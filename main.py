@@ -1,6 +1,7 @@
 import discord
 import praw
-import markovChaining, saveThread, keys, harambeThread, BSJ
+##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
+import markovChaining, saveThread, keys, BSJ
 import asyncio
 
 ##Praw
