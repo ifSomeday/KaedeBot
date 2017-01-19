@@ -5,7 +5,7 @@ import asyncio
 
 ##Praw
 client = discord.Client()
-r = praw.Reddit(user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
+r = praw.Reddit(client_id=keys.PRAW_ID, client_secret=keys.PRAW_SECRET, user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
 markovChaining.init()
 
 ##Save Thread

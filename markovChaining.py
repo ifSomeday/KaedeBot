@@ -6,7 +6,7 @@ import os
 
 NONWORD = "\n"
 d = {}
-TABLE_NAME = "/home/pi/Discord_Bot/memes.pickle"
+TABLE_NAME = os.cwd() + "memes.pickle"
 SUBREDDIT = "copypasta"
 
 def addTable(aList):
@@ -67,7 +67,7 @@ def generateText():
 
 def download(subreddit, num):
     t = []
-    r = praw.Reddit(user_agent='python:MemeDownloader(by /u/WalrusPorn)')
+    r = praw.Reddit(client_id=keys.PRAW_ID, client_secret=keys.PRAW_SECRET, user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
     submissions = r.get_subreddit(subreddit).get_top(limit = num)
     for item in submissions:
         item = item.selftext.replace(u'\ufeff', '')
