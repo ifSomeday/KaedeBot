@@ -1,14 +1,13 @@
 import discord
 import praw
 ##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
-import markovChaining, saveThread, keys, BSJ
+import markovChaining, saveThread, keys, BSJ, os
 import asyncio
 
 os.chdir("/home/pi/KaedeBot/")
 
 ##Praw
 client = discord.Client()
-r = praw.Reddit(client_id=keys.PRAW_ID, client_secret=keys.PRAW_SECRET, user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
 markovChaining.init()
 
 ##Save Thread
