@@ -2,6 +2,7 @@ import praw
 import random
 import sys
 import pickle
+import keys
 import os
 
 NONWORD = "\n"
