@@ -69,7 +69,7 @@ def generateText():
 def download(subreddit, num):
     t = []
     r = praw.Reddit(client_id=keys.PRAW_ID, client_secret=keys.PRAW_SECRET, user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
-    submissions = r.get_subreddit(subreddit).get_top(limit = num)
+    submissions = r.subreddit(subreddit).top(limit = num)
     for item in submissions:
         item = item.selftext.replace(u'\ufeff', '')
         item += "\n"

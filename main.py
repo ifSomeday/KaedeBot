@@ -4,6 +4,8 @@ import praw
 import markovChaining, saveThread, keys, BSJ
 import asyncio
 
+os.chdir("/home/pi/KaedeBot/")
+
 ##Praw
 client = discord.Client()
 r = praw.Reddit(client_id=keys.PRAW_ID, client_secret=keys.PRAW_SECRET, user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
