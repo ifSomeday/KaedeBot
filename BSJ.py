@@ -24,7 +24,7 @@ class BSJText:
     def _getDegreeArray(self):
         degreeArray = []
         try:
-            with open(os.cwd() + "/degrees.txt", "r") as f:
+            with open(os.getcwd() + "/degrees.txt", "r") as f:
                 for line in f:
                     degreeArray.append(line.strip())
         except:
@@ -37,11 +37,11 @@ class BSJText:
         sList = []
         jList = []
         try:
-            with open(os.cwd() + "/bList.dat" , "rb") as f:
+            with open(os.getcwd() + "/bList.dat" , "rb") as f:
                 bList = pickle.load(f)
-            with open(os.cwd() + "/sList.dat" , "rb") as f:
+            with open(os.getcwd() + "/sList.dat" , "rb") as f:
                 sList = pickle.load(f)
-            with open(os.cwd() + "/jList.dat", "rb") as f:
+            with open(os.getcwd() + "/jList.dat", "rb") as f:
                 jList = pickle.load(f)
         except:
             allwordlist = requests.get("http://www.mieliestronk.com/corncob_lowercase.txt").text.split()

@@ -6,7 +6,7 @@ import os
 
 NONWORD = "\n"
 d = {}
-TABLE_NAME = os.cwd() + "memes.pickle"
+TABLE_NAME = os.getcwd() + "memes.pickle"
 SUBREDDIT = "copypasta"
 
 def addTable(aList):
