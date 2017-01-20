@@ -4,8 +4,6 @@ import praw
 import markovChaining, saveThread, keys, BSJ, os
 import asyncio
 
-os.chdir("/home/pi/KaedeBot/")
-
 ##Praw
 client = discord.Client()
 markovChaining.init()
