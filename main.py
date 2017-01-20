@@ -3,6 +3,7 @@ import praw
 ##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
 import markovChaining, saveThread, keys, BSJ, os
 import asyncio
+import random
 
 ##Praw
 client = discord.Client()
@@ -17,10 +18,11 @@ BsjFacts = BSJ.BSJText()
 
 ##Call and Response
 async def processMessage(client, message):
+
     if message.content.startswith("!meme"):
         await client.send_message(message.channel, markovChaining.generateText())
-    if message.content.startswith("!newmeme"):
 
+    if message.content.startswith("!newmeme"):
         new_meme = message.content[len("!newmeme"):]
         print(new_meme)
         markovChaining.addSingle(new_meme)
@@ -53,6 +55,14 @@ async def processMessage(client, message):
             await client.send_message(message.channel, "what what")
         else:
             await client.send_message(message.channel, "nope")
+
+    if(not message.content.startswith('!')):
+        ##if(random.randint(0,1000) == 666):
+        if(message.author.name.lower() == "lay your heaven on me"):
+            client.change_nickname(message.author, (message.author + " senpai san "))
+            await client.send_message(message.channel("(✿◠‿◠)"))
+
+
 
 
 
