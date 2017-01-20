@@ -60,7 +60,7 @@ async def processMessage(client, message):
         ##if(random.randint(0,1000) == 666):
         if(message.author.name.lower() == "lay your heaven on me"):
             client.change_nickname(message.author, (message.author.name + " senpai san "))
-            await client.send_message(message.channel("(✿◠‿◠)"))
+            await client.send_message(message.channel, "(✿◠‿◠)")
 
 
 
