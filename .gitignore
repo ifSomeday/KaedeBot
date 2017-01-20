@@ -51,3 +51,6 @@ keys.py
 __pycache__/*
 memeTable
 memes.pickle
+
+startBot
+startBot.log

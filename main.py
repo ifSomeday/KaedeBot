@@ -1,11 +1,11 @@
 import discord
 import praw
-import markovChaining, saveThread, keys, harambeThread, BSJ
+##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
+import markovChaining, saveThread, keys, BSJ, os
 import asyncio
 
 ##Praw
 client = discord.Client()
-r = praw.Reddit(user_agent='python:ThreadTitleDownloader(by /u/WalrusPorn)')
 markovChaining.init()
 
 ##Save Thread
