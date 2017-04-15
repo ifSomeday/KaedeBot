@@ -3,7 +3,8 @@ import praw
 ##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
 import markovChaining, saveThread, keys, BSJ, os
 import asyncio
-import random
+import random, time
+import bernoulli_detection
 
 ##Praw
 client = discord.Client()
@@ -15,6 +16,9 @@ sThread.start()
 
 ##Bsj Facts
 BsjFacts = BSJ.BSJText()
+
+async def sendMessage(channel, string):
+    await client.send_message(channel, string)
 
 ##Call and Response
 async def processMessage(client, message):
@@ -56,13 +60,24 @@ async def processMessage(client, message):
         else:
             await client.send_message(message.channel, "nope")
 
+    if message.content.startswith("!test"):
+        url = message.content[len("!test"):]
+        await bernoulli_detection.checkUrlImage("https://cdn.discordapp.com/attachments/213086692683415552/302667850697408523/berger.jpg")
+
     if(not message.content.startswith('!')):
         ##if(random.randint(0,1000) == 666):
-        if(message.author.name.lower() == "lay your heaven on me"):
-            client.change_nickname(message.author, (message.author.name + " senpai san "))
-            await client.send_message(message.channel, "(✿◠‿◠)")
+        # if(message.author.name.lower() == "lay your heaven on me"):
+        #     newNick = message.author.name + " senpai san"
+        #     print(newNick)
+        #     client.change_nickname(message.author, newNick)
+        #     await client.send_message(message.channel, "(✿◠‿◠)")
+        pass
 
-
+    if len(message.attachments) != 0:
+        res = await bernoulli_detection.checkImage(message.attachments)
+        print(res)
+        if(res == True):
+            await client.send_message(message.channel, "Illicit Bernoulli detected!\nPlease be more careful in the future.")
 
 
 
