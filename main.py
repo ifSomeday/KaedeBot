@@ -3,6 +3,18 @@ import praw
 ##keys.py needs to contain a discord TOKEN, PRAW_ID and PRAW_SECRET
 import markovChaining, saveThread, keys, BSJ, os
 import asyncio
+import random, time
+import bernoulli_detection
+import edit_distance as ed
+
+testingEnabled= False
+
+
+
+
+
+##fixes race conditions lol
+time.sleep(15)
 
 ##Praw
 client = discord.Client()
@@ -15,12 +27,16 @@ sThread.start()
 ##Bsj Facts
 BsjFacts = BSJ.BSJText()
 
+async def sendMessage(channel, string):
+    await client.send_message(channel, string)
+
 ##Call and Response
 async def processMessage(client, message):
+
     if message.content.startswith("!meme"):
         await client.send_message(message.channel, markovChaining.generateText())
-    if message.content.startswith("!newmeme"):
 
+    if message.content.startswith("!newmeme"):
         new_meme = message.content[len("!newmeme"):]
         print(new_meme)
         markovChaining.addSingle(new_meme)
@@ -37,7 +53,7 @@ async def processMessage(client, message):
 
     if message.content.startswith("!help"):
         await client.send_message(message.channel,
-                            "Use !meme to get a spicy meme\nUse !newmeme to add your own dank memes")
+                            "Use !meme to get a spicy meme\nUse !newmeme to add your own dank memes\nUse !MsjMe to get BSJ memes\nUse !BsjName to get your BSJ Name\nUse !twitter to see my twitter counterpart")
 
     if message.content.startswith("!BsjMe"):
         await client.send_message(message.channel, BsjFacts.getFact())
@@ -48,12 +64,11 @@ async def processMessage(client, message):
     if message.content.startswith("!twitter"):
         await client.send_message(message.channel, "Follow my twitter counterpart!!\nhttps://twitter.com/NameIsBot")
 
-    if message.content.startswith('Can I get a "what what" from my homies?!'):
+    if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
         if(not str(message.author.id) == str(85148771226234880)):
             await client.send_message(message.channel, "what what")
         else:
-            await client.send_message(message.channel, "nope")
-
+            await client.send_message(message.channel, "quack quack")
 
 
 @client.event

@@ -12,11 +12,14 @@ class BSJText:
         self.placeDict = {"HERO" : self.getRandHero, "MONTH" : self.getRandMonth, "PERC" : self.getPerc, "DEGREE" : self.getRandDegree, "B-WORD" : self.getRandBWord, "S-WORD" : self.getRandSWord, "J-WORD" : self.getRandJWord}
 
     def _getHeroList(self):
-        heroJSON = requests.get("https://raw.githubusercontent.com/kronusme/dota2-api/master/data/heroes.json").json()
-        heroArray = []
-        for hero in heroJSON["heroes"]:
-            heroArray.append(hero["localized_name"])
-        return(heroArray)
+        try:
+            heroJSON = requests.get("https://raw.githubusercontent.com/kronusme/dota2-api/master/data/heroes.json").json()
+            heroArray = []
+            for hero in heroJSON["heroes"]:
+                heroArray.append(hero["localized_name"])
+            return(heroArray)
+        except:
+            return(["slark"])
 
     def getPerc(self):
         return(round(random.random()*100, 2))
