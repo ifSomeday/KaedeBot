@@ -190,6 +190,9 @@ def dotaThread():
                 elif(chat_quick_decode(msg).lower() == "tleave"):
                     leave_team_lobby()
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving team")
+                elif(chat_quick_decode(msg).lower() == "leave"):
+                        leave_party()
+                        client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
                 else:
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
             return
