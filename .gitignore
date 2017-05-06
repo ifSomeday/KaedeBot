@@ -58,3 +58,4 @@ startBot.log
 push.bat
 push.txt
 
+*.pickle

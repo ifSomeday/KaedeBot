@@ -318,7 +318,7 @@ def dotaThread():
     ##a quick decode macro for friend message protobuf
     def chat_quick_decode(string):
         return(string.body.message.decode("utf-8").rstrip('\x00'))
-v
+
     def dumpTable(table):
         with open(TABLE_NAME,'wb') as f:
             pickle.dump(table, f)
