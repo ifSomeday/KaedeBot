@@ -63,7 +63,9 @@ def dotaThread():
 
     @dota.on('notready')
     def reload():
-        start_dota()
+        print("starting dota")
+        dota.exit()
+        dota.launch()
         pass
 
     ##dota lobby on lobby change event handler
@@ -100,7 +102,6 @@ def dotaThread():
         ##state 3 is postgame
         ##game_state
         if(msg.game_state == dGState.DOTA_GAMERULES_STATE_POST_GAME):
-
             winner = msg.match_outcome
             if(winner == dOutcome.RadVictory):
                 print("radiant wins!")
@@ -118,7 +119,6 @@ def dotaThread():
                 print(member.team)
                 print(member.id)
                 if not member.id in table:
-                    print("player not in league")
                     table[member.id] = classes.leaguePlayer()
                     table[member.id].account_id = member.id
                 if(member.team == 0):
@@ -146,7 +146,7 @@ def dotaThread():
                         table[member.id].new_mmr(radiantAverage, 1)
                 else:
                     print("member not updatesd")
-                print(table[member.id].printStats())
+                table[member.id].printStats()
             dumpTable(table)
 
 
@@ -186,7 +186,8 @@ def dotaThread():
                 elif(chat_quick_decode(msg).lower() == "tleave"):
                     leave_team_lobby()
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving team")
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
+                else:
+                    client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
             return
         elif(len(chat_quick_decode(msg)) > 0):
             if(chat_quick_decode(msg).lower() == "lobby"):
@@ -331,16 +332,19 @@ def dotaThread():
         else:
             return({})
 
-    def init_local_data(table):
+    def init_local_data():
         if(os.path.isfile(TABLE_NAME)):
             print("previous table found... opening")
-            table = openTable()
+
         else:
             print("no local table.... generating one")
-            dumpTable(table)
+            dumpTable({})
             print("local table created")
+        return(openTable())
 
-    init_local_data(table)
+    table = init_local_data()
+
+    print(table)
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
     print("logged in")
