@@ -48,7 +48,7 @@ def dotaThread():
 
     ##DECORATED FUNCTIONS
 
-    #logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
 
     ##after logon, launch dota
     @client.on('logged_on')
@@ -178,7 +178,7 @@ def dotaThread():
     @client.on(EMsg.ClientFriendMsgIncoming)
     def i_got_a_message(msg):
         print(msg.body.steamid_from)
-        if(not str(msg.body.steamid_from) == str(76561198035685466)):
+        if(not str(msg.body.steamid_from) == str(76561198035685466) or not str(msg.body.steamid_from) == str(76561198060607123)):
             if(len(chat_quick_decode(msg)) > 0):
                 if(chat_quick_decode(msg).lower() == "lleave"):
                     leave_lobby()
@@ -318,7 +318,7 @@ def dotaThread():
     ##a quick decode macro for friend message protobuf
     def chat_quick_decode(string):
         return(string.body.message.decode("utf-8").rstrip('\x00'))
-
+v
     def dumpTable(table):
         with open(TABLE_NAME,'wb') as f:
             pickle.dump(table, f)
