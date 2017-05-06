@@ -68,6 +68,10 @@ def dotaThread():
         dota.launch()
         pass
 
+    @client.on('disconnected')
+    def restart():
+        client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
+
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
     def fix_self(msg):
@@ -124,7 +128,7 @@ def dotaThread():
                 if(member.team == 0):
                     radiantCount +=1
                     radiantAverage += table[member.id].mmr
-                if(member.team == 0):
+                if(member.team == 1):
                     direCount +=1
                     direAverage += table[member.id].mmr
             radiantAverage = (radiantAverage + 1400*(5-radiantCount))/5
