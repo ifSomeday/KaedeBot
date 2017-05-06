@@ -9,10 +9,6 @@ import edit_distance as ed
 
 testingEnabled= False
 
-
-
-
-
 ##fixes race conditions lol
 time.sleep(15)
 
@@ -69,6 +65,7 @@ async def processMessage(client, message):
             await client.send_message(message.channel, "what what")
         else:
             await client.send_message(message.channel, "quack quack")
+
 
 
 @client.event
