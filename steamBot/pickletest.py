@@ -1,7 +1,7 @@
 import os
 import pickle
 
-TABLE_NAME = os.getcwd() + "\\ratings.pickle"
+TABLE_NAME = os.getcwd() + "/ratings.pickle"
 
 
 

@@ -39,7 +39,7 @@ def dotaThread():
 
     debug = False
 
-    TABLE_NAME = os.getcwd() + "\\ratings.pickle"
+    TABLE_NAME = os.getcwd() + "/ratings.pickle"
     table = {}
 
     r_pattern = re.compile('"(.*?)"')
