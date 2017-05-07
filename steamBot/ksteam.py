@@ -24,6 +24,7 @@ from dota2.enums import EMatchOutcome as dOutcome
 ##general imports
 import logging
 import time
+import sys
 import re
 import os
 import pickle
@@ -36,10 +37,11 @@ def dotaThread():
     ##set up client
     client = SteamClient()
     dota = Dota2Client(client)
-
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     debug = False
 
     TABLE_NAME = os.getcwd() + "/ratings.pickle"
+    print(TABLE_NAME)
     table = {}
 
     r_pattern = re.compile('"(.*?)"')
