@@ -37,7 +37,7 @@ def dotaThread():
     ##set up client
     client = SteamClient()
     dota = Dota2Client(client)
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
     debug = False
 
     TABLE_NAME = os.getcwd() + "/ratings.pickle"
@@ -61,11 +61,11 @@ def dotaThread():
     ##At this point dota is ready
     @dota.on('ready')
     def ready0():
-        print("Dota is ready")
+        print("Dota is ready", flush=true)
 
     @dota.on('notready')
     def reload():
-        print("starting dota")
+        print("starting dota", flush=true)
         dota.exit()
         dota.launch()
         pass
@@ -103,27 +103,27 @@ def dotaThread():
     ##lobby removed event handler
     @dota.on('lobby_removed')
     def lobby_removed(msg):
-        print(msg)
+        print(msg, flush=true)
         dota.channels.leave_channel("Lobby_%s" % msg.lobby_id)
         ##state 3 is postgame
         ##game_state
         if(msg.game_state == dGState.DOTA_GAMERULES_STATE_POST_GAME):
             winner = msg.match_outcome
             if(winner == dOutcome.RadVictory):
-                print("radiant wins!")
+                print("radiant wins!", flush=true)
             elif(winner == dOutcome.DireVictory):
-                print("dire wins!")
+                print("dire wins!", flush=true)
             else:
-                print("lobby died")
+                print("lobby died", flush=true)
                 return
             direCount = 0
             radiantCount = 0
             direAverage  = 0
             radiantAverage = 0
             for member in msg.members:
-                print(member.name)
-                print(member.team)
-                print(member.id)
+                print(member.name, flush=true)
+                print(member.team, flush=true)
+                print(member.id, flush=true)
                 if not member.id in table:
                     table[member.id] = classes.leaguePlayer()
                     table[member.id].account_id = member.id
@@ -135,8 +135,8 @@ def dotaThread():
                     direAverage += table[member.id].mmr
             radiantAverage = (radiantAverage + 1400*(5-radiantCount))/5
             direAverage = (direAverage + 1400*(5-direCount))/5
-            print(radiantAverage)
-            print(direAverage)
+            print(radiantAverage, flush=true)
+            print(direAverage, flush=true)
             for member in msg.members:
                 table[member.id].account_name = member.name
                 ##TODO fancy bitwise stuff here
@@ -151,7 +151,7 @@ def dotaThread():
                     elif(member.team == 1):
                         table[member.id].new_mmr(radiantAverage, 1)
                 else:
-                    print("member not updatesd")
+                    print("member not updatesd", flush=true)
                 table[member.id].printStats()
             dumpTable(table)
 
@@ -161,14 +161,14 @@ def dotaThread():
     @dota.on('party_invite')
     def party_invite(msg):
         if(dota.party == None):
-            print(msg)
+            print(msg, flush=true)
             dota.respond_to_party_invite(msg.group_id, accept=True)
 
     ##lobby invite event handler
     @dota.on('lobby_invite')
     def lobby_invite(msg):
         if(dota.lobby == None):
-            print(msg)
+            print(msg, flush=true)
             dota.respond_lobby_invite(msg.group_id, accept=True)
 
     @client.friends.on('friend_invite')
@@ -183,7 +183,7 @@ def dotaThread():
     ##control bot from steam messages. soon to be removed (excpet probably tleave)
     @client.on(EMsg.ClientFriendMsgIncoming)
     def i_got_a_message(msg):
-        print(msg.body.steamid_from)
+        print(msg.body.steamid_from, flush=true)
         if(not str(msg.body.steamid_from) == str(76561198035685466) or not str(msg.body.steamid_from) == str(76561198060607123)):
             if(len(chat_quick_decode(msg)) > 0):
                 if(chat_quick_decode(msg).lower() == "lleave"):
@@ -238,9 +238,9 @@ def dotaThread():
                             #print("unprintable name")
                             pass
                         if lobby.name == params[0]:
-                            print(lobby)
+                            print(lobby, flush=true)
             elif(chat_quick_decode(msg).lower() == 'test'):
-                print(dota.lobby)
+                print(dota.lobby, flush=true)
             else:
                 client.get_user(SteamID(msg.body.steamid_from)).send_message(chat_quick_decode(msg).lower())
 
@@ -250,14 +250,14 @@ def dotaThread():
 
     @client.on('friend_invite')
     def accept_request(msg):
-        print(msg)
+        print(msg, flush=true)
 
 
     ##GC RELATED COMMANDS
 
     ##sets up and issues the create lobby command
     def _lobby_setup_backend():
-        print("setting up lobby")
+        print("setting up lobby", flush=true)
         d = {}
         d['game_name'] = "Kaede Lobby"
         d['server_region'] = 2
@@ -343,12 +343,12 @@ def dotaThread():
 
     def init_local_data():
         if(os.path.isfile(TABLE_NAME)):
-            print("previous table found... opening")
+            print("previous table found... opening", flush=true)
 
         else:
-            print("no local table.... generating one")
+            print("no local table.... generating one", flush=true)
             dumpTable({})
-            print("local table created")
+            print("local table created", flush=true)
         return(openTable())
 
     table = init_local_data()
@@ -356,7 +356,7 @@ def dotaThread():
     print(table)
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
-    print("logged in")
+    print("logged in", flush=true)
     client.run_forever()
 
 
