@@ -46,11 +46,13 @@ def dotaThread():
 
     r_pattern = re.compile('"(.*?)"')
 
+    ##TODO programatically generate this
     me = SteamID(75419738)
 
-    ##DECORATED FUNCTIONS
+    if(debug):
+        logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
 
-    logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
+    ##DECORATED FUNCTIONS
 
     ##after logon, launch dota
     @client.on('logged_on')
@@ -184,7 +186,7 @@ def dotaThread():
     @client.on(EMsg.ClientFriendMsgIncoming)
     def i_got_a_message(msg):
         print(msg.body.steamid_from, flush=True)
-        if(not str(msg.body.steamid_from) == str(76561198035685466) or not str(msg.body.steamid_from) == str(76561198060607123)):
+        if(not str(msg.body.steamid_from) == str(76561198035685466) and not str(msg.body.steamid_from) == str(76561198060607123)):
             if(len(chat_quick_decode(msg)) > 0):
                 if(chat_quick_decode(msg).lower() == "lleave"):
                     leave_lobby()
@@ -364,6 +366,3 @@ pbThread = Thread(target = dotaThread)
 pbThread.start()
 pbThread.join()
 #login client. make sure to populate keys.py properly
-
-
-##remove this if not running as a standalone bot
