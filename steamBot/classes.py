@@ -21,10 +21,10 @@ class leaguePlayer:
 
     def printStats(self):
         try:
-            print(self.account_name)
+            print(self.account_name, flush=True)
         except:
-            print("cant encode name")
-        print("\tmmr = " + str(self.mmr))
-        print("\taccount_id = " + str(self.account_id))
-        print("\twins = " + str(self.wins))
-        print("\tgames = " + str(self.games))
+            print("cant encode name", flush=True)
+        print("\tmmr = " + str(self.mmr), flush=True)
+        print("\taccount_id = " + str(self.account_id), flush=True)
+        print("\twins = " + str(self.wins), flush=True)
+        print("\tgames = " + str(self.games), flush=True)

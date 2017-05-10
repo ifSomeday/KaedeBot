@@ -41,12 +41,13 @@ def dotaThread():
     debug = False
 
     TABLE_NAME = os.getcwd() + "/ratings.pickle"
-    print(TABLE_NAME)
+    print(TABLE_NAME, flush=True)
     table = {}
 
     r_pattern = re.compile('"(.*?)"')
 
     ##TODO programatically generate this
+    bot_SteamID = SteamID(76561198384957078)
     me = SteamID(75419738)
 
     if(debug):
@@ -78,7 +79,20 @@ def dotaThread():
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
-    def fix_self(msg):
+    def lobby_change_handler(msg):
+        lobby_stat, party_stat = get_status()
+        if(not lobby_stat == None):
+                print("Lobby is dead, leaving",flush = True)
+                leave_lobby()
+        pass
+
+    @dota.on('party_changed')
+    def party_change_handler(msg):
+        lobby_stat, party_stat = get_status()
+        if(not party_stat == None):
+            if(len(party_stat.members) <= 1):
+                print("lobby is dead, leaving",flush = True)
+                leave_party()
         pass
     #   leave_team_lobby()
 
@@ -239,12 +253,12 @@ def dotaThread():
                 else:
                     lobbies = get_lobbies(server_region=1, game_mode = 0).lobbies
                     for lobby in lobbies:
-                        #print(lobby)
+                        #print(lobby, flush=True)
                         try:
-                            #print(lobby.name)
+                            #print(lobby.name, flush=True)
                             pass
                         except:
-                            #print("unprintable name")
+                            #print("unprintable name", flush=True)
                             pass
                         if lobby.name == params[0]:
                             print(lobby, flush=True)
@@ -302,6 +316,7 @@ def dotaThread():
     ##invite to party by ID
     ##automagically converts to a SteamID object
     def party_invite_me(idd):
+        ##TODO verify that party invites will never be automagically rescinded
         dota.invite_to_party(SteamID(idd))
         pass
 
