@@ -123,7 +123,10 @@ def dotaThread():
             direAverage  = 0
             radiantAverage = 0
             for member in msg.members:
-                print(member.name, flush=True)
+                try:
+                    print(member.name, flush=True)
+                except:
+                    print("cant encode name")
                 print(member.team, flush=True)
                 print(member.id, flush=True)
                 if not member.id in table:

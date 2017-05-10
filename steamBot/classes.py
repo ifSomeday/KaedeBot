@@ -20,7 +20,10 @@ class leaguePlayer:
         self.wins += won
 
     def printStats(self):
-        print(self.account_name)
+        try:
+            print(self.account_name)
+        except:
+            print("cant encode name")
         print("\tmmr = " + str(self.mmr))
         print("\taccount_id = " + str(self.account_id))
         print("\twins = " + str(self.wins))
