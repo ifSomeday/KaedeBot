@@ -60,3 +60,4 @@ push.bat
 push.txt
 
 *.pickle
+*.pyc
