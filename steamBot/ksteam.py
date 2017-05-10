@@ -188,7 +188,7 @@ def dotaThread():
     ##control bot from steam messages. soon to be removed (excpet probably tleave)
     @client.on(EMsg.ClientFriendMsgIncoming)
     def i_got_a_message(msg):
-        print(msg.body.steamid_from, flush=True)
+        ##TODO determine what commands should need priviledge, seperate out those that dont, to avoid current cude duplication
         if(not str(msg.body.steamid_from) == str(76561198035685466) and not str(msg.body.steamid_from) == str(76561198060607123)):
             if(len(chat_quick_decode(msg)) > 0):
                 if(chat_quick_decode(msg).lower() == "lleave"):
@@ -200,6 +200,8 @@ def dotaThread():
                 elif(chat_quick_decode(msg).lower() == "leave"):
                         leave_party()
                         client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
+                elif(chat_quick_decode(msg).lower() == 'status'):
+                        send_status(msg.body.steamid_from)
                 else:
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
             return
@@ -227,6 +229,8 @@ def dotaThread():
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("launching lobby")
             elif(chat_quick_decode(msg).lower() == 'die'):
                 exit()
+            elif(chat_quick_decode(msg).lower() == 'status'):
+                send_status(msg.body.steamid_from)
             elif(chat_quick_decode(msg).lower().startswith('inhouse')):
                 command = chat_quick_decode(msg)[len('inhouse')+1:]
                 params = r_pattern.findall(command)
@@ -328,6 +332,25 @@ def dotaThread():
     def get_session_status():
         return(dota.connection_status)
 
+    def get_status():
+        lobby = dota.lobby
+        party = dota.party
+        return lobby, party
+
+    def send_status(id):
+        requester = client.get_user(SteamID(id))
+        lobby_stat, party_stat = get_status()
+        if(party_stat == None):
+            requester.send_message("Party: None")
+        else:
+            requester.send_message("Party: Active")
+            ##TODO parse and send party info
+        if(lobby_stat == None):
+            requester.send_message("Lobby: None")
+        else:
+            requester.send_message("Lobby: Active")
+            ##TODO parse and send lobby info
+
     ##HELPER FUNCTIONS
 
     ##a quick decode macro for friend message protobuf
@@ -357,8 +380,6 @@ def dotaThread():
         return(openTable())
 
     table = init_local_data()
-
-    print(table)
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
     print("logged in", flush=True)
