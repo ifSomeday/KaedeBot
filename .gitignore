@@ -49,6 +49,7 @@ Temporary Items
 keys.py
 .idea/*
 __pycache__/*
+*/__pycache__/*
 memeTable
 memes.pickle
 
