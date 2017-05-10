@@ -58,6 +58,7 @@ def dotaThread():
     ##after logon, launch dota
     @client.on('logged_on')
     def start_dota():
+        print("Logged into steam, starting dota", flush=True)
         dota.launch()
         pass
 
@@ -68,13 +69,14 @@ def dotaThread():
 
     @dota.on('notready')
     def reload():
-        print("starting dota", flush=True)
+        print("out of dota, restarting...", flush=True)
         dota.exit()
         dota.launch()
         pass
 
     @client.on('disconnected')
     def restart():
+        print("disconnected from steam. Attempting to relog...", flush=True)
         client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
 
     ##dota lobby on lobby change event handler
