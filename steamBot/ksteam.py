@@ -84,7 +84,7 @@ def dotaThread():
     def lobby_change_handler(msg):
         lobby_stat, party_stat = get_status()
         if(not lobby_stat == None):
-            if(len(lobby_stat.members) <= 1 and not lobby.leader_id == bot_SteamID.as_64):
+            if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
                 print("Lobby is dead, leaving",flush = True)
                 leave_lobby()
         pass
