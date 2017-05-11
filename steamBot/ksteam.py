@@ -381,9 +381,11 @@ def dotaThread():
         except:
             spots = 3
             pass
+        if(spots < 0):
+            spots = 3
         requester = client.get_user(SteamID(id))
         top = get_top_players(spots)
-        reply = "Top " + str(spots) + " players:"
+        reply = "Top " + str(len(top)) + " players:"
         for player in top:
             reply += "\n" + str(player.account_name) +": " + str(player.mmr)
         requester.send_message(reply)
@@ -397,6 +399,8 @@ def dotaThread():
     def get_top_players(spots=3):
         sorted_table = sorted(table.values(), key=operator.attrgetter('mmr'), reverse=True)
         top = []
+        if(spots == 0):
+            return(sorted_table)
         for i in range(0, min(spots, len(sorted_table))):
             top.append(sorted_table[i])
         return(top)
