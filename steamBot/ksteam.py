@@ -22,6 +22,7 @@ from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
 
 ##general imports
+import operator
 import logging
 import time
 import sys
@@ -219,6 +220,8 @@ def dotaThread():
                         client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
                 elif(chat_quick_decode(msg).lower() == 'status'):
                         send_status(msg.body.steamid_from)
+                elif(chat_quick_decode(msg).lower().startswith('leaderboard')):
+                    send_top_players(msg.body.steamid_from, chat_quick_decode(msg)[len("leaderboard")+1:])
                 else:
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
             return
@@ -248,6 +251,8 @@ def dotaThread():
                 exit()
             elif(chat_quick_decode(msg).lower() == 'status'):
                 send_status(msg.body.steamid_from)
+            elif(chat_quick_decode(msg).lower().startswith('leaderboard')):
+                send_top_players(msg.body.steamid_from, chat_quick_decode(msg)[len("leaderboard")+1:])
             elif(chat_quick_decode(msg).lower().startswith('inhouse')):
                 command = chat_quick_decode(msg)[len('inhouse')+1:]
                 params = r_pattern.findall(command)
@@ -369,11 +374,33 @@ def dotaThread():
             requester.send_message("Lobby: Active")
             ##TODO parse and send lobby info
 
+    def send_top_players(id, message):
+        spots = 3
+        try:
+            spots = int(message)
+        except:
+            spots = 3
+            pass
+        requester = client.get_user(SteamID(id))
+        top = get_top_players(spots)
+        reply = "Top " + str(spots) + " players:"
+        for player in top:
+            reply += "\n" + str(player.account_name) +": " + str(player.mmr)
+        requester.send_message(reply)
+
     ##HELPER FUNCTIONS
 
     ##a quick decode macro for friend message protobuf
     def chat_quick_decode(string):
         return(string.body.message.decode("utf-8").rstrip('\x00'))
+
+    def get_top_players(spots=3):
+        sorted_table = sorted(table.values(), key=operator.attrgetter('mmr'), reverse=True)
+        top = []
+        for i in range(0, min(spots, len(sorted_table))):
+            top.append(sorted_table[i])
+        return(top)
+
 
     def dumpTable(table):
         with open(TABLE_NAME,'wb') as f:
