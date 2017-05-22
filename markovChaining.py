@@ -7,7 +7,7 @@ import os
 
 NONWORD = "\n"
 d = {}
-TABLE_NAME = os.getcwd() + "/memes.pickle"
+TABLE_NAME = os.getcwd() + "/dataStores/memes.pickle"
 SUBREDDIT = "copypasta"
 
 def addTable(aList):
@@ -78,11 +78,11 @@ def download(subreddit, num):
 
 def init():
     if(os.path.isfile(TABLE_NAME)):
-        print("previous table found... opening")
+        print("previous meme table found... opening")
         openTable(TABLE_NAME)
     else:
-        print("no local table.... generating one")
+        print("no local meme table.... generating one")
         list = download(SUBREDDIT, 250)
         addTable(list)
         dumpTable(d)
-        print("local table created")
+        print("local meme table created")
