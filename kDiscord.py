@@ -40,9 +40,9 @@ def discBot(kstQ, dscQ):
 
         if message.content.startswith("!purgememes"):
             if(message.author.name.lower() == "lay your heaven on me"):
-                markovChaining.clearTable()
-                markovChaining.addTable(markovChaining.download(markovChaining.SUBREDDIT, 250))
-                markovChaining.dumpTable(markovChaining.TABLE_NAME)
+                #markovChaining.clearTable()
+                #markovChaining.addTable(markovChaining.download(markovChaining.SUBREDDIT, 250))
+                #markovChaining.dumpTable(markovChaining.TABLE_NAME)
                 await client.send_message(message.channel, "memes purged.")
             else:
                 await client.send_message(message.channel, "permission denied.")
@@ -71,53 +71,24 @@ def discBot(kstQ, dscQ):
             await client.send_typing(message.channel)
             kstQ.put(classes.command(classes.steamCommands.STATUS, [message.channel]))
 
-    print("get ere")
-
-    # async def messageHandler(*args, **kwargs):
-    #     while(True):
-    #         dscQ = args[0]
-    #         kstQ = args[1]
-    #         print("calling message handler")
-    #         cmd = dscQ.get()
-    #         if(cmd):
-    #             print("found command")
-    #             if(cmd.command == classes.discordCommands.BROADCAST):
-    #                 print("sending status")
-    #                 await client.send_message(cmd.args[0], cmd.args[1])
-    #
-    #         await asyncio.sleep(10.0)
+        if message.content.startswith("!thumbsup"):
+                await client.send_file(message.channel, os.getcwd() + "/dataStores/Kyouko_Thumbs_up.gif")
+                await client.delete_message(message)
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
         while(not client.is_closed):
             if(dscQ.qsize() > 0):
                 cmd = dscQ.get()
-                print("found command")
+                print("found discord command")
                 if(cmd.command == classes.discordCommands.BROADCAST):
-                    print("found command")
                     print("sending status")
-                    #loop.run_until_complete(sendMessage(args[0],args[1]))
                     await client.send_message(cmd.args[0], cmd.args[1])
             await asyncio.sleep(1)
 
 
-
-    async def my_background_task(test1, test2):
-        await client.wait_until_ready()
-        counter = 0
-        channel = discord.Object(id='213086692683415552')
-        while not client.is_closed:
-            print(test1, test2)
-            counter += 1
-            await client.send_message(channel, counter)
-            await asyncio.sleep(1) # task runs every 1 seconds
-
-    #tsk = asyncio.ensure_future(loop.run_in_executor(executor, messageHandler, args=[kstQ, dscQ]))
-
-
     @client.event
     async def on_ready():
-        print("Bot Online")
 
 
 
@@ -125,8 +96,5 @@ def discBot(kstQ, dscQ):
     async def on_message(message):
         await processMessage(client, message)
 
-    print("so we get here")
     client.loop.create_task(messageHandler(kstQ, dscQ))
-    #client.loop.create_task(my_background_task(3, 4))
-    print("and here?")
     client.run(keys.TOKEN)

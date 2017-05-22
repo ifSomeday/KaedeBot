@@ -431,7 +431,7 @@ def dotaThread(kstQ, dscQ):
 
         cmd = kstQ.get()
         if(cmd):
-            print("found command")
+            print("found steam command")
             if(cmd.command == classes.steamCommands.STATUS):
                 print("getting status")
                 lobby, party = get_status()
