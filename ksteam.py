@@ -3,10 +3,10 @@ My daddy told me never make a method longer than your screen
 looks like i fucked that right up
 '''
 
+##TODO: fix imports
+
 ##library imports
 import gevent.monkey
-gevent.monkey.patch_socket()
-gevent.monkey.patch_ssl()
 
 from steam import SteamClient
 from steam import SteamID
@@ -21,6 +21,7 @@ from dota2.enums import ESOType as dEType
 from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
 
+
 ##general imports
 import operator
 import logging
@@ -29,19 +30,19 @@ import sys
 import re
 import os
 import pickle
-from threading import Thread
+import threading
 ##need STEAM_USERNAME and STEAM_PASS in keys.py
 import keys
 import classes
 
-def dotaThread():
+def dotaThread(kstQ, dscQ):
     ##set up client
     client = SteamClient()
     dota = Dota2Client(client)
 
     debug = False
 
-    TABLE_NAME = os.getcwd() + "/ratings.pickle"
+    TABLE_NAME = os.getcwd() + "/dataStores/ratings.pickle"
     print(TABLE_NAME, flush=True)
     table = {}
 
@@ -148,7 +149,7 @@ def dotaThread():
                 print(member.team, flush=True)
                 print(member.id, flush=True)
                 if not member.id in table:
-                    table[member.id] = classes.leaguePlayer()
+                    table[member.id] = steamBot.classes.leaguePlayer()
                     table[member.id].account_id = member.id
                 if(member.team == 0):
                     radiantCount +=1
@@ -363,15 +364,9 @@ def dotaThread():
     def send_status(id):
         requester = client.get_user(SteamID(id))
         lobby_stat, party_stat = get_status()
-        if(party_stat == None):
-            requester.send_message("Party: None")
-        else:
-            requester.send_message("Party: Active")
+        requester.send_message("Party: " + str("None" if party_stat == None else "Active"))
             ##TODO parse and send party info
-        if(lobby_stat == None):
-            requester.send_message("Lobby: None")
-        else:
-            requester.send_message("Lobby: Active")
+        requester.send_message("Lobby: " + str("None" if lobby_stat == None else "Active"))
             ##TODO parse and send lobby info
 
     def send_top_players(id, message):
@@ -430,12 +425,28 @@ def dotaThread():
 
     table = init_local_data()
 
+    def messageHandler(*args, **kwargs):
+        kstQ = args[0]
+        dscQ = args[1]
+
+        cmd = kstQ.get()
+        if(cmd):
+            print("found command")
+            if(cmd.command == classes.steamCommands.STATUS):
+                print("getting status")
+                lobby, party = get_status()
+                resp = "Party: " + str("None" if party == None else "Active") + "\n"
+                resp += "Lobby: " + str("None" if lobby == None else "Active") + "\n"
+                dscQ.put(classes.command(classes.discordCommands.BROADCAST, [cmd.args[0], resp]))
+
+        msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
+        msgH.start()
+
+    msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
+    msgH.start()
+
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
     print("logged in", flush=True)
+
+
     client.run_forever()
-
-
-pbThread = Thread(target = dotaThread)
-pbThread.start()
-pbThread.join()
-#login client. make sure to populate keys.py properly

@@ -51,7 +51,7 @@ keys.py
 __pycache__/*
 */__pycache__/*
 memeTable
-memes.pickle
+*memes.pickle
 
 startBot
 startBot.log
@@ -61,3 +61,4 @@ push.txt
 
 *.pickle
 *.pyc
+*firebase_private_key.json
