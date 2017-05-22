@@ -69,10 +69,20 @@ def discBot(kstQ, dscQ):
 
         if message.content.startswith("!status"):
             await client.send_typing(message.channel)
-            kstQ.put(classes.command(classes.steamCommands.STATUS, [message.channel]))
+            kstQ.put(classes.command(classes.steamCommands.STATUS_4D, [message.channel]))
+
+        if message.content.startswith("!leaderboard"):
+            await client.send_typing(message.channel)
+            kstQ.put(classes.command(classes.steamCommands.LEADERBOARD_4D, [message.channel, message.content[len("!leaderboard"):]]))
 
         if message.content.startswith("!thumbsup"):
+            if str(message.author.id) == str(133811493778096128):
                 await client.send_file(message.channel, os.getcwd() + "/dataStores/Kyouko_Thumbs_up.gif")
+                await client.delete_message(message)
+
+        if message.content.startswith("!airguitar"):
+            if str(message.author.id) == str(133811493778096128):
+                await client.send_file(message.channel, os.getcwd() + "/dataStores/Kyouko_air_guitar.gif")
                 await client.delete_message(message)
 
     async def messageHandler(kstQ, dscQ):
@@ -89,6 +99,7 @@ def discBot(kstQ, dscQ):
 
     @client.event
     async def on_ready():
+        print("discord bot Online")
 
 
 

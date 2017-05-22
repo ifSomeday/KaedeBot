@@ -1,8 +1,3 @@
-'''
-My daddy told me never make a method longer than your screen
-looks like i fucked that right up
-'''
-
 ##TODO: fix imports
 
 ##library imports
@@ -43,7 +38,6 @@ def dotaThread(kstQ, dscQ):
     debug = False
 
     TABLE_NAME = os.getcwd() + "/dataStores/ratings.pickle"
-    print(TABLE_NAME, flush=True)
     table = {}
 
     r_pattern = re.compile('"(.*?)"')
@@ -54,6 +48,14 @@ def dotaThread(kstQ, dscQ):
 
     if(debug):
         logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
+
+    ##TODO: move elsewhere
+    chat_command_translation = {"lobby" : classes.steamCommands.LOBBY_CREATE, "invite" : classes.steamCommands.PARTY_INVITE,
+    "linvite" : classes.steamCommands.LOBBY_INVITE, "lleave" : classes.steamCommands.LEAVE_LOBBY,
+    "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
+    "die" : classes.steamCommands.STOP_BOT, "leaderboard" : classes.steamCommands.LEADERBOARD,
+    "launch" : classes.steamCommands.LAUNCH_LOBBY, "status" : classes.steamCommands.STATUS,
+    "inhouse" : classes.steamCommands.INHOUSE}
 
     ##DECORATED FUNCTIONS
 
@@ -227,54 +229,10 @@ def dotaThread(kstQ, dscQ):
                     client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
             return
         elif(len(chat_quick_decode(msg)) > 0):
-            if(chat_quick_decode(msg).lower() == "lobby"):
-                setup_lobby()
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
-            elif(chat_quick_decode(msg).lower() == "invite"):
-                party_invite_me(msg.body.steamid_from)
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("inviting to party")
-            elif(chat_quick_decode(msg).lower() == "linvite"):
-                lobby_invite_me(msg.body.steamid_from)
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("inviting to lobby")
-            elif(chat_quick_decode(msg).lower() == "lleave"):
-                leave_lobby()
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving lobby")
-            elif(chat_quick_decode(msg).lower() == "leave"):
-                leave_party()
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
-            elif(chat_quick_decode(msg).lower() == "tleave"):
-                leave_team_lobby()
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving team")
-            elif(chat_quick_decode(msg).lower() == "launch"):
-                launch_lobby()
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("launching lobby")
-            elif(chat_quick_decode(msg).lower() == 'die'):
-                exit()
-            elif(chat_quick_decode(msg).lower() == 'status'):
-                send_status(msg.body.steamid_from)
-            elif(chat_quick_decode(msg).lower().startswith('leaderboard')):
-                send_top_players(msg.body.steamid_from, chat_quick_decode(msg)[len("leaderboard")+1:])
-            elif(chat_quick_decode(msg).lower().startswith('inhouse')):
-                command = chat_quick_decode(msg)[len('inhouse')+1:]
-                params = r_pattern.findall(command)
-                if(len(params) == 0):
-                    client.get_user(SteamID(msg.body.steamid_from)).send_message("please put quotes around the lobby name and password")
-                else:
-                    lobbies = get_lobbies(server_region=1, game_mode = 0).lobbies
-                    for lobby in lobbies:
-                        #print(lobby, flush=True)
-                        try:
-                            #print(lobby.name, flush=True)
-                            pass
-                        except:
-                            #print("unprintable name", flush=True)
-                            pass
-                        if lobby.name == params[0]:
-                            print(lobby, flush=True)
-            elif(chat_quick_decode(msg).lower() == 'test'):
-                print(dota.lobby, flush=True)
-            else:
-                client.get_user(SteamID(msg.body.steamid_from)).send_message(chat_quick_decode(msg).lower())
+            #TODO: split on space, so args can be passed to commands
+            cMsg = chat_quick_decode(msg).lower().split()
+            command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.steamCommands.INVALID_COMMAND
+            function_translation[command](cMsg, msg = msg)
 
         else:
             ##just someone typing
@@ -307,14 +265,20 @@ def dotaThread(kstQ, dscQ):
         pass
 
     ##leaves current lobby
-    def leave_lobby():
+    def leave_lobby(*args, **kwargs):
         ##check if in lobby
         dota.leave_practice_lobby()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving lobby")
 
     ##leaves current party
-    def leave_party():
+    def leave_party(*args, **kwargs):
         ##check if in party
         dota.leave_party()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
 
     ##make sure to use resp.lobbies
     def get_lobbies(game_mode=0, server_region = 0):
@@ -324,33 +288,57 @@ def dotaThread(kstQ, dscQ):
 
     ##invite to party by ID
     ##automagically converts to a SteamID object
-    def party_invite_me(idd):
+    def party_invite_me(*args, **kwargs):
         ##TODO verify that party invites will never be automagically rescinded
+        if(not "msg" in kwargs):
+            print("missing context from party_invite_me")
+            return
+        msg = kwargs["msg"]
+        idd = msg.body.steamid_from
         dota.invite_to_party(SteamID(idd))
+        client.get_user(SteamID(msg.body.steamid_from)).send_message("inviting to party")
         pass
 
     ##invite to lobby by ID
     ##automagically converts to a SteamID object
-    def lobby_invite_me(idd):
+    def lobby_invite_me(*args, **kwargs):
+        if(not "msg" in kwargs):
+            print("missing context from lobby_invite_me")
+            return
+        msg = kwargs["msg"]
+        idd = msg.body.steamid_from
         dota.invite_to_lobby(SteamID(idd))
+        client.get_user(SteamID(idd)).send_message("inviting to lobby")
         leave_team_lobby()
         pass
 
     ##enters the "unassigned" section in lobby
-    def leave_team_lobby():
+    def leave_team_lobby(*args, **kwargs):
         dota.join_practice_lobby_team(team=4)
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving team")
         pass
 
     ##general lobby setup
-    def setup_lobby():
+    def setup_lobby(*args, **kwargs):
         _lobby_setup_backend()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
         pass
 
     ##launchs current lobby
-    def launch_lobby():
+    def launch_lobby(*args, **kwargs):
         dota.launch_practice_lobby()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("launching lobby")
         ##add invites
         pass
+
+    def exit_dota(*args, **kwargs):
+        exit()
 
     ##0 is good, anything else is bad
     def get_session_status():
@@ -361,7 +349,9 @@ def dotaThread(kstQ, dscQ):
         party = dota.party
         return lobby, party
 
-    def send_status(id):
+    def send_status(*args, **kwargs):
+        msg = kwargs['msg']
+        id = msg.body.steamid_from
         requester = client.get_user(SteamID(id))
         lobby_stat, party_stat = get_status()
         requester.send_message("Party: " + str("None" if party_stat == None else "Active"))
@@ -369,21 +359,43 @@ def dotaThread(kstQ, dscQ):
         requester.send_message("Lobby: " + str("None" if lobby_stat == None else "Active"))
             ##TODO parse and send lobby info
 
-    def send_top_players(id, message):
-        spots = 3
-        try:
-            spots = int(message)
-        except:
-            spots = 3
-            pass
-        if(spots < 0):
-            spots = 3
+    ##TODO: combine these two based on whther or not kwargs is msg or cmd
+    def send_top_players(*args, **kwargs):
+        msg = kwargs['msg']
+        id = msg.body.steamid_from
+        spots = chat_quick_decode(msg)[len("leaderboard")+1:].strip()
         requester = client.get_user(SteamID(id))
         top = get_top_players(spots)
         reply = "Top " + str(len(top)) + " players:"
         for player in top:
             reply += "\n" + str(player.account_name) +": " + str(player.mmr)
         requester.send_message(reply)
+
+    def get_leaderboard_discord(*args, **kwargs):
+        cmd = kwargs['cmd']
+        channel = cmd.args[0]
+        spots = cmd.args[1].strip()
+        print(spots)
+        top = get_top_players(spots)
+        resp = "Top " + str(len(top)) + " players:"
+        for player in top:
+            resp += "\n" + str(player.account_name) +": " + str(player.mmr)
+        dscQ.put(classes.command(classes.discordCommands.BROADCAST, [cmd.args[0], resp]))
+
+    def get_status_discord(*args, **kwargs):
+        cmd = kwargs['cmd']
+        lobby, party = get_status()
+        resp = "Party: " + str("None" if party == None else "Active") + "\n"
+        resp += "Lobby: " + str("None" if lobby == None else "Active") + "\n"
+        dscQ.put(classes.command(classes.discordCommands.BROADCAST, [cmd.args[0], resp]))
+
+
+
+
+    def invalid_command(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("unknown command")
 
     ##HELPER FUNCTIONS
 
@@ -394,6 +406,13 @@ def dotaThread(kstQ, dscQ):
     def get_top_players(spots=3):
         sorted_table = sorted(table.values(), key=operator.attrgetter('mmr'), reverse=True)
         top = []
+        try:
+            spots = int(spots)
+        except:
+            spots = 3
+            pass
+        if(spots < 0):
+            spots = 3
         if(spots == 0):
             return(sorted_table)
         for i in range(0, min(spots, len(sorted_table))):
@@ -415,15 +434,24 @@ def dotaThread(kstQ, dscQ):
 
     def init_local_data():
         if(os.path.isfile(TABLE_NAME)):
-            print("previous table found... opening", flush=True)
+            print("previous ranking table found... opening", flush=True)
 
         else:
-            print("no local table.... generating one", flush=True)
+            print("no local ranking table.... generating one", flush=True)
             dumpTable({})
-            print("local table created", flush=True)
+            print("local ranking table created", flush=True)
         return(openTable())
 
     table = init_local_data()
+
+    function_translation = {classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_TEAM : leave_team_lobby,
+        classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status,
+        classes.steamCommands.LEADERBOARD : send_top_players, classes.steamCommands.PARTY_INVITE : party_invite_me,
+        classes.steamCommands.LOBBY_INVITE : lobby_invite_me, classes.steamCommands.LAUNCH_LOBBY : launch_lobby,
+        classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : None,
+        classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
+        classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : None,
+        classes.steamCommands.INVALID_COMMAND : invalid_command}
 
     def messageHandler(*args, **kwargs):
         kstQ = args[0]
@@ -431,13 +459,8 @@ def dotaThread(kstQ, dscQ):
 
         cmd = kstQ.get()
         if(cmd):
-            print("found steam command")
-            if(cmd.command == classes.steamCommands.STATUS):
-                print("getting status")
-                lobby, party = get_status()
-                resp = "Party: " + str("None" if party == None else "Active") + "\n"
-                resp += "Lobby: " + str("None" if lobby == None else "Active") + "\n"
-                dscQ.put(classes.command(classes.discordCommands.BROADCAST, [cmd.args[0], resp]))
+            print("found steam command", flush=True)
+            function_translation[cmd.command](cmd = cmd)
 
         msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
         msgH.start()

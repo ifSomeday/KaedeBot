@@ -78,11 +78,11 @@ def download(subreddit, num):
 
 def init():
     if(os.path.isfile(TABLE_NAME)):
-        print("previous table found... opening")
+        print("previous meme table found... opening")
         openTable(TABLE_NAME)
     else:
-        print("no local table.... generating one")
+        print("no local meme table.... generating one")
         list = download(SUBREDDIT, 250)
         addTable(list)
         dumpTable(d)
-        print("local table created")
+        print("local meme table created")

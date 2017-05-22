@@ -42,6 +42,7 @@ class command:
         self.args = args
 
 class steamCommands(Enum):
+    INVALID_COMMAND = 0
     LEAVE_LOBBY = 1
     LEAVE_TEAM = 2
     LEAVE_PARTY = 3
@@ -52,6 +53,10 @@ class steamCommands(Enum):
     LAUNCH_LOBBY = 8
     STOP_BOT = 9
     INHOUSE = 10
+    STATUS_4D = 11
+    LEADERBOARD_4D = 12
+    LOBBY_CREATE = 13
+    TOURNAMENT_LOBBY_CREATE = 14
 
 class discordCommands(Enum):
     BROADCAST = 1
