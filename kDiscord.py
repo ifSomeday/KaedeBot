@@ -23,7 +23,7 @@ def discBot(kstQ, dscQ):
 
     chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme" : classes.discordCommands.NEW_MEME,
         "purgememes" : classes.discordCommands.PURGE_MEMES, "help" : classes.discordCommands.HELP,
-        "BsjMe" : classes.discordCommands.BSJ_MEME, "BsjName" : classes.discordCommands.BSJ_NAME,
+        "bsjme" : classes.discordCommands.BSJ_MEME, "bsjname" : classes.discordCommands.BSJ_NAME,
         "twitter" : classes.discordCommands.TWITTER, "status" : classes.discordCommands.GET_STEAM_STATUS,
         "leaderboard" : classes.discordCommands.GET_STEAM_LEADERBOARD, "thumbsup" :  classes.discordCommands.THUMBSUP,
         "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER}
@@ -47,6 +47,8 @@ def discBot(kstQ, dscQ):
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
             command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.discordCommands.INVALID_COMMAND
+            print(command)
+            print(cMsg[0])
             await function_translation[command](cMsg, msg = message, command = command)
         if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
             if(not str(message.author.id) == str(85148771226234880)):
@@ -108,7 +110,6 @@ def discBot(kstQ, dscQ):
 
     async def image_macro(*args, **kwargs):
         if('msg' in kwargs):
-
             msg = kwargs['msg']
             if(msg.author.id in anime_enough):
                 await client.delete_message(msg)

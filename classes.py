@@ -72,4 +72,4 @@ class discordCommands(Enum):
     GET_STEAM_LEADERBOARD = 10
     THUMBSUP = 11
     AIRGUITAR = 12
-    CHEERLEADER = 12
+    CHEERLEADER = 13
