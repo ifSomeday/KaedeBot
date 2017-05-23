@@ -51,11 +51,11 @@ def dotaThread(kstQ, dscQ):
 
     ##TODO: move elsewhere
     chat_command_translation = {"lobby" : classes.steamCommands.LOBBY_CREATE, "invite" : classes.steamCommands.PARTY_INVITE,
-    "linvite" : classes.steamCommands.LOBBY_INVITE, "lleave" : classes.steamCommands.LEAVE_LOBBY,
-    "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
-    "die" : classes.steamCommands.STOP_BOT, "leaderboard" : classes.steamCommands.LEADERBOARD,
-    "launch" : classes.steamCommands.LAUNCH_LOBBY, "status" : classes.steamCommands.STATUS,
-    "inhouse" : classes.steamCommands.INHOUSE}
+        "linvite" : classes.steamCommands.LOBBY_INVITE, "lleave" : classes.steamCommands.LEAVE_LOBBY,
+        "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
+        "die" : classes.steamCommands.STOP_BOT, "leaderboard" : classes.steamCommands.LEADERBOARD,
+        "launch" : classes.steamCommands.LAUNCH_LOBBY, "status" : classes.steamCommands.STATUS,
+        "inhouse" : classes.steamCommands.INHOUSE}
 
     ##DECORATED FUNCTIONS
 

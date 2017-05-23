@@ -59,4 +59,17 @@ class steamCommands(Enum):
     TOURNAMENT_LOBBY_CREATE = 14
 
 class discordCommands(Enum):
+    INVALID_COMMAND = 0
     BROADCAST = 1
+    SEND_MEME = 2
+    NEW_MEME = 3
+    PURGE_MEMES = 4
+    HELP = 5
+    BSJ_MEME = 6
+    BSJ_NAME = 7
+    TWITTER = 8
+    GET_STEAM_STATUS = 9
+    GET_STEAM_LEADERBOARD = 10
+    THUMBSUP = 11
+    AIRGUITAR = 12
+    CHEERLEADER = 12
