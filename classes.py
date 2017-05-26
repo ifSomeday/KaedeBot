@@ -73,3 +73,6 @@ class discordCommands(Enum):
     THUMBSUP = 11
     AIRGUITAR = 12
     CHEERLEADER = 13
+    CHOCOLATE = 14
+    TOMATO = 15
+    TRANSFORM = 16
