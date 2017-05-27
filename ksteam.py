@@ -209,31 +209,12 @@ def dotaThread(kstQ, dscQ):
     ##control bot from steam messages. soon to be removed (excpet probably tleave)
     @client.on(EMsg.ClientFriendMsgIncoming)
     def i_got_a_message(msg):
-        ##TODO determine what commands should need priviledge, seperate out those that dont, to avoid current cude duplication
-        if(not str(msg.body.steamid_from) == str(76561198035685466) and not str(msg.body.steamid_from) == str(76561198060607123)):
-            if(len(chat_quick_decode(msg)) > 0):
-                if(chat_quick_decode(msg).lower() == "lleave"):
-                    leave_lobby()
-                    client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving lobby")
-                elif(chat_quick_decode(msg).lower() == "tleave"):
-                    leave_team_lobby()
-                    client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving team")
-                elif(chat_quick_decode(msg).lower() == "leave"):
-                        leave_party()
-                        client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
-                elif(chat_quick_decode(msg).lower() == 'status'):
-                        send_status(msg.body.steamid_from)
-                elif(chat_quick_decode(msg).lower().startswith('leaderboard')):
-                    send_top_players(msg.body.steamid_from, chat_quick_decode(msg)[len("leaderboard")+1:])
-                else:
-                    client.get_user(SteamID(msg.body.steamid_from)).send_message("i only respond to my master :O")
-            return
-        elif(len(chat_quick_decode(msg)) > 0):
-            #TODO: split on space, so args can be passed to commands
+        if(len(chat_quick_decode(msg)) > 0):
             cMsg = chat_quick_decode(msg).lower().split()
+            if(cMsg[0].startswith("!")):
+                cMsg[0] = cMsg[0][1:]
             command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.steamCommands.INVALID_COMMAND
             function_translation[command](cMsg, msg = msg)
-
         else:
             ##just someone typing
             pass

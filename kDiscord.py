@@ -50,8 +50,6 @@ def discBot(kstQ, dscQ):
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
             command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.discordCommands.INVALID_COMMAND
-            print(command)
-            print(cMsg[0])
             await function_translation[command](cMsg, msg = message, command = command)
         if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
             if(not str(message.author.id) == str(85148771226234880)):
@@ -141,7 +139,6 @@ def discBot(kstQ, dscQ):
         while(not client.is_closed):
             if(dscQ.qsize() > 0):
                 cmd = dscQ.get()
-                print("found discord command")
                 await function_translation[cmd.command](cmd = cmd)
 
             await asyncio.sleep(1)
@@ -149,7 +146,7 @@ def discBot(kstQ, dscQ):
 
     @client.event
     async def on_ready():
-        print("discord bot Online")
+        print("discord bot Online", flush=True)
 
 
 
