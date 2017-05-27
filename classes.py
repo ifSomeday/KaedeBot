@@ -76,3 +76,8 @@ class discordCommands(Enum):
     CHOCOLATE = 14
     TOMATO = 15
     TRANSFORM = 16
+    BROADCAST_LOBBY = 17
+
+class lobbyCommands(Enum):
+    INVALID_COMMAND = 0
+    BROADCAST = 1

@@ -6,6 +6,7 @@ import praw
 import threading
 import classes
 import markovChaining, saveThread, keys, BSJ, os
+from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 
 def discBot(kstQ, dscQ):
@@ -120,6 +121,17 @@ def discBot(kstQ, dscQ):
             else:
                 await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact someone who is if you believe this is in error.")
 
+    async def broadcast_lobby(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            total_members = 0
+            for member in cmd.args[0].members:
+                if(member.team == 0 or member.team == 1):
+                    total_members += 1
+            print(cmd.args[1])
+            sid = SteamID(cmd.args[1].account_id)
+            await client.send_message(client.get_channel('133812880654073857'), "Inhouse looking for members.\nLooking for " + str(10 - total_members) + " more players\nContact " + cmd.args[1].persona_name + " on steam.\n(<" + sid.community_url +">)")
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -132,7 +144,8 @@ def discBot(kstQ, dscQ):
         classes.discordCommands.GET_STEAM_LEADERBOARD : steam_leaderboard, classes.discordCommands.THUMBSUP : image_macro,
         classes.discordCommands.AIRGUITAR : image_macro, classes.discordCommands.CHEERLEADER : image_macro,
         classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro,
-        classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro}
+        classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
+        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

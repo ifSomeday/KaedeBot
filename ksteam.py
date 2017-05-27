@@ -36,6 +36,9 @@ def dotaThread(kstQ, dscQ):
     dota = Dota2Client(client)
 
     debug = False
+    broadcast_game = False
+
+    broadcast_counter = 0
 
     TABLE_NAME = os.getcwd() + "/dataStores/ratings.pickle"
     table = {}
@@ -44,7 +47,7 @@ def dotaThread(kstQ, dscQ):
 
     ##TODO programatically generate this
     bot_SteamID = SteamID(76561198384957078)
-    me = SteamID(75419738)
+    kyuoko_toshino = SteamID(75419738)
 
     if(debug):
         logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
@@ -56,6 +59,8 @@ def dotaThread(kstQ, dscQ):
         "die" : classes.steamCommands.STOP_BOT, "leaderboard" : classes.steamCommands.LEADERBOARD,
         "launch" : classes.steamCommands.LAUNCH_LOBBY, "status" : classes.steamCommands.STATUS,
         "inhouse" : classes.steamCommands.INHOUSE}
+
+    chat_lobby_command_translation = {"broadcast" : classes.lobbyCommands.BROADCAST}
 
     ##DECORATED FUNCTIONS
 
@@ -93,6 +98,16 @@ def dotaThread(kstQ, dscQ):
                 leave_lobby()
         pass
 
+    @dota.on(dGCMsg.EMsgGCChatMessage)
+    def lobby_message_handler(msg):
+        if(len(msg.text) > 0):
+            cMsg = msg.text.split()
+            if(cMsg[0].startswith("!")):
+                cMsg[0] = cMsg[0][1:]
+            command = chat_lobby_command_translation[cMsg[0]] if cMsg[0] in chat_lobby_command_translation else classes.lobbyCommands.INVALID_COMMAND
+            lobby_function_translation[command](cMsg, msg = msg)
+
+
     @dota.on('party_changed')
     def party_change_handler(msg):
         lobby_stat, party_stat = get_status()
@@ -103,29 +118,16 @@ def dotaThread(kstQ, dscQ):
         pass
     #   leave_team_lobby()
 
-    ##dota lobby shared object create event handler
-    @dota.socache.on(('new', dEType.CSODOTALobby))
-    def got_a_new_item(obj):
-        #dota.channels.join_channel("Lobby_%s" % dota.lobby.lobby_id,channel_type=3)
-        #leave_team_lobby()
-        pass
-        #print(obj)
-
-    ##dota lobby shared object multiple update event handler
-    @dota.socache.on(('updated', dEType.CSODOTALobby))
-    def got_status_update(obj):
-        ##match_outcome = obj.match_outcome
-        pass
-        #print(obj)
-
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
         leave_team_lobby()
+        broadcast_game = False
         dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
 
     ##lobby removed event handler
     @dota.on('lobby_removed')
     def lobby_removed(msg):
+        broadcast_game = False
         print(msg, flush=True)
         dota.channels.leave_channel("Lobby_%s" % msg.lobby_id)
         ##state 3 is postgame
@@ -194,7 +196,7 @@ def dotaThread(kstQ, dscQ):
     @dota.on('lobby_invite')
     def lobby_invite(msg):
         if(dota.lobby == None):
-            print(msg, flush=True)
+            print("joining lobby", flush=True)
             dota.respond_lobby_invite(msg.group_id, accept=True)
 
     @client.friends.on('friend_invite')
@@ -208,7 +210,7 @@ def dotaThread(kstQ, dscQ):
 
     ##control bot from steam messages. soon to be removed (excpet probably tleave)
     @client.on(EMsg.ClientFriendMsgIncoming)
-    def i_got_a_message(msg):
+    def steam_message_handler(msg):
         if(len(chat_quick_decode(msg)) > 0):
             cMsg = chat_quick_decode(msg).lower().split()
             if(cMsg[0].startswith("!")):
@@ -303,10 +305,11 @@ def dotaThread(kstQ, dscQ):
 
     ##general lobby setup
     def setup_lobby(*args, **kwargs):
-        _lobby_setup_backend()
         if('msg' in kwargs):
             msg = kwargs['msg']
-            client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
+            if(msg.steamid_from == kyuoko_toshino.as_64):
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
+                _lobby_setup_backend()
         pass
 
     ##launchs current lobby
@@ -319,7 +322,9 @@ def dotaThread(kstQ, dscQ):
         pass
 
     def exit_dota(*args, **kwargs):
-        exit()
+        msg = kwargs['msg']
+        if(msg.body.steamid_from == kyuoko_toshino.as_64):
+            exit()
 
     ##0 is good, anything else is bad
     def get_session_status():
@@ -370,13 +375,17 @@ def dotaThread(kstQ, dscQ):
         resp += "Lobby: " + str("None" if lobby == None else "Active") + "\n"
         dscQ.put(classes.command(classes.discordCommands.BROADCAST, [cmd.args[0], resp]))
 
-
-
+    def set_lobby_broadcast(*args, **kwargs):
+        msg = kwargs['msg']
+        dscQ.put(classes.command(classes.discordCommands.BROADCAST_LOBBY, [dota.lobby, msg]))
 
     def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
             client.get_user(SteamID(msg.body.steamid_from)).send_message("unknown command")
+
+    def naw(*args, **kwargs):
+        pass
 
     ##HELPER FUNCTIONS
 
@@ -429,10 +438,12 @@ def dotaThread(kstQ, dscQ):
         classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status,
         classes.steamCommands.LEADERBOARD : send_top_players, classes.steamCommands.PARTY_INVITE : party_invite_me,
         classes.steamCommands.LOBBY_INVITE : lobby_invite_me, classes.steamCommands.LAUNCH_LOBBY : launch_lobby,
-        classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : None,
+        classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
         classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
-        classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : None,
+        classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
         classes.steamCommands.INVALID_COMMAND : invalid_command}
+
+    lobby_function_translation = {classes.lobbyCommands.INVALID_COMMAND : naw, classes.lobbyCommands.BROADCAST : set_lobby_broadcast}
 
     def messageHandler(*args, **kwargs):
         kstQ = args[0]
@@ -442,6 +453,11 @@ def dotaThread(kstQ, dscQ):
         if(cmd):
             print("found steam command", flush=True)
             function_translation[cmd.command](cmd = cmd)
+        if(broadcast_game):
+            print(broadcast_counter)
+            if(broadcast_counter == 0):
+                dscQ.put(classes.command(classes.discordCommands.BROADCAST_LOBBY, [dota.lobby]))
+            broadcast_counter = (broadcast_counter + 1) % 60
 
         msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
         msgH.start()
