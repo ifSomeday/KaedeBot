@@ -77,6 +77,7 @@ class discordCommands(Enum):
     TOMATO = 15
     TRANSFORM = 16
     BROADCAST_LOBBY = 17
+    SEND_OLD_MEME = 18
 
 class lobbyCommands(Enum):
     INVALID_COMMAND = 0

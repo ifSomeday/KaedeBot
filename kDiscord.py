@@ -29,7 +29,7 @@ def discBot(kstQ, dscQ):
         "leaderboard" : classes.discordCommands.GET_STEAM_LEADERBOARD, "thumbsup" :  classes.discordCommands.THUMBSUP,
         "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER,
         "chocolate" : classes.discordCommands.CHOCOLATE, "tomato" : classes.discordCommands.TOMATO,
-        "transform" : classes.discordCommands.TRANSFORM}
+        "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME}
 
     chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.gif", classes.discordCommands.AIRGUITAR : "Kyouko_air_guitar.gif",
         classes.discordCommands.CHEERLEADER : "Kyouko_Cheerleader.gif", classes.discordCommands.CHOCOLATE : "Kyouko_chocolate.gif",
@@ -63,14 +63,16 @@ def discBot(kstQ, dscQ):
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(('meme' or 'meming' or 'afk') in msg.channel.name):
-                await client.send_message(msg.channel, markovChaining.generateText())
+                table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
+                await client.send_message(msg.channel, markovChaining.generateText(table, builder = args[0][1:]))
             else:
                 await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
+
 
     async def add_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            markovChaining.addSingle(msg.content[len("!newmeme"):])
+            markovChaining.addSingle(msg.content[len("!newmeme"):], markovChaining.nd)
             await client.send_message(msg.channel, "new meme added, thanks!")
 
     async def purge_memes(*args, **kwargs):
@@ -154,7 +156,7 @@ def discBot(kstQ, dscQ):
         classes.discordCommands.AIRGUITAR : image_macro, classes.discordCommands.CHEERLEADER : image_macro,
         classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro,
         classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
-        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby}
+        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
