@@ -62,7 +62,10 @@ def discBot(kstQ, dscQ):
     async def send_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, markovChaining.generateText())
+            if(('meme' or 'meming' or 'afk') in msg.channel.name):
+                await client.send_message(msg.channel, markovChaining.generateText())
+            else:
+                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def add_meme(*args, **kwargs):
         if('msg' in kwargs):
@@ -83,12 +86,18 @@ def discBot(kstQ, dscQ):
     async def bsj_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, BsjFacts.getFact())
+            if(('meme' or 'meming' or 'afk') in msg.channel.name):
+                await client.send_message(msg.channel, BsjFacts.getFact())
+            else:
+                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def bsj_name(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, BsjFacts.bsjName())
+            if(('meme' or 'meming' or 'afk') in msg.channel.name):
+                await client.send_message(msg.channel, BsjFacts.bsjName())
+            else:
+                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def twitter(*args, **kwargs):
         if('msg' in kwargs):
