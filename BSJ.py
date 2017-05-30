@@ -27,7 +27,7 @@ class BSJText:
     def _getDegreeArray(self):
         degreeArray = []
         try:
-            with open(os.getcwd() + "/degrees.txt", "r") as f:
+            with open(os.getcwd() + "/dataStores/degrees.txt", "r") as f:
                 for line in f:
                     degreeArray.append(line.strip())
         except:
@@ -40,11 +40,11 @@ class BSJText:
         sList = []
         jList = []
         try:
-            with open(os.getcwd() + "/bList.dat" , "rb") as f:
+            with open(os.getcwd() + "/dataStores/bList.dat" , "rb") as f:
                 bList = pickle.load(f)
-            with open(os.getcwd() + "/sList.dat" , "rb") as f:
+            with open(os.getcwd() + "/dataStores/sList.dat" , "rb") as f:
                 sList = pickle.load(f)
-            with open(os.getcwd() + "/jList.dat", "rb") as f:
+            with open(os.getcwd() + "/dataStores/jList.dat", "rb") as f:
                 jList = pickle.load(f)
         except:
             allwordlist = requests.get("http://www.mieliestronk.com/corncob_lowercase.txt").text.split()
@@ -59,11 +59,11 @@ class BSJText:
                 if word.startswith("j"):
                     jList.append(word)
 
-            with open("bList.dat", "wb") as f:
+            with open("dataStores/bList.dat", "wb") as f:
                 pickle.dump(bList, f)
-            with open("/home/pi/Discord_Bot/sList.dat", "wb") as f:
+            with open("/home/pi/Discord_Bot/dataStores/sList.dat", "wb") as f:
                 pickle.dump(sList, f)
-            with open("/home/pi/Discord_Bot/jList.dat", "wb") as f:
+            with open("/home/pi/Discord_Bot/dataStores/jList.dat", "wb") as f:
                 pickle.dump(jList, f)
         return(bList, sList, jList)
 

@@ -18,7 +18,8 @@ class saveThread (Thread):
 
 def saveTable():
     print("dumping table...")
-    markovChaining.dumpTable(markovChaining.TABLE_NAME)
+    markovChaining.dumpTable(markovChaining.OLD_TABLE_NAME, markovChaining.d)
+    markovChaining.dumpTable(markovChaining.NEW_TABLE_NAME, markovChaining.nd)
     print("dumping complete.")
 
 def stop():

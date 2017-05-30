@@ -7,40 +7,41 @@ import os
 
 NONWORD = "\n"
 d = {}
-TABLE_NAME = os.getcwd() + "/memes.pickle"
+nd = {}
+OLD_TABLE_NAME = os.getcwd() + "/dataStores/memes.pickle"
+NEW_TABLE_NAME = os.getcwd() + "/dataStores/newMemes.pickle"
 SUBREDDIT = "copypasta"
 
-def addTable(aList):
+##TODO: rewrite this not retardedly
+
+def addTable(aList, table):
     word1 = NONWORD
     word2 = NONWORD
     for aString in aList:
         if "http" in aString:
             continue
         for word in aString.split():
-            d.setdefault((word1, word2),[]).append(word)
+            table.setdefault((word1, word2),[]).append(word)
             word1, word2 = word2, word
-        d.setdefault((word1, word2),[]).append(NONWORD)
-    d.setdefault((word1,word2),[]).append(NONWORD)
+        table.setdefault((word1, word2),[]).append(NONWORD)
+    table.setdefault((word1,word2),[]).append(NONWORD)
 
-def addSingle(string):
+def addSingle(string, table):
     word1 = NONWORD
     word2 = NONWORD
     string = string.strip()
     for word in string.split():
-        d.setdefault((word1, word2), []).append(word)
+        table.setdefault((word1, word2), []).append(word)
         word1, word2 = word2, word
-    d.setdefault((word1, word2), []).append(NONWORD)
+    table.setdefault((word1, word2), []).append(NONWORD)
 
-##table arg breaks for some reason
-def dumpTable(table):
-    with open(TABLE_NAME,'wb') as f:
-        pickle.dump(d, f)
+def dumpTable(table_name, table):
+    with open(table_name,'wb') as f:
+        pickle.dump(table, f)
 
-##table arg breaks for some reason
-def openTable(table):
-    with open(TABLE_NAME,'rb') as f:
-        global d
-        d = pickle.load(f)
+def openTable(table_name):
+    with open(table_name,'rb') as f:
+        return(pickle.load(f))
 
 def printTable():
     print(d)
@@ -49,12 +50,16 @@ def clearTable():
     global d
     d.clear()
 
-def generateText():
-    word1 = NONWORD
-    word2 = NONWORD
-    output = ""
+def generateText(table, builder = None):
+    word1, word2 = NONWORD, NONWORD
+    for sText in builder:
+        word1, word2 = word2, sText
+    output = " ".join(builder) + " "
+    if(not (word1, word2) in table):
+        word1, word2 = NONWORD, NONWORD
+        output = ""
     while True:
-        newword = random.choice(d[(word1, word2)])
+        newword = random.choice(table[(word1, word2)])
         if(newword == NONWORD):
             return(output)
             sys.exit()
@@ -77,12 +82,17 @@ def download(subreddit, num):
     return(t)
 
 def init():
-    if(os.path.isfile(TABLE_NAME)):
-        print("previous table found... opening")
-        openTable(TABLE_NAME)
+    if(os.path.isfile(OLD_TABLE_NAME)):
+        global d
+        d = openTable(OLD_TABLE_NAME)
     else:
-        print("no local table.... generating one")
         list = download(SUBREDDIT, 250)
-        addTable(list)
-        dumpTable(d)
-        print("local table created")
+        addTable(list, d)
+        dumpTable(OLD_TABLE_NAME, d)
+
+    if(os.path.isfile(NEW_TABLE_NAME)):
+        global nd
+        nd = openTable(NEW_TABLE_NAME)
+    else:
+        addSingle("this is a meme", nd)
+        dumpTable(NEW_TABLE_NAME, nd)

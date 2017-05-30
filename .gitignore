@@ -49,8 +49,9 @@ Temporary Items
 keys.py
 .idea/*
 __pycache__/*
+*/__pycache__/*
 memeTable
-memes.pickle
+*memes.pickle
 
 startBot
 startBot.log
@@ -58,3 +59,12 @@ startBot.log
 push.bat
 push.txt
 
+*.pickle
+*.pyc
+*firebase_private_key.json
+*Kyouko_Thumbs_up.gif
+*Kyouko_air_guitar.gif
+*Kyouko_Cheerleader.gif
+*Kyouko_chocolate.gif
+*Kyouko_transform.gif
+*Kyouko_tomato.gif
