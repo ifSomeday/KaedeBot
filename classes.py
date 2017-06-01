@@ -31,7 +31,6 @@ class leaguePlayer:
         print("\twins = " + str(self.wins), flush=True)
         print("\tgames = " + str(self.games), flush=True)
 
-
 class command:
 
     command = None
@@ -78,6 +77,8 @@ class discordCommands(Enum):
     TRANSFORM = 16
     BROADCAST_LOBBY = 17
     SEND_OLD_MEME = 18
+    BROADCAST_DRAFT_PICK = 19
+    TOGGLE_DRAFT_MODE = 20
 
 class lobbyCommands(Enum):
     INVALID_COMMAND = 0

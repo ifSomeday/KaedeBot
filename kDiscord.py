@@ -9,7 +9,7 @@ import markovChaining, saveThread, keys, BSJ, os
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 
-def discBot(kstQ, dscQ):
+def discBot(kstQ, dscQ, draftEvent):
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -29,13 +29,17 @@ def discBot(kstQ, dscQ):
         "leaderboard" : classes.discordCommands.GET_STEAM_LEADERBOARD, "thumbsup" :  classes.discordCommands.THUMBSUP,
         "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER,
         "chocolate" : classes.discordCommands.CHOCOLATE, "tomato" : classes.discordCommands.TOMATO,
-        "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME}
+        "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME,
+        "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE}
 
     chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.gif", classes.discordCommands.AIRGUITAR : "Kyouko_air_guitar.gif",
         classes.discordCommands.CHEERLEADER : "Kyouko_Cheerleader.gif", classes.discordCommands.CHOCOLATE : "Kyouko_chocolate.gif",
         classes.discordCommands.TOMATO : "Kyouko_tomato.gif", classes.discordCommands.TRANSFORM : "Kyouko_transform.gif"}
 
     anime_enough = ['133811493778096128', '146490789520867328', '127651622628229120', '225768977115250688', '162830306137735169', '85148771226234880']
+
+    base_draft_message = ("**Round:**__ %s __ **Pick:**__ %s __ (*Overall:* __ %s __)\n"
+        "**Captain**__ %s __ picks **Player**__ %s __\n**Player MMR:**__ %s __ **Team Avg:**__ %s __")
 
     async def sendMessage(channel, string):
         await client.send_message(channel, string)
@@ -51,6 +55,9 @@ def discBot(kstQ, dscQ):
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
             command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.discordCommands.INVALID_COMMAND
+            ##TODO: prettier implementation of this:
+            if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386')):
+                return
             await function_translation[command](cMsg, msg = message, command = command)
         if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
             if(not str(message.author.id) == str(85148771226234880)):
@@ -130,7 +137,20 @@ def discBot(kstQ, dscQ):
                     command = kwargs['command']
                     await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + chat_macro_translation[command])
             else:
-                await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact someone who is if you believe this is in error.")
+                await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact a weeb if you believe this is in error.")
+
+    async def broadcast_draft_pick(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            testChannelId = '319617513035923466'
+            bChannel = client.get_channel('319617513035923466')
+            resr = await build_draft_message(row = cmd.args[0])
+            await client.send_message(bChannel, resr)
+
+    async def build_draft_message(*args, **kwargs):
+        row = kwargs['row']
+        return(base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7])))
+
 
     async def broadcast_lobby(*args, **kwargs):
         if('cmd' in kwargs):
@@ -142,6 +162,18 @@ def discBot(kstQ, dscQ):
             print(cmd.args[1])
             sid = SteamID(cmd.args[1].account_id)
             await client.send_message(client.get_channel('133812880654073857'), "Inhouse looking for members.\nLooking for " + str(10 - total_members) + " more players\nContact " + cmd.args[1].persona_name + " on steam.\n(<" + sid.community_url +">)")
+
+    async def toggle_draft(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128'):
+                if(draftEvent.is_set()):
+                    draftEvent.clear()
+                else:
+                    draftEvent.set()
+                await client.send_message(msg.channel, "draft mode is now " + ("enabled" if draftEvent.is_set() else "disabled"))
+            else:
+                await client.send_message(msg.channel, "you don't have permission to do that :(")
 
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
@@ -156,12 +188,13 @@ def discBot(kstQ, dscQ):
         classes.discordCommands.AIRGUITAR : image_macro, classes.discordCommands.CHEERLEADER : image_macro,
         classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro,
         classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
-        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme}
+        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
+        classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
         while(not client.is_closed):
-            if(dscQ.qsize() > 0):
+            while(dscQ.qsize() > 0):
                 cmd = dscQ.get()
                 await function_translation[cmd.command](cmd = cmd)
 
@@ -171,7 +204,7 @@ def discBot(kstQ, dscQ):
     @client.event
     async def on_ready():
         print("discord bot Online", flush=True)
-
+        await client.change_presence(game=discord.Game(name='Yuru Yuri San Hai !!'))
 
 
     @client.event
