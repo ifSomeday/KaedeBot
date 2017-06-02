@@ -40,8 +40,8 @@ def discBot(kstQ, dscQ, draftEvent):
 
     anime_enough = ['133811493778096128', '146490789520867328', '127651622628229120', '225768977115250688', '162830306137735169', '85148771226234880']
 
-    base_draft_message = ("**Round:**__ %s __ **Pick:**__ %s __ (*Overall:* __ %s __)\n"
-        "**Captain**__ %s __ picks **Player**__ %s __\n**Player MMR:**__ %s __ **Team Avg:**__ %s __")
+    base_draft_message = ("Round: **%s** Pick: **%s** (Overall: **%s**)\n"
+        "Captain **%s** picks Player **%s**\nPlayer MMR: **%s** Team Avg: **%s**")
 
     async def sendMessage(channel, string):
         await client.send_message(channel, string)
@@ -151,7 +151,8 @@ def discBot(kstQ, dscQ, draftEvent):
 
     async def build_draft_message(*args, **kwargs):
         row = kwargs['row']
-        return(base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7])))
+        start = "----------\n" if(not int(row[0]) == 1) else ""
+        return(start + (base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7]))))
 
     async def update_draft_message(*args, **kwargs):
         if('cmd' in kwargs):
