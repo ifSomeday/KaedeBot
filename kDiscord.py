@@ -144,8 +144,8 @@ def discBot(kstQ, dscQ, draftEvent):
     async def broadcast_draft_pick(*args, **kwargs):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
-            testChannelId = '319617513035923466'
-            bChannel = client.get_channel('319617513035923466')
+            #bChannel = client.get_channel('320033818083983361')
+            bChannel = client.get_channel('315212408740380672')
             resr = await build_draft_message(row = cmd.args[0])
             draft_messages.append(await client.send_message(bChannel, resr))
 
@@ -175,7 +175,7 @@ def discBot(kstQ, dscQ, draftEvent):
     async def toggle_draft(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128'):
+            if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128' or msg.author.id == '85148771226234880'):
                 if(draftEvent.is_set()):
                     draftEvent.clear()
                 else:
