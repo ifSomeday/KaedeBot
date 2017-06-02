@@ -1,6 +1,6 @@
 from __future__ import print_function
 import httplib2
-import os
+import os, platform
 
 from gevent import monkey
 monkey.patch_ssl()
@@ -24,8 +24,13 @@ RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N15'
 player_array = []
 
 def get_credentials():
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
+    credential_dir = ""
+    if(platform.system() == 'Windows'):
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+    else:
+        credential_dir = "/home/pi/.credentials"
+    print(credential_dir, flush=True)
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
