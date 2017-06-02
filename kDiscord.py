@@ -22,6 +22,8 @@ def discBot(kstQ, dscQ, draftEvent):
 
     BsjFacts = BSJ.BSJText()
 
+    draft_messages = []
+
     chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme" : classes.discordCommands.NEW_MEME,
         "purgememes" : classes.discordCommands.PURGE_MEMES, "help" : classes.discordCommands.HELP,
         "bsjme" : classes.discordCommands.BSJ_MEME, "bsjname" : classes.discordCommands.BSJ_NAME,
@@ -145,12 +147,19 @@ def discBot(kstQ, dscQ, draftEvent):
             testChannelId = '319617513035923466'
             bChannel = client.get_channel('319617513035923466')
             resr = await build_draft_message(row = cmd.args[0])
-            await client.send_message(bChannel, resr)
+            draft_messages.append(await client.send_message(bChannel, resr))
 
     async def build_draft_message(*args, **kwargs):
         row = kwargs['row']
         return(base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7])))
 
+    async def update_draft_message(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            playerIndex = int(cmd.args[0][0]) - 1
+            message = draft_messages[playerIndex]
+            resr = await build_draft_message(row = cmd.args[0])
+            draft_messages[playerIndex] = await client.edit_message(message, resr)
 
     async def broadcast_lobby(*args, **kwargs):
         if('cmd' in kwargs):
@@ -189,7 +198,8 @@ def discBot(kstQ, dscQ, draftEvent):
         classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro,
         classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
         classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
-        classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft}
+        classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft,
+        classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

@@ -31,6 +31,46 @@ class leaguePlayer:
         print("\twins = " + str(self.wins), flush=True)
         print("\tgames = " + str(self.games), flush=True)
 
+class draftPlayer:
+    rnd = 0
+    pick = 0
+    overall = 0
+    cpt = ""
+    player = ""
+    mmr = 0
+
+    def __init__(self, arr=None):
+        if(arr):
+            self.rnd = arr[1]
+            self.pick = arr[2]
+            self.overall = arr[0]
+            self.captain = arr[4]
+            self.player = arr[5]
+            self.mmr = arr[6]
+
+    ##TODO: Im retarded
+    def isChanged(self, arr):
+        if(not self.rnd == arr[1]):
+            return(True)
+        elif(not self.pick == arr[2]):
+            return(True)
+        elif(not self.overall == arr[0]):
+            return(True)
+        elif(not self.captain == arr[4]):
+            return(True)
+        elif(not self.player == arr[5]):
+            return(True)
+        elif(not self.mmr == arr[6]):
+            return(True)
+        else:
+            return(False)
+
+    def __str__(self):
+        return(str([self.rnd, self.pick, self.overall, self.cpt, self.player, self.mmr]))
+
+    def __repr__(self):
+        return(str([self.rnd, self.pick, self.overall, self.cpt, self.player, self.mmr]))
+
 class command:
 
     command = None
@@ -39,6 +79,12 @@ class command:
     def __init__(self, command, args):
         self.command = command
         self.args = args
+
+    def __str__(self):
+        return("command = " + str(self.command) + ", args = " + str(self.args))
+
+    def __repr__(self):
+        return("command = " + str(self.command) + ", args = " + str(self.args))
 
 class steamCommands(Enum):
     INVALID_COMMAND = 0
@@ -78,7 +124,8 @@ class discordCommands(Enum):
     BROADCAST_LOBBY = 17
     SEND_OLD_MEME = 18
     BROADCAST_DRAFT_PICK = 19
-    TOGGLE_DRAFT_MODE = 20
+    UPDATE_DRAFT_PICK = 20
+    TOGGLE_DRAFT_MODE = 21
 
 class lobbyCommands(Enum):
     INVALID_COMMAND = 0

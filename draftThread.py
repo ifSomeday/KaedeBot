@@ -21,6 +21,7 @@ SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
 RANGE_FOR_PICKS = 'ADMIN DRAFT SHEET!B3:H'
 RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N15'
 
+player_array = []
 
 def get_credentials():
     home_dir = os.path.expanduser('~')
@@ -44,12 +45,10 @@ def get_credentials():
 
 
 def main(kstQ, dscQ, draftEvent):
-    print("here")
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?version=v4')
     service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=discoveryUrl)
-
 
     last_pick = float('-inf')
     while(True):
@@ -58,19 +57,39 @@ def main(kstQ, dscQ, draftEvent):
             for i in range(0, len(values)):
                 row = values[i]
                 if len(row) == 7:
-                    if(i > last_pick):
-                        command = classes.command(classes.discordCommands.BROADCAST_DRAFT_PICK, [row])
-                        mmr_list = get_sheet_data(service, SPREADSHEET_ID, RANGE_FOR_AMMR)
-                        for mmr in mmr_list:
-                            if row[4] == mmr[0]:
-                                command.args[0].append(mmr[1])
-                        dscQ.put(command)
-                        last_pick = i
+                    if(not "idiotbeard" in row[6].lower()):
+                        if(i > last_pick):
+                            command = build_command(row, service)
+                            dscQ.put(command)
+                            last_pick = i
+                        else:
+                            if(player_array[i].isChanged(row)):
+                                command = build_command(row, service, update=True)
+                                dscQ.put(command)
+                    else:
+                        print("bad entry")
+                        break
                 else:
                     break
             time.sleep(7)
         else:
             draftEvent.wait()
+
+def build_command(row, service, update=False):
+    command = classes.command(classes.discordCommands.UPDATE_DRAFT_PICK if update else classes.discordCommands.BROADCAST_DRAFT_PICK, [row])
+    command.args[0].append(getTeamMMR(row[4], service))
+    if(update):
+        player_array[int(row[0]) - 1] = classes.draftPlayer(row)
+    else:
+        player_array.append(classes.draftPlayer(row))
+    return(command)
+
+
+def getTeamMMR(captain, service):
+    mmr_list = get_sheet_data(service, SPREADSHEET_ID, RANGE_FOR_AMMR)
+    for mmr in mmr_list:
+        if captain == mmr[0]:
+            return(mmr[1])
 
 def get_sheet_data(service, spreadsheetId, rangeName):
     result = service.spreadsheets().values().get(spreadsheetId=spreadsheetId, range= rangeName).execute()
