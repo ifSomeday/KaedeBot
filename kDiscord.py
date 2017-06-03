@@ -5,7 +5,7 @@ import discord
 import praw
 import threading
 import classes
-import markovChaining, saveThread, keys, BSJ, os
+import markovChaining, saveThread, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 
@@ -23,25 +23,7 @@ def discBot(kstQ, dscQ, draftEvent):
     BsjFacts = BSJ.BSJText()
 
     draft_messages = []
-
-    chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme" : classes.discordCommands.NEW_MEME,
-        "purgememes" : classes.discordCommands.PURGE_MEMES, "help" : classes.discordCommands.HELP,
-        "bsjme" : classes.discordCommands.BSJ_MEME, "bsjname" : classes.discordCommands.BSJ_NAME,
-        "twitter" : classes.discordCommands.TWITTER, "status" : classes.discordCommands.GET_STEAM_STATUS,
-        "leaderboard" : classes.discordCommands.GET_STEAM_LEADERBOARD, "thumbsup" :  classes.discordCommands.THUMBSUP,
-        "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER,
-        "chocolate" : classes.discordCommands.CHOCOLATE, "tomato" : classes.discordCommands.TOMATO,
-        "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME,
-        "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE}
-
-    chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.gif", classes.discordCommands.AIRGUITAR : "Kyouko_air_guitar.gif",
-        classes.discordCommands.CHEERLEADER : "Kyouko_Cheerleader.gif", classes.discordCommands.CHOCOLATE : "Kyouko_chocolate.gif",
-        classes.discordCommands.TOMATO : "Kyouko_tomato.gif", classes.discordCommands.TRANSFORM : "Kyouko_transform.gif"}
-
-    anime_enough = ['133811493778096128', '146490789520867328', '127651622628229120', '225768977115250688', '162830306137735169', '85148771226234880']
-
-    base_draft_message = ("Round: **%s** Pick: **%s** (Overall: **%s**)\n"
-        "Captain **%s** picks Player **%s**\nPlayer MMR: **%s** Team Avg: **%s**")
+    media_messages = {}
 
     async def sendMessage(channel, string):
         await client.send_message(channel, string)
@@ -53,10 +35,18 @@ def discBot(kstQ, dscQ, draftEvent):
 
     ##Call and Response
     async def processMessage(client, message):
+        print(message.attachments)
+        if(len(message.attachments) > 0):
+            print('here')
+            await check_media_message(message)
+        if(message.author.id == '133811493778096128' and not message.server.id == '315211723231461386'):
+            await client.delete_message(message)
+            await client.send_message(message.channel, "stop.")
+            return
         if message.content.startswith('!'):
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
-            command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.discordCommands.INVALID_COMMAND
+            command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             ##TODO: prettier implementation of this:
             if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386')):
                 return
@@ -76,6 +66,17 @@ def discBot(kstQ, dscQ, draftEvent):
                 await client.send_message(msg.channel, markovChaining.generateText(table, builder = args[0][1:]))
             else:
                 await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
+
+    async def check_media_message(message):
+        if(not any(name in message.channel.name for name in ['meme', 'meming', 'afk'])):
+            if(message.author.id in media_messages and not message.author.id == '213099188584579072'):
+                if(time.time() - media_messages[message.author.id] < 60):
+                    await client.delete_message(message)
+                    await client.send_message(message.channel, message.author.mention + " please refrain from spamming !!")
+                else:
+                    media_messages[message.author.id] = time.time()
+            else:
+                media_messages[message.author.id] = time.time()
 
 
     async def add_meme(*args, **kwargs):
@@ -133,11 +134,11 @@ def discBot(kstQ, dscQ, draftEvent):
     async def image_macro(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.author.id in anime_enough):
+            if(msg.author.id in header.anime_enough):
                 await client.delete_message(msg)
                 if('command' in kwargs):
                     command = kwargs['command']
-                    await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + chat_macro_translation[command])
+                    await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + header.chat_macro_translation[command])
             else:
                 await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact a weeb if you believe this is in error.")
 
@@ -152,7 +153,7 @@ def discBot(kstQ, dscQ, draftEvent):
     async def build_draft_message(*args, **kwargs):
         row = kwargs['row']
         start = "----------\n" if(not int(row[0]) == 1) else ""
-        return(start + (base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7]))))
+        return(start + (header.base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7]))))
 
     async def update_draft_message(*args, **kwargs):
         if('cmd' in kwargs):
