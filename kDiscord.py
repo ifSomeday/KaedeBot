@@ -37,12 +37,7 @@ def discBot(kstQ, dscQ, draftEvent):
     async def processMessage(client, message):
         print(message.attachments)
         if(len(message.attachments) > 0):
-            print('here')
             await check_media_message(message)
-        if(message.author.id == '133811493778096128' and not message.server.id == '315211723231461386'):
-            await client.delete_message(message)
-            await client.send_message(message.channel, "stop.")
-            return
         if message.content.startswith('!'):
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
