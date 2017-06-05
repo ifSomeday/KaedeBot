@@ -35,7 +35,6 @@ def discBot(kstQ, dscQ, draftEvent):
 
     ##Call and Response
     async def processMessage(client, message):
-        print(message.attachments)
         if(len(message.attachments) > 0):
             await check_media_message(message)
         if message.content.startswith('!'):
@@ -165,11 +164,11 @@ def discBot(kstQ, dscQ, draftEvent):
             for member in cmd.args[0].members:
                 if(member.team == 0 or member.team == 1):
                     total_members += 1
-            print(cmd.args[1])
             sid = SteamID(cmd.args[1].account_id)
             await client.send_message(client.get_channel('133812880654073857'), "Inhouse looking for members.\nLooking for " + str(10 - total_members) + " more players\nContact " + cmd.args[1].persona_name + " on steam.\n(<" + sid.community_url +">)")
 
     async def toggle_draft(*args, **kwargs):
+        return
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128' or msg.author.id == '85148771226234880'):
