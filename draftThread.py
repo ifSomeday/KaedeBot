@@ -17,8 +17,9 @@ import classes
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
 CLIENT_SECRET_FILE = os.getcwd() + '\\dataStores\\google_api.json'
 APPLICATION_NAME = 'KaedeBot Draft Plugin'
-SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
 RANGE_FOR_PICKS = 'ADMIN DRAFT SHEET!B3:H'
+#SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
+SPREADSHEET_ID = '1jzI8iSFPV2iJCaCbxwVaBnB_QtGI-h0XHfUDf9auQf8'
 RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N15'
 
 player_array = []

@@ -141,8 +141,8 @@ def discBot(kstQ, dscQ, draftEvent):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
             #bChannel = client.get_channel('320033818083983361')
-            bChannel = client.get_channel('315212408740380672')
             resr = await build_draft_message(row = cmd.args[0])
+            bChannel = client.get_channel('315212408740380672')
             draft_messages.append(await client.send_message(bChannel, resr))
 
     async def build_draft_message(*args, **kwargs):
