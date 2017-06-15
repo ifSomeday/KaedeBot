@@ -180,6 +180,12 @@ def discBot(kstQ, dscQ, draftEvent):
             else:
                 await client.send_message(msg.channel, "you don't have permission to do that :(")
 
+    async def broadcast_match_res(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            bChannel = client.get_channel('213086692683415552')
+            await client.send_message(bChannel, cmd.args[0])
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -195,7 +201,7 @@ def discBot(kstQ, dscQ, draftEvent):
         classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
         classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
         classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft,
-        classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message}
+        classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message, classes.discordCommands.BROADCAST_MATCH_RESULT : broadcast_match_res}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
