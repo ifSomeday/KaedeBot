@@ -19,6 +19,7 @@ from dota2.enums import EMatchOutcome as dOutcome
 
 ##general imports
 import operator
+import queue
 import logging
 import time
 import sys
@@ -29,9 +30,11 @@ import threading
 ##need STEAM_USERNAME and STEAM_PASS in keys.py
 import keys
 import classes
+import ksteamSlave
 
 def dotaThread(kstQ, dscQ):
     ##set up client
+    bots_used = 0
     client = SteamClient()
     dota = Dota2Client(client)
 
@@ -44,6 +47,10 @@ def dotaThread(kstQ, dscQ):
     table = {}
 
     r_pattern = re.compile('"(.*?)"')
+
+    count_lock = threading.Lock()
+
+
 
     ##TODO programatically generate this
     bot_SteamID = SteamID(76561198384957078)
@@ -58,34 +65,41 @@ def dotaThread(kstQ, dscQ):
         "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
         "die" : classes.steamCommands.STOP_BOT, "leaderboard" : classes.steamCommands.LEADERBOARD,
         "launch" : classes.steamCommands.LAUNCH_LOBBY, "status" : classes.steamCommands.STATUS,
-        "inhouse" : classes.steamCommands.INHOUSE}
+        "inhouse" : classes.steamCommands.INHOUSE, "givebot" : classes.steamCommands.REQUEST_LOBBY_BOT,
+        "requestbot" : classes.steamCommands.REQUEST_LOBBY_BOT_FLAME}
 
     chat_lobby_command_translation = {"broadcast" : classes.lobbyCommands.BROADCAST}
 
     ##DECORATED FUNCTIONS
 
+    def botLog(text):
+        try:
+            print("KaedeBot: " +  str(text), flush = True)
+        except:
+            print(sBot.name + ": Logging error. Probably some retard name", flush = True)
+
     ##after logon, launch dota
     @client.on('logged_on')
     def start_dota():
-        print("Logged into steam, starting dota", flush=True)
+        botLog("Logged into steam, starting dota")
         dota.launch()
         pass
 
     ##At this point dota is ready
     @dota.on('ready')
     def ready0():
-        print("Dota is ready", flush=True)
+        botLog("Dota is ready")
 
     @dota.on('notready')
     def reload():
-        print("out of dota, restarting...", flush=True)
+        botLog("out of dota, restarting...")
         dota.exit()
         dota.launch()
         pass
 
     @client.on('disconnected')
     def restart():
-        print("disconnected from steam. Attempting to relog...", flush=True)
+        botLog("disconnected from steam. Attempting to relog...")
         client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
 
     ##dota lobby on lobby change event handler
@@ -94,7 +108,7 @@ def dotaThread(kstQ, dscQ):
         lobby_stat, party_stat = get_status()
         if(not lobby_stat == None):
             if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
-                print("Lobby is dead, leaving",flush = True)
+                botLog("Lobby is dead, leaving",flush = True)
                 leave_lobby()
         pass
 
@@ -113,7 +127,7 @@ def dotaThread(kstQ, dscQ):
         lobby_stat, party_stat = get_status()
         if(not party_stat == None):
             if(len(party_stat.members) <= 1):
-                print("lobby is dead, leaving",flush = True)
+                botLog("lobby is dead, leaving",flush = True)
                 leave_party()
         pass
     #   leave_team_lobby()
@@ -128,18 +142,18 @@ def dotaThread(kstQ, dscQ):
     @dota.on('lobby_removed')
     def lobby_removed(msg):
         broadcast_game = False
-        print(msg, flush=True)
+        botLog(msg)
         dota.channels.leave_channel("Lobby_%s" % msg.lobby_id)
         ##state 3 is postgame
         ##game_state
         if(msg.game_state == dGState.DOTA_GAMERULES_STATE_POST_GAME):
             winner = msg.match_outcome
             if(winner == dOutcome.RadVictory):
-                print("radiant wins!", flush=True)
+                botLog("radiant wins!")
             elif(winner == dOutcome.DireVictory):
-                print("dire wins!", flush=True)
+                botLog("dire wins!")
             else:
-                print("lobby died", flush=True)
+                botLog("lobby died")
                 return
             direCount = 0
             radiantCount = 0
@@ -147,11 +161,11 @@ def dotaThread(kstQ, dscQ):
             radiantAverage = 0
             for member in msg.members:
                 try:
-                    print(member.name, flush=True)
+                    botLog(member.name)
                 except:
-                    print("cant encode name")
-                print(member.team, flush=True)
-                print(member.id, flush=True)
+                    botLog("cant encode name")
+                botLog(member.team)
+                botLog(member.id)
                 if not member.id in table:
                     table[member.id] = steamBot.classes.leaguePlayer()
                     table[member.id].account_id = member.id
@@ -163,8 +177,8 @@ def dotaThread(kstQ, dscQ):
                     direAverage += table[member.id].mmr
             radiantAverage = (radiantAverage + 1400*(5-radiantCount))/5
             direAverage = (direAverage + 1400*(5-direCount))/5
-            print(radiantAverage, flush=True)
-            print(direAverage, flush=True)
+            botLog(radiantAverage)
+            botLog(direAverage)
             for member in msg.members:
                 table[member.id].account_name = member.name
                 ##TODO fancy bitwise stuff here
@@ -179,7 +193,7 @@ def dotaThread(kstQ, dscQ):
                     elif(member.team == 1):
                         table[member.id].new_mmr(radiantAverage, 1)
                 else:
-                    print("member not updatesd", flush=True)
+                    botLog("member not updatesd")
                 table[member.id].printStats()
             dumpTable(table)
 
@@ -189,14 +203,14 @@ def dotaThread(kstQ, dscQ):
     @dota.on('party_invite')
     def party_invite(msg):
         if(dota.party == None):
-            print(msg, flush=True)
+            botLog(msg)
             dota.respond_to_party_invite(msg.group_id, accept=True)
 
     ##lobby invite event handler
     @dota.on('lobby_invite')
     def lobby_invite(msg):
         if(dota.lobby == None):
-            print("joining lobby", flush=True)
+            botLog("joining lobby")
             dota.respond_lobby_invite(msg.group_id, accept=True)
 
     @client.friends.on('friend_invite')
@@ -205,7 +219,7 @@ def dotaThread(kstQ, dscQ):
 
     @dota.on(dGCMsg.EMsgGCLobbyListResponse)
     def test6(msg):
-        #print(msg)
+        #botLog(msg)
         pass
 
     ##control bot from steam messages. soon to be removed (excpet probably tleave)
@@ -223,14 +237,13 @@ def dotaThread(kstQ, dscQ):
 
     @client.on('friend_invite')
     def accept_request(msg):
-        print(msg, flush=True)
-
+        botLog(msg)
 
     ##GC RELATED COMMANDS
 
     ##sets up and issues the create lobby command
     def _lobby_setup_backend():
-        print("setting up lobby", flush=True)
+        botLog("setting up lobby")
         d = {}
         d['game_name'] = "Kaede Lobby"
         d['server_region'] = 2
@@ -274,7 +287,7 @@ def dotaThread(kstQ, dscQ):
     def party_invite_me(*args, **kwargs):
         ##TODO verify that party invites will never be automagically rescinded
         if(not "msg" in kwargs):
-            print("missing context from party_invite_me")
+            botLog("missing context from party_invite_me")
             return
         msg = kwargs["msg"]
         idd = msg.body.steamid_from
@@ -286,7 +299,7 @@ def dotaThread(kstQ, dscQ):
     ##automagically converts to a SteamID object
     def lobby_invite_me(*args, **kwargs):
         if(not "msg" in kwargs):
-            print("missing context from lobby_invite_me")
+            botLog("missing context from lobby_invite_me")
             return
         msg = kwargs["msg"]
         idd = msg.body.steamid_from
@@ -361,7 +374,7 @@ def dotaThread(kstQ, dscQ):
         cmd = kwargs['cmd']
         channel = cmd.args[0]
         spots = cmd.args[1].strip()
-        print(spots)
+        botLog(spots)
         top = get_top_players(spots)
         resp = "Top " + str(len(top)) + " players:"
         for player in top:
@@ -384,6 +397,41 @@ def dotaThread(kstQ, dscQ):
             msg = kwargs['msg']
             client.get_user(SteamID(msg.body.steamid_from)).send_message("unknown command")
 
+    def spawn_bot_flame(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("Wow you can spell request !!")
+            cMsg = args[0]
+            function_translation[classes.steamCommands.REQUEST_LOBBY_BOT](cMsg, msg = msg)
+
+    def spawn_bot(*args, **kwargs):
+        nonlocal bots_used
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            sBot = None
+            #TODO: why
+            count_lock.acquire()
+            if((bots_used) < len(keys.SLAVEUSERNAMES)):
+                sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[bots_used], keys.SLAVEUSERNAMES[bots_used], keys.SLAVEPASSWORDS[bots_used], keys.SLAVEBOTSTEAMLINKS[bots_used])
+                bots_used += 1
+            count_lock.release()
+            if(sBot):
+                #TODO: dynamic pronouns
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("You have been assigned " + str(sBot.name))
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("Please add her at " + str(sBot.steamLink) + " and then invite her to your lobby.\nIf she isn't in a lobby in 15 minutes, she will return to the available bot pool and you will need to request another lobby bot")
+                slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ)).start()
+            else:
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("All Bots Busy")
+
+    def freeBot(*args, **kwargs):
+        nonlocal bots_used
+        if('cmd' in kwargs):
+            count_lock.acquire()
+            if(bots_used > 0):
+                bots_used -= 1
+            else:
+                botLog("Bot broadcast free... but all bots unused...")
+            count_lock.release()
     def naw(*args, **kwargs):
         pass
 
@@ -424,12 +472,12 @@ def dotaThread(kstQ, dscQ):
 
     def init_local_data():
         if(os.path.isfile(TABLE_NAME)):
-            print("previous ranking table found... opening", flush=True)
+            botLog("previous ranking table found... opening")
 
         else:
-            print("no local ranking table.... generating one", flush=True)
+            botLog("no local ranking table.... generating one")
             dumpTable({})
-            print("local ranking table created", flush=True)
+            botLog("local ranking table created")
         return(openTable())
 
     table = init_local_data()
@@ -441,7 +489,8 @@ def dotaThread(kstQ, dscQ):
         classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
         classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
         classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
-        classes.steamCommands.INVALID_COMMAND : invalid_command}
+        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.FREE_BOT : freeBot,
+        classes.steamCommands.REQUEST_LOBBY_BOT : spawn_bot, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
 
     lobby_function_translation = {classes.lobbyCommands.INVALID_COMMAND : naw, classes.lobbyCommands.BROADCAST : set_lobby_broadcast}
 
@@ -451,10 +500,10 @@ def dotaThread(kstQ, dscQ):
 
         cmd = kstQ.get()
         if(cmd):
-            print("found steam command", flush=True)
+            botLog("found steam command")
             function_translation[cmd.command](cmd = cmd)
         if(broadcast_game):
-            print(broadcast_counter)
+            botLog(broadcast_counter)
             if(broadcast_counter == 0):
                 dscQ.put(classes.command(classes.discordCommands.BROADCAST_LOBBY, [dota.lobby]))
             broadcast_counter = (broadcast_counter + 1) % 60
@@ -466,7 +515,10 @@ def dotaThread(kstQ, dscQ):
     msgH.start()
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
-    print("logged in", flush=True)
-
-
+    botLog("logged in")
     client.run_forever()
+
+if(__name__ == "__main__"):
+    kstQ = queue.Queue()
+    dscQ = queue.Queue()
+    dotaThread(kstQ, dscQ)

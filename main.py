@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_ssl()
+
 ##handles thread creation and management
 import ksteam as sb
 import kDiscord as db

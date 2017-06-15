@@ -1,4 +1,106 @@
 from enum import Enum
+import operator
+
+def get_hero_name(hero_id, hero_list):
+    for hero in hero_list['heroes']:
+        if(str(hero_id) == str(hero['id'])):
+            return(hero['localized_name'])
+
+class player:
+
+    def __init__(self, op= None):
+        self.steamID = 0
+        self.playerName = ""
+        self.TeamId = 0
+        self.hero_dict = {}
+        if(op):
+            self.steamID = op.steamID
+            self.playerName = op.playerName
+            self.TeamId = op.TeamId
+
+    def hero_row_form(self):
+        row = [self.playerName]
+        sorted_heroes = sorted(self.hero_dict.items(), key=operator.itemgetter(1), reverse=True)
+        for i in range(0,5):
+            if(i < len(sorted_heroes)):
+                row.append(sorted_heroes[i][0])
+            else:
+                row.append("")
+        return(row)
+
+    def add_hero(self, hero_name):
+        if(hero_name in self.hero_dict):
+            self.hero_dict[hero_name] += 1
+        else:
+            self.hero_dict[hero_name] = 1
+
+    def __str__(self):
+        return(self.playerName + ":" + (self.steamID) + " ")
+
+    def __repr__(self):
+        return(self.playerName + ":" + str(self.steamID) + " ")
+
+class team:
+
+    def __combine_dicts(self, dict1, dict2):
+        return({x: dict1.get(x, 0) + dict2.get(x, 0) for x in set(dict1).union(dict2)})
+
+    def calculate_hero_array(self):
+        self.hero_dict = {}
+        for player in self.players:
+                self.hero_dict = self.__combine_dicts(player.hero_dict, self.hero_dict)
+
+    def __init__(self, ot=None):
+        self.players = []
+        self.captain = None
+        self.name = ""
+        self.teamId = 0
+        self.last_match = 0
+        self.hero_dict = {}
+        if(ot):
+            for p in ot.players:
+                self.players.append(player(p))
+            self.captain = player(ot.captain)
+            self.name = ot.name
+            self.teamId = ot.teamId
+
+    def __str__(self):
+        return(self.name + ": " + str(self.players) + "\n")
+
+    def __repr__(self):
+        return(self.name + ": " + str(self.players) + "\n")
+
+class sheet_match:
+
+    match_id = 0
+    won = False
+    side = "Radiant"
+    mode = 0
+    opponent = "n/a"
+    heroes_played = []
+
+    def __init__(self, match = None, side = None, team_ids = None, hero_list = None):
+        if(match and team_ids and hero_list):
+            self.match_id = match['match_id']
+            self.won = (match['radiant_win'] == side)
+            self.side = "Radiant" if side else "Dire"
+            ##TODO: translate this
+            self.mode = match['lobby_type']
+            self.opponent = "n/a"
+            self.heroes_played = []
+            for player in match['players']:
+                if str(player['account_id']) in team_ids:
+                    if player['player_slot'] in (range(0,5) if side else range(128,133)):
+                        self.heroes_played.append(get_hero_name(player['hero_id'], hero_list))
+            while(len(self.heroes_played) < 5):
+                self.heroes_played.append('')
+
+    def row_form(self):
+        row = [self.match_id, self.won, self.side, self.mode, self.opponent]
+        for hero in self.heroes_played:
+            row.append(hero)
+        row.append("https://www.dotabuff.com/matches/" + str(self.match_id))
+        return(row)
 
 class leaguePlayer:
 
@@ -86,6 +188,17 @@ class command:
     def __repr__(self):
         return("command = " + str(self.command) + ", args = " + str(self.args))
 
+class steamBotInfo:
+
+    def __init__(self, name, username, password, steamLink):
+        self.name = name
+        self.username = username
+        self.password = password
+        self.steamLink = steamLink
+
+class Die:
+    pass
+
 class steamCommands(Enum):
     INVALID_COMMAND = 0
     LEAVE_LOBBY = 1
@@ -102,6 +215,9 @@ class steamCommands(Enum):
     LEADERBOARD_4D = 12
     LOBBY_CREATE = 13
     TOURNAMENT_LOBBY_CREATE = 14
+    FREE_BOT = 15
+    REQUEST_LOBBY_BOT = 16
+    REQUEST_LOBBY_BOT_FLAME = 17
 
 class discordCommands(Enum):
     INVALID_COMMAND = 0
@@ -126,7 +242,79 @@ class discordCommands(Enum):
     BROADCAST_DRAFT_PICK = 19
     UPDATE_DRAFT_PICK = 20
     TOGGLE_DRAFT_MODE = 21
+    BROADCAST_MATCH_RESULT = 22
 
 class lobbyCommands(Enum):
     INVALID_COMMAND = 0
     BROADCAST = 1
+
+class Teams(Enum):
+    DANNY = 0
+    TERESA = 1
+    BURGEONING =2
+    PANDA = 3
+    SMACKDICKZ = 4
+    MICHAELJJACKSON = 5
+    THEMANTIS = 6
+    FINITE = 7
+    KODOS = 8
+    BLAMESOCIABLE = 9
+    CRAP = 10
+    XAG = 11
+    TRUCKWAFFLE = 12
+    DREAM = 13
+    STAREND = 14
+    AR = 15
+
+##TODO: not be retarded
+def Captain_name_to_enum(string):
+    if(string == "Danny"):
+        return(Teams.DANNY)
+
+    elif(string == "Teresa"):
+        return(Teams.TERESA)
+
+    elif(string == "Burgeoning"):
+        return(Teams.BURGEONING)
+
+    elif(string == "Panda"):
+        return(Teams.PANDA)
+
+    elif(string == "smackdickz"):
+        return(Teams.SMACKDICKZ)
+
+    elif(string == "MichaelJJackson"):
+        return(Teams.MICHAELJJACKSON)
+
+    elif(string == "TheMantis"):
+        return(Teams.THEMANTIS)
+
+    elif(string.strip() == "FiNite"):
+        return(Teams.FINITE)
+
+    elif(string == "Kodos"):
+        return(Teams.KODOS)
+
+    elif(string == "BlameSociable"):
+        return(Teams.BLAMESOCIABLE)
+
+    elif(string == "CRAP"):
+        return(Teams.CRAP)
+
+    elif(string == "Xag"):
+        return(Teams.XAG)
+
+    elif(string == "Truckwaffle"):
+        return(Teams.TRUCKWAFFLE)
+
+    elif(string == "Dream"):
+        return(Teams.DREAM)
+
+    elif(string == "StarEnd"):
+        return(Teams.STAREND)
+
+    elif(string == "Abyssal.Reality"):
+        return(Teams.AR)
+
+    else:
+        print("cant translate " + string)
