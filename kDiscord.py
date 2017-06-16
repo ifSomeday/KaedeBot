@@ -45,11 +45,11 @@ def discBot(kstQ, dscQ, draftEvent):
             await check_media_message(message)
         if message.content.startswith('!'):
             ##TODO: prettier implementation of this:
+            command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386') or (message.server.id == '308515912653340682')):
                 return
             await client.send_typing(message.channel)
             cMsg = message.content.lower()[1:].split()
-            command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             await function_translation[command](cMsg, msg = message, command = command)
         if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
             if(not str(message.author.id) == str(85148771226234880)):
@@ -227,7 +227,6 @@ def discBot(kstQ, dscQ, draftEvent):
     @client.event
     async def on_message_delete(message):
         await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
-
 
     @client.event
     async def on_message(message):
