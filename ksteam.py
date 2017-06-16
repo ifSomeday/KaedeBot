@@ -34,28 +34,32 @@ import ksteamSlave
 
 def dotaThread(kstQ, dscQ):
     ##set up client
-    bots_used = 0
     client = SteamClient()
     dota = Dota2Client(client)
 
+    ##flags
     debug = False
     broadcast_game = False
 
+    ##counters
+    sBotArray = []
     broadcast_counter = 0
 
+    ##table info
     TABLE_NAME = os.getcwd() + "/dataStores/ratings.pickle"
     table = {}
 
+    ##arg decoding
     r_pattern = re.compile('"(.*?)"')
 
+    ##locks
     count_lock = threading.Lock()
-
-
 
     ##TODO programatically generate this
     bot_SteamID = SteamID(76561198384957078)
     kyuoko_toshino = SteamID(75419738)
 
+    ##enable debug
     if(debug):
         logging.basicConfig(format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
 
@@ -405,15 +409,16 @@ def dotaThread(kstQ, dscQ):
             function_translation[classes.steamCommands.REQUEST_LOBBY_BOT](cMsg, msg = msg)
 
     def spawn_bot(*args, **kwargs):
-        nonlocal bots_used
         if('msg' in kwargs):
             msg = kwargs['msg']
             sBot = None
             #TODO: why
             count_lock.acquire()
-            if((bots_used) < len(keys.SLAVEUSERNAMES)):
-                sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[bots_used], keys.SLAVEUSERNAMES[bots_used], keys.SLAVEPASSWORDS[bots_used], keys.SLAVEBOTSTEAMLINKS[bots_used])
-                bots_used += 1
+            for bot in sBotArray:
+                if(not bot.in_use):
+                    bot.in_use = True
+                    sBot = bot
+                    break
             count_lock.release()
             if(sBot):
                 #TODO: dynamic pronouns
@@ -424,13 +429,14 @@ def dotaThread(kstQ, dscQ):
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("All Bots Busy")
 
     def freeBot(*args, **kwargs):
-        nonlocal bots_used
         if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            sBot = cmd.args[0]
             count_lock.acquire()
-            if(bots_used > 0):
-                bots_used -= 1
-            else:
-                botLog("Bot broadcast free... but all bots unused...")
+            for bot in sBotArray:
+                if(bot.name == sBot.name):
+                    bot.in_use = False
+                    break;
             count_lock.release()
     def naw(*args, **kwargs):
         pass
@@ -480,20 +486,6 @@ def dotaThread(kstQ, dscQ):
             botLog("local ranking table created")
         return(openTable())
 
-    table = init_local_data()
-
-    function_translation = {classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_TEAM : leave_team_lobby,
-        classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status,
-        classes.steamCommands.LEADERBOARD : send_top_players, classes.steamCommands.PARTY_INVITE : party_invite_me,
-        classes.steamCommands.LOBBY_INVITE : lobby_invite_me, classes.steamCommands.LAUNCH_LOBBY : launch_lobby,
-        classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
-        classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
-        classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
-        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.FREE_BOT : freeBot,
-        classes.steamCommands.REQUEST_LOBBY_BOT : spawn_bot, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
-
-    lobby_function_translation = {classes.lobbyCommands.INVALID_COMMAND : naw, classes.lobbyCommands.BROADCAST : set_lobby_broadcast}
-
     def messageHandler(*args, **kwargs):
         kstQ = args[0]
         dscQ = args[1]
@@ -511,8 +503,25 @@ def dotaThread(kstQ, dscQ):
         msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
         msgH.start()
 
+    function_translation = {classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_TEAM : leave_team_lobby,
+        classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status,
+        classes.steamCommands.LEADERBOARD : send_top_players, classes.steamCommands.PARTY_INVITE : party_invite_me,
+        classes.steamCommands.LOBBY_INVITE : lobby_invite_me, classes.steamCommands.LAUNCH_LOBBY : launch_lobby,
+        classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
+        classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
+        classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
+        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.FREE_BOT : freeBot,
+        classes.steamCommands.REQUEST_LOBBY_BOT : spawn_bot, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
+
+    for i in range(0, len(keys.SLAVEBOTNAMES)):
+        sBotArray.append(classes.steamBotInfo(keys.SLAVEBOTNAMES[i], keys.SLAVEUSERNAMES[i], keys.SLAVEPASSWORDS[i], keys.SLAVEBOTSTEAMLINKS[i]))
+
+    table = init_local_data()
+
     msgH = threading.Timer(1.0, messageHandler, [kstQ, dscQ])
     msgH.start()
+
+    lobby_function_translation = {classes.lobbyCommands.INVALID_COMMAND : naw, classes.lobbyCommands.BROADCAST : set_lobby_broadcast}
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
     botLog("logged in")

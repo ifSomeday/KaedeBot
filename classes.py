@@ -195,9 +195,7 @@ class steamBotInfo:
         self.username = username
         self.password = password
         self.steamLink = steamLink
-
-class Die:
-    pass
+        self.in_use = False
 
 class steamCommands(Enum):
     INVALID_COMMAND = 0

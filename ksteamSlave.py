@@ -124,13 +124,19 @@ def steamSlave(sBot, kstQ, dscQ):
             else:
                 botLog("lobby died")
 
-        stop_event.set()
+            botCleanup()
 
+    @client.on(EMsg.ClientFriendMsgIncoming)
+    def steam_message_handler(msg):
+        ##TODO: check you have permission to release
+        msgT = msg.body.message.decode("utf-8").rstrip('\x00')
+        if(len(msgT) > 0):
+            if(msgT == "release"):
+                botCleanup()
 
     @client.friends.on('friend_invite')
     def friend_invite(msg):
         client.friends.add(msg)
-
 
     @dota.on('lobby_invite')
     def lobby_invite(msg):
@@ -138,14 +144,19 @@ def steamSlave(sBot, kstQ, dscQ):
             botLog("joining lobby")
             dota.respond_lobby_invite(msg.group_id, accept=True)
 
+    def botCleanup():
+        kstQ.put(classes.command(classes.steamCommands.FREE_BOT, [sBot]))
+        stop_event.set()
+        botLog("shutting down")
+
     def timeoutHandler(*args, **kwargs):
         evnt = args[0]
         if(dota.lobby == None):
             botLog("lobby not found")
-            stop_event.set()
-            kstQ.put(classes.command(classes.steamCommands.FREE_BOT, []))
+            botCleanup()
         else:
             botLog("im in a lobby!")
+
 
     ##fifteen minutes to get in a lobby
     toH = threading.Timer(900.0, timeoutHandler, [stop_event,])
