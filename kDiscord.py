@@ -25,7 +25,7 @@ def discBot(kstQ, dscQ, draftEvent):
     draft_messages = []
     media_messages = {}
 
-    async def botLog(text):
+    def botLog(text):
         try:
             print("DiscordBot: " +  str(text), flush = True)
         except:
@@ -45,13 +45,14 @@ def discBot(kstQ, dscQ, draftEvent):
             await check_media_message(message)
         if message.content.startswith('!'):
             ##TODO: prettier implementation of this:
+            cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386') or (message.server.id == '308515912653340682')):
                 return
             await client.send_typing(message.channel)
-            cMsg = message.content.lower()[1:].split()
+
             await function_translation[command](cMsg, msg = message, command = command)
-        if(ed.distance(message.content.lower(), 'can I get a "what what" from my homies?!') < 6):
+        if(ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6):
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
             else:
@@ -61,7 +62,7 @@ def discBot(kstQ, dscQ, draftEvent):
     async def send_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if((msg.server.id == 133812880654073857) and any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
+            if(any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
                 table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
                 await client.send_message(msg.channel, markovChaining.generateText(table, builder = args[0][1:]))
             else:
@@ -221,7 +222,7 @@ def discBot(kstQ, dscQ, draftEvent):
 
     @client.event
     async def on_ready():
-        await botLog("discord bot Online")
+        botLog("discord bot Online")
         await client.change_presence(game=discord.Game(name='Yuru Yuri San Hai !!'))
 
     @client.event

@@ -119,12 +119,9 @@ def steamSlave(sBot, kstQ, dscQ):
 
                 out = (r_team_str if winner == dOutcome.RadVictory else d_team_str) + " beat " + (d_team_str if winner == dOutcome.RadVictory else r_team_str)
                 dscQ.put(classes.command(classes.discordCommands.BROADCAST_MATCH_RESULT, [out]))
-
-
             else:
                 botLog("lobby died")
-
-            botCleanup()
+        botCleanup()
 
     @client.on(EMsg.ClientFriendMsgIncoming)
     def steam_message_handler(msg):
@@ -145,9 +142,10 @@ def steamSlave(sBot, kstQ, dscQ):
             dota.respond_lobby_invite(msg.group_id, accept=True)
 
     def botCleanup():
+        botLog("shutting down")
         kstQ.put(classes.command(classes.steamCommands.FREE_BOT, [sBot]))
         stop_event.set()
-        botLog("shutting down")
+
 
     def timeoutHandler(*args, **kwargs):
         evnt = args[0]
