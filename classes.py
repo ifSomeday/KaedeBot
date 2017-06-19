@@ -190,12 +190,14 @@ class command:
 
 class steamBotInfo:
 
-    def __init__(self, name, username, password, steamLink):
+    def __init__(self, name, username, password, steamLink, requester='', teams=[]):
         self.name = name
         self.username = username
         self.password = password
         self.steamLink = steamLink
         self.in_use = False
+        self.requester = requester
+        self.teams = teams
 
 class steamCommands(Enum):
     INVALID_COMMAND = 0
@@ -245,6 +247,13 @@ class discordCommands(Enum):
 class lobbyCommands(Enum):
     INVALID_COMMAND = 0
     BROADCAST = 1
+
+class leagueLobbyCommands(Enum):
+    SWITCH_SIDE = 0
+    FIRST_PICK = 1
+    SERVER = 2
+    START = 3
+
 
 class Teams(Enum):
     DANNY = 0

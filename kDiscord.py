@@ -41,7 +41,7 @@ def discBot(kstQ, dscQ, draftEvent):
 
     ##Call and Response
     async def processMessage(client, message):
-        if(len(message.attachments) > 0):
+        if(len(message.attachments) > 0 and (message.server.id == '133812880654073857')):
             await check_media_message(message)
         if message.content.startswith('!'):
             ##TODO: prettier implementation of this:

@@ -1,5 +1,6 @@
 from gevent import monkey
 monkey.patch_ssl()
+monkey.patch_socket()
 
 ##handles thread creation and management
 import ksteam as sb

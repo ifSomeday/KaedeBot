@@ -31,6 +31,7 @@ import threading
 import keys
 import classes
 import ksteamSlave
+import random, string
 
 def dotaThread(kstQ, dscQ):
     ##set up client
@@ -81,6 +82,10 @@ def dotaThread(kstQ, dscQ):
             print("KaedeBot: " +  str(text), flush = True)
         except:
             print(sBot.name + ": Logging error. Probably some retard name", flush = True)
+
+    def randomword(length):
+        return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+
 
     ##after logon, launch dota
     @client.on('logged_on')
@@ -421,10 +426,11 @@ def dotaThread(kstQ, dscQ):
                     break
             count_lock.release()
             if(sBot):
+                pswrd = randomword(6)
                 #TODO: dynamic pronouns
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("You have been assigned " + str(sBot.name))
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("Please add her at " + str(sBot.steamLink) + " and then invite her to your lobby.\nIf she isn't in a lobby in 15 minutes, she will return to the available bot pool and you will need to request another lobby bot")
-                slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ)).start()
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("You can optionally add her at " + str(sBot.steamLink) + "\nA lobby will be hosted titled as SEAL: " + str(msg.body.steamid_from) + " \nthe password is: " + pswrd + "\nPlease leave about 10-20 seconds for the lobby to get hosted")
+                slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, msg.body.steamid_from, pswrd)).start()
             else:
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("All Bots Busy")
 
