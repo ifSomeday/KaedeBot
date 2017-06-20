@@ -227,7 +227,7 @@ def discBot(kstQ, dscQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        if(not message.author.channel == '213099188584579072')
+        if(not message.author.channel == '213099188584579072'):
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
     @client.event
