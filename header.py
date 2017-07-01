@@ -5,6 +5,8 @@ import classes
 base_draft_message = ("Round: **%s** Pick: **%s** (Overall: **%s**)\n"
     "Captain **%s** picks Player **%s**\nPlayer MMR: **%s** Team Avg: **%s**")
 
+approved_deletetion_channels = ['133812880654073857', '246680759421763585', '134961597163634688', '314261304300929024', '308662797837795328', '308662818607988736', '326188941369671680']
+
 anime_enough = ['133811493778096128', '146490789520867328', '127651622628229120', '225768977115250688', '162830306137735169', '85148771226234880']
 
 chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.gif", classes.discordCommands.AIRGUITAR : "Kyouko_air_guitar.gif",

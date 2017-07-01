@@ -2,6 +2,7 @@ import asyncio
 import random, time
 import edit_distance as ed
 import discord
+import queue
 import praw
 import threading
 import classes
@@ -227,7 +228,9 @@ def discBot(kstQ, dscQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        if(not message.author.channel == '213099188584579072'):
+        if(message.channel.id in header.approved_deletetion_channels):
+            if(message.content.startswith("!") and (message.content[1:] in header.chat_command_translation)):
+                return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
     @client.event
@@ -236,3 +239,9 @@ def discBot(kstQ, dscQ, draftEvent):
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.run(keys.TOKEN)
+
+if(__name__ == "__main__"):
+    kstQ = queue.Queue()
+    dscQ = queue.Queue()
+    draft_event = threading.Event()
+    discBot(kstQ, dscQ, draft_event)
