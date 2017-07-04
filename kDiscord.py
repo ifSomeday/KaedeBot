@@ -40,10 +40,12 @@ def discBot(kstQ, dscQ, draftEvent):
             cmd = kwargs['cmd']
             await sendMessage(cmd.args[0], cmd.args[1])
 
-    ##Call and Response
+    ##Call and Response213086692683415552
     async def processMessage(client, message):
         if(len(message.attachments) > 0 and (message.server.id == '133812880654073857')):
             await check_media_message(message)
+        if(message.channel.is_private and message.author.id == '133811493778096128'):
+            await pm_command(msg=message)
         if message.content.startswith('!'):
             ##TODO: prettier implementation of this:
             cMsg = message.content.lower()[1:].split()
@@ -59,6 +61,24 @@ def discBot(kstQ, dscQ, draftEvent):
             else:
                 await client.send_message(message.channel, "quack quack")
 
+    async def pm_command(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            split_string = msg.content.find(' ')
+            pm_channel = msg.content[0:split_string]
+            pm_content = msg.content[(split_string + 1):]
+            pm_content_array = pm_content.split()
+            pm_content = ''
+            for word in pm_content_array:
+                if word.startswith('&'):
+                    try:
+                        int(word[1:])
+                        word = "<@" + word + ">"
+                    except Exception as e:
+                        print(e)
+                        pass
+                pm_content += (word + " ")
+            await client.send_message(client.get_channel(pm_channel), pm_content)
 
     async def send_meme(*args, **kwargs):
         if('msg' in kwargs):
@@ -228,7 +248,7 @@ def discBot(kstQ, dscQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        if(message.channel.id in header.approved_deletetion_channels):
+        if((message.channel.id in header.approved_deletetion_channels) and (not message.author.id == '213099188584579072')):
             if(message.content.startswith("!") and (message.content[1:] in header.chat_command_translation)):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
