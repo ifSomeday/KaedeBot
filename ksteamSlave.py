@@ -34,12 +34,15 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
 
     hosted = False
 
+    d = {}
+
     sides_ready = [False, False]
 
     stop_event = threading.Event()
 
     lobby_command_translation = {"switchside" : classes.leagueLobbyCommands.SWITCH_SIDE, "fp" : classes.leagueLobbyCommands.FIRST_PICK,
-                                "server": classes.leagueLobbyCommands.SERVER, "start" : classes.leagueLobbyCommands.START}
+                                "firstpick" :  classes.leagueLobbyCommands.FIRST_PICK, "server": classes.leagueLobbyCommands.SERVER,
+                                "start" : classes.leagueLobbyCommands.START}
 
     def botLog(text):
         try:
@@ -59,7 +62,7 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
     @dota.on('ready')
     def ready0():
         botLog("Dota is ready")
-        hostLobby()
+        hostLobby(tournament=True)
 
     @dota.on('notready')
     def reload():
@@ -90,52 +93,9 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
     def lobby_removed(msg):
         if(not hosted):
             return
-        if(msg.game_state == dGState.DOTA_GAMERULES_STATE_POST_GAME):
-            teamArray = []
-            api = WebAPI(key = keys.STEAM_WEBAPI)
-            hero_dict = api.IEconDOTA2_570.GetHeroes(language='en_us')['result']
-            winner = msg.match_outcome
-            if(winner == dOutcome.RadVictory or winner == dOutcome.DireVictory):
-                with open(os.getcwd() + '/dataStores/teamArray.pickle', 'rb') as f:
-                    teamArray = pickle.load(f)
-                radiant_team_arr = []
-                radiant_hero_arr = []
-                dire_team_arr = []
-                dire_hero_arr = []
-                for member in msg.members:
-                    if(member.team == 0):
-                        radiant_team_arr.append(SteamID(member.id).as_32)
-                        radiant_hero_arr.append(classes.get_hero_name(member.hero_id, hero_dict))
-                    elif(member.team == 1):
-                        dire_team_arr.append(SteamID(member.id).as_32)
-                        dire_hero_arr.append(classes.get_hero_name(member.hero_id, hero_dict))
-                radiant_team = None
-                dire_team = None
-                r_team_str = ""
-                d_team_str = ""
-                for team in teamArray:
-                    teamCountRadiant = 0
-                    teamCountDire = 0
-                    for player in team.players:
-                        if str(player.steamID) in str(radiant_team_arr):
-                            teamCountRadiant += 1
-                            r_team_str += (", " if not teamCountRadiant == 1 else "") + player.playerName
-                        elif str(player.steamID) in str(dire_team_arr):
-                            teamCountDire += 1
-                            d_team_str += (", " if teamCountRadiant == 1 else "") + player.playerName
-                    if(teamCountRadiant >= 1):
-                        radiant_team = team
-                    elif(teamCountDire >= 1):
-                        dire_team = team
-                r_team_str = (radiant_team.captain.playerName if radiant_team else "Unknown") + "'s team " + ("(" + r_team_str + ")" if r_team_str else "")
-                d_team_str = (dire_team.captain.playerName if dire_team else "Unkown") + "'s team " + ("(" + d_team_str + ")" if d_team_str else "")
-
-                out = (r_team_str if winner == dOutcome.RadVictory else d_team_str) + " beat " + (d_team_str if winner == dOutcome.RadVictory else r_team_str)
-                dscQ.put(classes.command(classes.discordCommands.BROADCAST_MATCH_RESULT, [out]))
-            else:
-                botLog("lobby died")
-        botLog("removed")
-        botCleanup()
+        else:
+            botlog("hosted lobby disappeared")
+            botCleanup()
 
     @client.on(EMsg.ClientFriendMsgIncoming)
     def steam_message_handler(msg):
@@ -147,7 +107,7 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
                 botCleanup()
             if(msgT == "lobby"):
                 hosted = False
-                hostLobby()
+                hostLobby(tournament=True)
 
     @dota.on(dGCMsg.EMsgGCChatMessage)
     def lobby_message_handler(msg):
@@ -176,7 +136,6 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
     def hostLobby(tournament=False):
         if(dota.lobby):
             dota.leave_practice_lobby()
-        d = {}
         d['game_name'] = "SEAL: " + str(steamId)
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
@@ -190,9 +149,9 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
         d['allow_cheats'] = False
 
         if(tournament):
-            dota.create_tournament_lobby(password=lobby_password, options=d)
-        else:
-            dota.create_practice_lobby(password=lobby_password, options=d)
+            #d['leagueid'] = 5432
+            pass
+        dota.create_practice_lobby(password=lobby_password, options=d)
         time.sleep(1)
         dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
@@ -210,6 +169,7 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
             dota.flip_lobby_teams()
             ##sides_ready[0], sides_ready[1] = sides_ready[1], sides_ready[0]
             sendLobbyMessage("Sides switched", msg.channel_id)
+            reset_ready(msg=msg)
 
     def set_server(*args, **kwargs):
         if('msg' in kwargs):
@@ -219,7 +179,6 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
                 sendLobbyMessage("Please specify a server region (USW USE EU)", msg.channel_id)
                 return
             server = str(cMsg[1]).lower().strip()
-            d = {}
             if(server == 'usw'):
                 d['server_region'] = dota2.enums.EServerRegion.USWest
             elif(server == 'use'):
@@ -230,7 +189,9 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
                 sendLobbyMessage("Invalid region (USW USE EU)", msg.channel_id)
                 return
             sendLobbyMessage(("Set region to " + server.upper()), msg.channel_id)
+
             dota.config_practice_lobby(d)
+            reset_ready(msg=msg)
 
     def first_pick(*args, **kwargs):
         if('msg' in kwargs):
@@ -240,18 +201,18 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
                 sendLobbyMessage("Please specify a side (Radiant, Dire)", msg.channel_id)
                 return
             side = str(cMsg[1]).lower().strip()
-            d = {}
             if(edit_distance.distance(side, 'radiant') < 4):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
-                side = "Dire"
+                side = "Radiant"
             elif(edit_distance.distance(side, 'dire') < 4):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_BAD_GUYS
-                side = "Radiant"
+                side = "Dire"
             else:
                 sendLobbyMessage("Invalid side (Radiant, Dire)", msg.channel_id)
                 return
             sendLobbyMessage(("Gave first pick to " + side), msg.channel_id)
             dota.config_practice_lobby(d)
+            reset_ready(msg=msg)
 
     def start_lobby(*args, **kwargs):
         if ('msg' in kwargs):
@@ -280,6 +241,13 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
             else:
                 sendLobbyMessage("One side readied up. Waiting for other team..", msg.channel_id)
 
+    def reset_ready(*args, **kwargs):
+        sides_ready[0] = False
+        sides_ready[1] = False
+        if ('msg' in kwargs):
+            msg = kwargs['msg']
+            sendLobbyMessage("Reset ready status.", msg.channel_id)
+
 
     def botCleanup():
         botLog("shutting down")
@@ -303,12 +271,11 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
                             classes.leagueLobbyCommands.START : start_lobby}
 
     ##fifteen minutes to get in a lobby
-    toH = threading.Timer(900.0, timeoutHandler, [stop_event,])
+    toH = threading.Timer(300.0, timeoutHandler, [stop_event,])
     toH.start()
 
     client.cli_login(username=sBot.username, password=sBot.password)
     bot_SteamID = client.steam_id
-    print(bot_SteamID)
     while(not stop_event.isSet()):
         client.sleep(5)
     client.disconnect()

@@ -31,6 +31,7 @@ import threading
 import keys
 import classes
 import ksteamSlave
+import header
 import random, string
 
 def dotaThread(kstQ, dscQ):
@@ -329,7 +330,7 @@ def dotaThread(kstQ, dscQ):
     def setup_lobby(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.steamid_from == kyuoko_toshino.as_64):
+            if(msg.body.steamid_from == kyuoko_toshino.as_64):
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
                 _lobby_setup_backend()
         pass
@@ -416,8 +417,10 @@ def dotaThread(kstQ, dscQ):
     def spawn_bot(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
+            if(not any(msg.body.steamid_from == SteamID(x).as_64 for x in header.trusted_steam_ids)):
+                botLog("not trusted")
+                return
             sBot = None
-            #TODO: why
             count_lock.acquire()
             for bot in sBotArray:
                 if(not bot.in_use):
@@ -429,7 +432,7 @@ def dotaThread(kstQ, dscQ):
                 pswrd = randomword(6)
                 #TODO: dynamic pronouns
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("You have been assigned " + str(sBot.name))
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("You can optionally add her at " + str(sBot.steamLink) + "\nA lobby will be hosted titled as SEAL: " + str(msg.body.steamid_from) + " \nthe password is: " + pswrd + "\nPlease leave about 10-20 seconds for the lobby to get hosted")
+                client.get_user(SteamID(msg.body.steamid_from)).send_message("You can optionally add her at " + str(sBot.steamLink) + "\n\nA lobby will be hosted titled as SEAL: " + str(msg.body.steamid_from) + " \nthe password is: " + pswrd + "\n\nPlease leave about 10-20 seconds for the lobby to get hosted")
                 slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, msg.body.steamid_from, pswrd)).start()
             else:
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("All Bots Busy")
