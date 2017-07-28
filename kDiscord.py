@@ -256,6 +256,9 @@ def discBot(kstQ, dscQ, draftEvent):
     @client.event
     async def on_message(message):
         await processMessage(client, message)
+    
+    st = saveThread.saveThread(1800, saveThread.saveTable, "Save-Thread")
+    st.start()
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.run(keys.TOKEN)
