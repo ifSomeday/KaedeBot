@@ -42,8 +42,8 @@ def discBot(kstQ, dscQ, draftEvent):
 
     ##Call and Response213086692683415552
     async def processMessage(client, message):
-        if(len(message.attachments) > 0 and (message.server.id == '133812880654073857')):
-            await check_media_message(message)
+        if(len(message.attachments) > 0 and (message.server.id == '133812880654073857') or (message.server.id == '213086692683415552')):
+            await spam_check(message, cb=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
             await pm_command(msg=message)
         if message.content.startswith('!'):
@@ -88,18 +88,6 @@ def discBot(kstQ, dscQ, draftEvent):
                 await client.send_message(msg.channel, markovChaining.generateText(table, builder = args[0][1:]))
             else:
                 await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
-
-    async def check_media_message(message):
-        if(not any(name in message.channel.name for name in ['meme', 'meming', 'afk'])):
-            if(message.author.id in media_messages and not message.author.id == '213099188584579072'):
-                if(time.time() - media_messages[message.author.id] < 60):
-                    await client.delete_message(message)
-                    await client.send_message(message.channel, message.author.mention + " please refrain from spamming !!")
-                else:
-                    media_messages[message.author.id] = time.time()
-            else:
-                media_messages[message.author.id] = time.time()
-
 
     async def add_meme(*args, **kwargs):
         if('msg' in kwargs):
@@ -153,14 +141,18 @@ def discBot(kstQ, dscQ, draftEvent):
                 spots = 3
             kstQ.put(classes.command(classes.steamCommands.LEADERBOARD_4D, [msg.channel, str(spots)]))
 
+    async def image_macro_wrapper(*args, **kwargs):
+        if('msg' in kwargs):
+            await spam_check(args[0], msg=kwargs['msg'], command=kwargs['command'], cb=image_macro)
+
     async def image_macro(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.author.id in header.anime_enough):
-                await client.delete_message(msg)
-                if('command' in kwargs):
-                    command = kwargs['command']
-                    await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + header.chat_macro_translation[command])
+            botLog("checking status")
+            await client.delete_message(msg)
+            if('command' in kwargs):
+                command = kwargs['command']
+                await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + header.chat_macro_translation[command])
             else:
                 await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact a weeb if you believe this is in error.")
 
@@ -214,6 +206,29 @@ def discBot(kstQ, dscQ, draftEvent):
             bChannel = client.get_channel('213086692683415552')
             await client.send_message(bChannel, cmd.args[0])
 
+    async def spam_check(*args, **kwargs):
+        if('msg' in kwargs and 'cb' in kwargs):
+            msg = kwargs['msg']
+            command = kwargs['command']
+            botLog("checking spam")
+            callback = kwargs['cb']
+            cMsg = args[0]
+            if(not any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
+                if(msg.author.id in media_messages and not msg.author.id == '213099188584579072'):
+                    if(time.time() - media_messages[msg.author.id] < 60):
+                        botLog("found spam")
+                        await client.delete_message(msg)
+                        await client.send_message(msg.channel, msg.author.mention + " please refrain from spamming !!")
+                else:
+                    botLog("no spam")
+                    media_messages[msg.author.id] = time.time()
+                    if(callback):
+                        botLog("init callback")
+                        await callback(cMsg, msg=msg, command=command)
+            elif(callback):
+                botLog("in spam channel")
+                await callback(cMsg, msg=msg, command=command)
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -223,10 +238,10 @@ def discBot(kstQ, dscQ, draftEvent):
         classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
         classes.discordCommands.BSJ_MEME : bsj_meme, classes.discordCommands.BSJ_NAME : bsj_name ,
         classes.discordCommands.TWITTER : twitter, classes.discordCommands.GET_STEAM_STATUS : steam_status,
-        classes.discordCommands.GET_STEAM_LEADERBOARD : steam_leaderboard, classes.discordCommands.THUMBSUP : image_macro,
-        classes.discordCommands.AIRGUITAR : image_macro, classes.discordCommands.CHEERLEADER : image_macro,
-        classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro,
-        classes.discordCommands.TOMATO : image_macro, classes.discordCommands.TRANSFORM : image_macro,
+        classes.discordCommands.GET_STEAM_LEADERBOARD : steam_leaderboard, classes.discordCommands.THUMBSUP : image_macro_wrapper,
+        classes.discordCommands.AIRGUITAR : image_macro_wrapper, classes.discordCommands.CHEERLEADER : image_macro_wrapper,
+        classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro_wrapper,
+        classes.discordCommands.TOMATO : image_macro_wrapper, classes.discordCommands.TRANSFORM : image_macro_wrapper,
         classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
         classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft,
         classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message, classes.discordCommands.BROADCAST_MATCH_RESULT : broadcast_match_res}
