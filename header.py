@@ -1,4 +1,5 @@
 import classes
+import os
 
 ## DISCORD DEFs ##
 
@@ -21,9 +22,13 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER,
     "chocolate" : classes.discordCommands.CHOCOLATE, "tomato" : classes.discordCommands.TOMATO,
     "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME,
-    "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE
+    "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE, "addchannel" : classes.discordCommands.ADD_CHANNEL_PERMISSION,
+    "removechannel" : classes.discordCommands.REMOVE_CHANNEL_PERMISSION, "addserver" : classes.discordCommands.ADD_SERVER_PERMISSION,
+    "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featureStatus" : classes.discordCommands.PERMISSION_STATUS,
+    "featurehelp" : classes.discordCommands.PERMISSION_HELP
 }
 
+valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft"]
 
 trusted_steam_ids = {
     ## Admins
