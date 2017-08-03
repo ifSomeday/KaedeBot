@@ -174,7 +174,7 @@ def discBot(kstQ, dscQ, draftEvent):
                         append_type = "Channel"
                         obj_id = msg.channel.id
                     if(len(cMsg) > 2):
-                        if(True or cMsg[2] == msg.server.id or (cMsg[2] in list(chan.id for chan in msg.server.channels))):
+                        if(cMsg[2] == msg.server.id or (cMsg[2] in list(chan.id for chan in msg.server.channels))):
                             obj_id = cMsg[2]
                         else:
                             obj_id = None
@@ -219,7 +219,7 @@ def discBot(kstQ, dscQ, draftEvent):
             return(output)
 
     async def permissionStatus(*args, **kwargs):
-        if('msg' in kwargs):
+        if('msg' in kwargs and kwargs['msg'].author.server_permissions.manage_server):
             msg = kwargs['msg']
             server = msg.server
             channel = msg.channel
@@ -251,7 +251,7 @@ def discBot(kstQ, dscQ, draftEvent):
             await client.send_message(msg.channel, output)
 
     async def permissionHelp(*args, **kwargs):
-        if('msg' in kwargs):
+        if('msg' in kwargs and kwargs['msg'].author.server_permissions.manage_server):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "use commands `!addchannel <feature> [<channel id>]`, `!addserver <feature>`, `!removehannel <feature> [<channel id>]` and `!removeserver <feature>` to set up the bot." +
             "\n\nYou must have the Discord permission *Manage Server* to use this command.\n\nIf using the optional `<channel id>`, the channel must be in the current server.\n\nObviously features can be enabled serverwide, or by channel. " +

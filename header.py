@@ -24,7 +24,7 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME,
     "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE, "addchannel" : classes.discordCommands.ADD_CHANNEL_PERMISSION,
     "removechannel" : classes.discordCommands.REMOVE_CHANNEL_PERMISSION, "addserver" : classes.discordCommands.ADD_SERVER_PERMISSION,
-    "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featuresstatus" : classes.discordCommands.PERMISSION_STATUS,
+    "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featurestatus" : classes.discordCommands.PERMISSION_STATUS,
     "featurehelp" : classes.discordCommands.PERMISSION_HELP
 }
 
