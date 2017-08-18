@@ -6,6 +6,7 @@ import queue
 import praw
 import threading
 import classes
+import re
 import markovChaining, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
@@ -31,6 +32,19 @@ def discBot(kstQ, dscQ, draftEvent):
             print("DiscordBot: " +  str(text), flush = True)
         except:
             print(sBot.name + ": Logging error. Probably some retard name", flush = True)
+
+    def deleteFilter(string):
+        botLog(string)
+        if(string.startswith("!") and (string[1:].split()[0].lower() in header.chat_command_translation)):
+            return(True)
+        if(not re.search(keys.SECRET_REGEX_FILTER, string) == None):
+            return(True)
+        if("🐼" in string):
+            ##I fucking hate all of you making me put god damn emojis in here
+            return(True)
+        if(string.lower().startswith(".yt") or string.lower().startswith(".img")):
+            return(True)
+        return(False)
 
     async def sendMessage(channel, string):
         await client.send_message(channel, string)
@@ -191,7 +205,7 @@ def discBot(kstQ, dscQ, draftEvent):
                     elif(command == classes.discordCommands.REMOVE_CHANNEL_PERMISSION or command == classes.discordCommands.REMOVE_SERVER_PERMISISON):
                         cfg.removeAll(msg, command == classes.discordCommands.REMOVE_CHANNEL_PERMISSION)
                 else:
-                    await client.send_message(msg.channel, "Invalid feature. More information available through !permissionHelp")
+                    await client.send_message(msg.channel, "Invalid feature. More information available through !featureHelp")
                     return
                 cfg.saveDict()
                 await client.send_message(msg.channel, "Done !!")
@@ -371,7 +385,7 @@ def discBot(kstQ, dscQ, draftEvent):
     @client.event
     async def on_message_delete(message):
         if(cfg.checkMessage("deletion", message) and (not message.author.id == '213099188584579072')):
-            if(message.content.startswith("!") and (message.content[1:].split()[0].lower() in header.chat_command_translation)):
+            if(deleteFilter(message.content)):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
