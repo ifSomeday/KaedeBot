@@ -37,7 +37,7 @@ def discBot(kstQ, dscQ, draftEvent):
         botLog(string)
         if(string.startswith("!") and (string[1:].split()[0].lower() in header.chat_command_translation)):
             return(True)
-        if(not re.search(keys.SECRET_REGEX_FILTER, string) == None):
+        if(not re.search(keys.SECRET_REGEX_FILTER, string) == None or not re.search(keys.SECRET_REGEX_FILTER2, string) == None):
             return(True)
         if("🐼" in string):
             ##I fucking hate all of you making me put god damn emojis in here
