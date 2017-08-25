@@ -39,6 +39,10 @@ def dumpTable(table_name, table):
     with open(table_name,'wb') as f:
         pickle.dump(table, f)
 
+def dumpAllTables():
+    dumpTable(OLD_TABLE_NAME, d)
+    dumpTable(NEW_TABLE_NAME, nd)
+
 def openTable(table_name):
     with open(table_name,'rb') as f:
         return(pickle.load(f))
