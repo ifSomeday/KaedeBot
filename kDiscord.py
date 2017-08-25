@@ -181,7 +181,7 @@ def discBot(kstQ, dscQ, draftEvent):
     async def addRemovePermission(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            cMsg = args[0]w
+            cMsg = args[0]
             command = kwargs['command']
             if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
                 perm_type = cMsg[1].strip().lower()
