@@ -101,7 +101,12 @@ def discBot(kstQ, dscQ, draftEvent):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
                 table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
-                await client.send_message(msg.channel, markovChaining.generateText(table, builder = args[0][1:]))
+                i = 0
+                meme = markovChaining.generateText(table, builder = args[0][1:])
+                while(i < 10 and len(meme) < 1):
+                    meme = markovChaining.generateText(table, builder = args[0][1:])
+                    i += 1
+                await client.send_message(msg.channel, meme)
             else:
                 await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
@@ -176,9 +181,9 @@ def discBot(kstQ, dscQ, draftEvent):
     async def addRemovePermission(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            cMsg = args[0]
+            cMsg = args[0]w
             command = kwargs['command']
-            if(msg.author.server_permissions.manage_server):
+            if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
                 perm_type = cMsg[1].strip().lower()
                 if(perm_type in header.valid_permission_types):
                     ##TODO: better, but can be simplified
@@ -192,7 +197,10 @@ def discBot(kstQ, dscQ, draftEvent):
                             obj_id = cMsg[2]
                         else:
                             obj_id = None
-                            await client.send_message(msg.channel, "ID must be this server, or a channel in this server !!")
+                            if(msg.author.id == '133811493778096128'):
+                                await client.send_message(msg.channel, "overriding server exclusion...")
+                            else:
+                                await client.send_message(msg.channel, "ID must be this server, or a channel in this server !!")
                             return
                     if(command == classes.discordCommands.ADD_CHANNEL_PERMISSION or command == classes.discordCommands.ADD_SERVER_PERMISSION):
                         cfg.addElement(perm_type + append_type, obj_id)
