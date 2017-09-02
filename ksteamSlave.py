@@ -27,7 +27,7 @@ import pickle
 
 import keys, edit_distance
 
-def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
+def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
     client = SteamClient()
     dota = Dota2Client(client)
     bot_SteamID = None
@@ -42,7 +42,8 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
 
     lobby_command_translation = {"switchside" : classes.leagueLobbyCommands.SWITCH_SIDE, "fp" : classes.leagueLobbyCommands.FIRST_PICK,
                                 "firstpick" :  classes.leagueLobbyCommands.FIRST_PICK, "server": classes.leagueLobbyCommands.SERVER,
-                                "start" : classes.leagueLobbyCommands.START}
+                                "start" : classes.leagueLobbyCommands.START, "name" : classes.leagueLobbyCommands.GAME_NAME,
+                                "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS}
 
     def botLog(text):
         try:
@@ -136,7 +137,7 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
     def hostLobby(tournament=False):
         if(dota.lobby):
             dota.leave_practice_lobby()
-        d['game_name'] = "SEAL: " + str(steamId)
+        d['game_name'] = lobby_name
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
         d['allow_cheats'] = False
@@ -151,6 +152,7 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
         if(tournament):
             #d['leagueid'] = 5432
             pass
+        botLog(lobby_password)
         dota.create_practice_lobby(password=lobby_password, options=d)
         time.sleep(1)
         dota.join_practice_lobby_team(team=4)
@@ -188,9 +190,34 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
             else:
                 sendLobbyMessage("Invalid region (USW USE EU)", msg.channel_id)
                 return
+            dota.config_practice_lobby(d)
+            reset_ready(msg=msg)
             sendLobbyMessage(("Set region to " + server.upper()), msg.channel_id)
 
+    def set_name(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(len(cMSG) < 2):
+                sendLobbyMessage("Please specify a lobby name", msg.channel_id)
+                return
+            lobby_name = str(cMsg[1]).strip()
+            d['game_name'] = lobby_name
             dota.config_practice_lobby(d)
+            sendLobbyMessage("Set lobby name to '" + lobby_name + "'")
+            reset_ready(msg=msg)
+
+    def set_pass(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(len(cMSG) < 2):
+                sendLobbyMessage("Please specify a lobby password", msg.channel_id)
+                return
+            lobby_pass = str(cMsg[1]).strip()
+            d['pass_key'] = lobby_name
+            dota.config_practice_lobby(d)
+            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'")
             reset_ready(msg=msg)
 
     def first_pick(*args, **kwargs):
@@ -251,7 +278,6 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
 
     def botCleanup():
         botLog("shutting down")
-        kstQ.put(classes.command(classes.steamCommands.FREE_BOT, [sBot]))
         dota.leave_practice_lobby()
         stop_event.set()
 
@@ -268,9 +294,10 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
 
     function_translation = {classes.leagueLobbyCommands.SWITCH_SIDE : swap_teams, classes.leagueLobbyCommands.FIRST_PICK : first_pick,
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
-                            classes.leagueLobbyCommands.START : start_lobby}
+                            classes.leagueLobbyCommands.START : start_lobby, classes.leagueLobbyCommands.GAME_NAME : set_name,
+                            classes.leagueLobbyCommands.GAME_PASS : set_pass}
 
-    ##fifteen minutes to get in a lobby
+    ##five minutes to get in a lobby
     toH = threading.Timer(300.0, timeoutHandler, [stop_event,])
     toH.start()
 
@@ -280,10 +307,12 @@ def steamSlave(sBot, kstQ, dscQ, steamId, lobby_password):
         client.sleep(5)
     client.disconnect()
     client.logout()
+    factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot]))
     return
 
 if(__name__ == "__main__"):
     sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[0], keys.SLAVEUSERNAMES[0], keys.SLAVEPASSWORDS[0], keys.SLAVEBOTSTEAMLINKS[0])
     kstQ = queue.Queue()
     dstQ = queue.Queue()
-    client = steamSlave(sBot, kstQ, dstQ)
+    factoryQ = queue.Queue()
+    client = steamSlave(sBot, kstQ, dstQ, factoryQ)

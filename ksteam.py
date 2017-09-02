@@ -32,9 +32,8 @@ import keys
 import classes
 import ksteamSlave
 import header
-import random, string
 
-def dotaThread(kstQ, dscQ):
+def dotaThread(kstQ, dscQ, factoryQ):
     ##set up client
     client = SteamClient()
     dota = Dota2Client(client)
@@ -44,7 +43,6 @@ def dotaThread(kstQ, dscQ):
     broadcast_game = False
 
     ##counters
-    sBotArray = []
     broadcast_counter = 0
 
     ##table info
@@ -53,9 +51,6 @@ def dotaThread(kstQ, dscQ):
 
     ##arg decoding
     r_pattern = re.compile('"(.*?)"')
-
-    ##locks
-    count_lock = threading.Lock()
 
     ##TODO programatically generate this
     bot_SteamID = SteamID(76561198384957078)
@@ -82,11 +77,7 @@ def dotaThread(kstQ, dscQ):
         try:
             print("KaedeBot: " +  str(text), flush = True)
         except:
-            print(sBot.name + ": Logging error. Probably some retard name", flush = True)
-
-    def randomword(length):
-        return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
-
+            print("KaedeBot: Logging error. Probably some retard name", flush = True)
 
     ##after logon, launch dota
     @client.on('logged_on')
@@ -414,39 +405,6 @@ def dotaThread(kstQ, dscQ):
             cMsg = args[0]
             function_translation[classes.steamCommands.REQUEST_LOBBY_BOT](cMsg, msg = msg)
 
-    def spawn_bot(*args, **kwargs):
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(not any(msg.body.steamid_from == SteamID(x).as_64 for x in header.trusted_steam_ids)):
-                botLog("not trusted")
-                return
-            sBot = None
-            count_lock.acquire()
-            for bot in sBotArray:
-                if(not bot.in_use):
-                    bot.in_use = True
-                    sBot = bot
-                    break
-            count_lock.release()
-            if(sBot):
-                pswrd = randomword(6)
-                #TODO: dynamic pronouns
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("You have been assigned " + str(sBot.name))
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("You can optionally add her at " + str(sBot.steamLink) + "\n\nA lobby will be hosted titled as SEAL: " + str(msg.body.steamid_from) + " \nthe password is: " + pswrd + "\n\nPlease leave about 10-20 seconds for the lobby to get hosted")
-                slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, msg.body.steamid_from, pswrd)).start()
-            else:
-                client.get_user(SteamID(msg.body.steamid_from)).send_message("All Bots Busy")
-
-    def freeBot(*args, **kwargs):
-        if('cmd' in kwargs):
-            cmd = kwargs['cmd']
-            sBot = cmd.args[0]
-            count_lock.acquire()
-            for bot in sBotArray:
-                if(bot.name == sBot.name):
-                    bot.in_use = False
-                    break;
-            count_lock.release()
     def naw(*args, **kwargs):
         pass
 
@@ -519,11 +477,7 @@ def dotaThread(kstQ, dscQ):
         classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
         classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
         classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
-        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.FREE_BOT : freeBot,
-        classes.steamCommands.REQUEST_LOBBY_BOT : spawn_bot, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
-
-    for i in range(0, len(keys.SLAVEBOTNAMES)):
-        sBotArray.append(classes.steamBotInfo(keys.SLAVEBOTNAMES[i], keys.SLAVEUSERNAMES[i], keys.SLAVEPASSWORDS[i], keys.SLAVEBOTSTEAMLINKS[i]))
+        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
 
     table = init_local_data()
 
@@ -539,4 +493,5 @@ def dotaThread(kstQ, dscQ):
 if(__name__ == "__main__"):
     kstQ = queue.Queue()
     dscQ = queue.Queue()
-    dotaThread(kstQ, dscQ)
+    factoryQ = queue.Queue()
+    dotaThread(kstQ, dscQ, factoryQ)

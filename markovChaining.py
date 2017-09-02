@@ -66,10 +66,8 @@ def generateText(table, builder = None):
         newword = random.choice(table[(word1, word2)])
         if(newword == NONWORD):
             return(output)
-            sys.exit()
         elif(len(output + newword + " ") > 2000):
             return(output)
-            sys.exit()
         output += newword + " "
         word1, word2 = word2, newword
     return(output)

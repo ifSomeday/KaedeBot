@@ -11,7 +11,7 @@ import markovChaining, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 
-def discBot(kstQ, dscQ, draftEvent):
+def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -31,7 +31,7 @@ def discBot(kstQ, dscQ, draftEvent):
         try:
             print("DiscordBot: " +  str(text), flush = True)
         except:
-            print(sBot.name + ": Logging error. Probably some retard name", flush = True)
+            print("DiscordBot: Logging error. Probably some retard name", flush = True)
 
     def deleteFilter(string):
         botLog(string)
@@ -66,8 +66,8 @@ def discBot(kstQ, dscQ, draftEvent):
             ##TODO: prettier implementation of this:
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
-            if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386') or (message.server.id == '308515912653340682')):
-                return
+            #if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386') or (message.server.id == '308515912653340682')):
+            #    return
             await client.send_typing(message.channel)
             await function_translation[command](cMsg, msg = message, command = command)
 
@@ -102,6 +102,12 @@ def discBot(kstQ, dscQ, draftEvent):
             if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
                 table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
                 i = 0
+				##WILLR test
+				##TODO: is using args[0][1:] breaking things? cMsg should auto filter the command
+				##		either way, the new method should account for this. Determine if do pre/during gen
+                botLog(args[0])
+                args[0] = msg.content.split()
+                botLog(args[0])
                 meme = markovChaining.generateText(table, builder = args[0][1:])
                 while(i < 10 and len(meme) < 1):
                     meme = markovChaining.generateText(table, builder = args[0][1:])
@@ -329,7 +335,27 @@ def discBot(kstQ, dscQ, draftEvent):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
             bChannel = client.get_channel('213086692683415552')
+            ##TODO: add this configurable
             await client.send_message(bChannel, cmd.args[0])
+
+    async def create_lobby(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            ##TODO: verify here
+            ##TODO: get name
+            factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, ["test lobby"]))
+
+    async def request_bot_list(*args, **kwargs):
+        if('msg' in kwargs):
+            factoryQ.put(classes.command(classes.botFactoryCommands.LIST_BOTS_D, [kwargs['msg']]))
+
+    async def print_bot_list(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            msg = cmd.args[0]
+            l = cmd.args[1]
+            s = ', '.join(l)
+            await client.send_message(msg.channel, ("Currently available bots are: " + s))
 
     async def spam_check(*args, **kwargs):
         if('msg' in kwargs):
@@ -367,7 +393,9 @@ def discBot(kstQ, dscQ, draftEvent):
         classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message, classes.discordCommands.BROADCAST_MATCH_RESULT : broadcast_match_res,
         classes.discordCommands.ADD_CHANNEL_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_CHANNEL_PERMISSION : addRemovePermission,
         classes.discordCommands.ADD_SERVER_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_SERVER_PERMISISON : addRemovePermission,
-        classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp}
+        classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
+        classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
+        classes.discordCommands.BOT_LIST_RET : print_bot_list}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
@@ -408,5 +436,6 @@ def discBot(kstQ, dscQ, draftEvent):
 if(__name__ == "__main__"):
     kstQ = queue.Queue()
     dscQ = queue.Queue()
+    factoryQ = queue.Queue()
     draft_event = threading.Event()
-    discBot(kstQ, dscQ, draft_event)
+    discBot(kstQ, dscQ, factoryQ, draft_event)
