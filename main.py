@@ -93,15 +93,15 @@ def getFreeBots(*args, **kwargs):
 while(running):
     if(kst == None or not kst.isAlive()):
         pass
-        #print("thread kst is stopped... starting...")
-        ##kst = startMainSteam(kst)
+        print("thread kst is stopped... starting...")
+        kst = startMainSteam(kst)
     if(kdc == None or not kdc.isAlive()):
         print("thread kdc is stopped... starting...")
         kdc = startDiscord(kdc)
     if(drft == None or not drft.isAlive()):
         pass
-        #print("thread drft is stopped... starting...")
-        #drft = startDraft(drft)
+        print("thread drft is stopped... starting...")
+        drft = startDraft(drft)
     time.sleep(1)
     while(factoryQ.qsize() > 0):
         cmd = factoryQ.get()
@@ -109,10 +109,9 @@ while(running):
             startSteamSlave(cmd = cmd)
         elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
             freeBot(cmd = cmd)
-            running = False
         elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
             getFreeBots(cmd = cmd)
 
-##kst.join()
+kst.join()
 kdc.join()
-##drft.join()
+drft.join()
