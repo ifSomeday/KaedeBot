@@ -100,12 +100,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 				##WILLR test
 				##TODO: is using args[0][1:] breaking things? cMsg should auto filter the command
 				##		either way, the new method should account for this. Determine if do pre/during gen
-                botLog(args[0])
-                args[0] = msg.content.split()
-                botLog(args[0])
-                meme = markovChaining.generateText(table, builder = args[0][1:])
+                meme_base = msg.content.split()
+                meme = markovChaining.generateText(table, builder = meme_base[1:])
                 while(i < 10 and len(meme) < 1):
-                    meme = markovChaining.generateText(table, builder = args[0][1:])
+                    meme = markovChaining.generateText(table, builder = meme_base[1:])
                     i += 1
                 meme = re.sub(r"<@\d+>", r"", meme)
                 await client.send_message(msg.channel, meme)
