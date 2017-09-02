@@ -58,19 +58,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def processMessage(client, message):
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
-
         if(message.channel.is_private and message.author.id == '133811493778096128'):
             await pm_command(msg=message)
-
         if(message.content.startswith('!') and (len(message.content) > 1)):
             ##TODO: prettier implementation of this:
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
-            #if((not command == classes.discordCommands.TOGGLE_DRAFT_MODE) and (message.server.id == '315211723231461386') or (message.server.id == '308515912653340682')):
-            #    return
             await client.send_typing(message.channel)
             await function_translation[command](cMsg, msg = message, command = command)
-
         if((ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6) and cfg.checkMessage("chatresponse", message)):
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
@@ -112,6 +107,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 while(i < 10 and len(meme) < 1):
                     meme = markovChaining.generateText(table, builder = args[0][1:])
                     i += 1
+                meme = re.sub(r"<@\d+>", r"", meme)
                 await client.send_message(msg.channel, meme)
             else:
                 await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
