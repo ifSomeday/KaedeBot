@@ -26,6 +26,19 @@ def addTable(aList, table):
         table.setdefault((word1, word2),[]).append(NONWORD)
     table.setdefault((word1,word2),[]).append(NONWORD)
 
+def addTable3(aList, table):
+    word1 = NONWORD
+    word2 = NONWORD
+    word3 = NONWORD
+    for aString in aList:
+        if "http" in aString:
+            continue
+        for word in aString.split():
+            table.setdefault((word1, word2, word3),[]).append(word)
+            word1, word2, word3 = word2, word3, word
+        table.setdefault((word1, word2, word3),[]).append(NONWORD)
+    table.setdefault((word1, word2, word3),[]).append(NONWORD)
+
 def addSingle(string, table):
     word1 = NONWORD
     word2 = NONWORD
@@ -34,6 +47,16 @@ def addSingle(string, table):
         table.setdefault((word1, word2), []).append(word)
         word1, word2 = word2, word
     table.setdefault((word1, word2), []).append(NONWORD)
+
+def addSingle3(string, table):
+    word1 = NONWORD
+    word2 = NONWORD
+    word3 = NONWORD
+    string = string.strip()
+    for word in string.split():
+        table.setdefault((word1, word2, word3), []).append(word)
+        word1, word2, word3 = word2, word3, word
+    table.setdefault((word1, word2, word3), []).append(NONWORD)
 
 def dumpTable(table_name, table):
     with open(table_name,'wb') as f:
@@ -70,6 +93,24 @@ def generateText(table, builder = None):
             return(output)
         output += newword + " "
         word1, word2 = word2, newword
+    return(output)
+
+def generateText3(table, builder = None):
+    word1, word2, word3 = NONWORD, NONWORD, NONWORD
+    for sText in builder:
+        word1, word2, word3 = word2, word3, sText
+    output = " ".join(builder) + " "
+    if(not (word1, word2, word3) in table):
+        word1, word2, word3 = NONWORD, NONWORD, NONWORDSS
+        output = ""
+    while True:
+        newword = random.choice(table[(word1, word2, word3)])
+        if(newword == NONWORD):
+            return(output)
+        elif(len(output + newword + " ") > 2000):
+            return(output)
+        output += newword + " "
+        word1, word2, word3 = word2, word3, newword
     return(output)
 
 

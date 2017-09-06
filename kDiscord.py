@@ -101,23 +101,22 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 				##TODO: is using args[0][1:] breaking things? cMsg should auto filter the command
 				##		either way, the new method should account for this. Determine if do pre/during gen
                 meme_base = msg.content.split()
-                meme = markovChaining.generateText(table, builder = meme_base[1:])
+                meme = markovChaining.generateText3(table, builder = meme_base[1:])
                 while(i < 10 and len(meme) < 1):
-                    meme = markovChaining.generateText(table, builder = meme_base[1:])
+                    meme = markovChaining.generateText3(table, builder = meme_base[1:])
                     i += 1
                 meme = re.sub(r"<@\d+>", r"", meme)
                 await client.send_message(msg.channel, meme)
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def add_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            markovChaining.addSingle(msg.content[len("!newmeme"):], markovChaining.nd)
+            markovChaining.addSingle3(msg.content[len("!newmeme"):], markovChaining.nd)
             await client.send_message(msg.channel, "new meme added, thanks!")
 
     async def purge_memes(*args, **kwargs):
         if('msg' in kwargs):
+                if(cfg.checkMessage("meme", msg)):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "That command is currently disabled.")
 
@@ -131,16 +130,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):
                 await client.send_message(msg.channel, BsjFacts.getFact())
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def bsj_name(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):
                 await client.send_message(msg.channel, BsjFacts.bsjName())
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def twitter(*args, **kwargs):
         if('msg' in kwargs):
@@ -219,7 +214,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(msg.channel, "Done !!")
             else:
                 await client.send_message(msg.channel, "You need the *Manage Server* Discord permission to do that !!")
-
 
     def featureListHelper(server, server_channels, glob_feat, single_feat, feat_type):
         if(server.id in cfg.config_dict[feat_type + "Server"]):
