@@ -4,12 +4,16 @@ import sys
 import pickle
 import keys
 import os
+import string
+import re
 
 NONWORD = "\n"
 d = {}
 nd = {}
 OLD_TABLE_NAME = os.getcwd() + "/dataStores/memes.pickle"
 NEW_TABLE_NAME = os.getcwd() + "/dataStores/newMemes.pickle"
+MEME_LOG = os.getcwd() + "/dataStores/memes.log"
+meme_array = []
 SUBREDDIT = "copypasta"
 
 ##TODO: rewrite this not retardedly
@@ -43,6 +47,7 @@ def addSingle(string, table):
     word1 = NONWORD
     word2 = NONWORD
     string = string.strip()
+    meme_array.append(string)
     for word in string.split():
         table.setdefault((word1, word2), []).append(word)
         word1, word2 = word2, word
@@ -53,6 +58,7 @@ def addSingle3(string, table):
     word2 = NONWORD
     word3 = NONWORD
     string = string.strip()
+    meme_array.append(string)
     for word in string.split():
         table.setdefault((word1, word2, word3), []).append(word)
         word1, word2, word3 = word2, word3, word
@@ -63,8 +69,13 @@ def dumpTable(table_name, table):
         pickle.dump(table, f)
 
 def dumpAllTables():
-    dumpTable(OLD_TABLE_NAME, d)
-    dumpTable(NEW_TABLE_NAME, nd)
+    if(len(meme_array) > 0):
+        dumpTable(OLD_TABLE_NAME, d)
+        dumpTable(NEW_TABLE_NAME, nd)
+        with open(MEME_LOG, "a") as f:
+            for m in meme_array:
+                f.write(m + "\n")
+        meme_array.clear()
 
 def openTable(table_name):
     with open(table_name,'rb') as f:
@@ -76,6 +87,25 @@ def printTable():
 def clearTable():
     global d
     d.clear()
+
+def generalize(item):
+    return(re.sub('[' + string.punctuation + ']', '', item).lower())
+
+##match generalized item, ignoring nones
+def matcher(pattern):
+    def match(item):
+        return(all(p is None or generalize(t) == generalize(p) for p, t in zip(pattern, item)))
+    return(match)
+
+def fuzzyGet(pattern, table):
+    matches = filter(matcher(pattern), list(table.keys()))
+    arr = []
+    for m in matches:
+        arr += table[m]
+    if(len(arr) > 0):
+        return(matches, arr)
+    else:
+        return(None, None)
 
 def generateText(table, builder = None):
     word1, word2 = NONWORD, NONWORD
@@ -100,19 +130,21 @@ def generateText3(table, builder = None):
     for sText in builder:
         word1, word2, word3 = word2, word3, sText
     output = " ".join(builder) + " "
-    if(not (word1, word2, word3) in table):
-        word1, word2, word3 = NONWORD, NONWORD, NONWORDSS
+    matches, choices = fuzzyGet((word1, word2, word3), table)
+    if(choices is None):
+        word1, word2, word3 = NONWORD, NONWORD, NONWORD
+        matches, choices = fuzzyGet((word1, word2, word3), table)
         output = ""
     while True:
-        newword = random.choice(table[(word1, word2, word3)])
+        newword = random.choice(choices)
         if(newword == NONWORD):
             return(output)
         elif(len(output + newword + " ") > 2000):
             return(output)
         output += newword + " "
         word1, word2, word3 = word2, word3, newword
+        matches, choices = fuzzyGet((word1, word2, word3), table)
     return(output)
-
 
 def download(subreddit, num):
     t = []
