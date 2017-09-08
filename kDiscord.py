@@ -403,7 +403,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_reaction_add(reaction, user):
-        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me):
+        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.startswith("!")):
             if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
                 await client.add_reaction(reaction.message, '🤖')
                 markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
