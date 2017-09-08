@@ -61,7 +61,6 @@ push.txt
 
 *.pickle
 *.pyc
-*memes.log
 *firebase_private_key.json
 *Kyouko_Thumbs_up.gif
 *Kyouko_air_guitar.gif
