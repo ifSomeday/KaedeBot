@@ -10,6 +10,8 @@ d = {}
 nd = {}
 OLD_TABLE_NAME = os.getcwd() + "/dataStores/memes.pickle"
 NEW_TABLE_NAME = os.getcwd() + "/dataStores/newMemes.pickle"
+MEME_LOG = os.getcwd() + "/dataStores/memes.log"
+meme_array = []
 SUBREDDIT = "copypasta"
 
 ##TODO: rewrite this not retardedly
@@ -17,6 +19,7 @@ SUBREDDIT = "copypasta"
 def addTable(aList, table):
     word1 = NONWORD
     word2 = NONWORD
+    meme_array.append(string)
     for aString in aList:
         if "http" in aString:
             continue
@@ -30,6 +33,7 @@ def addTable3(aList, table):
     word1 = NONWORD
     word2 = NONWORD
     word3 = NONWORD
+    meme_array.append(string)
     for aString in aList:
         if "http" in aString:
             continue
@@ -63,8 +67,13 @@ def dumpTable(table_name, table):
         pickle.dump(table, f)
 
 def dumpAllTables():
-    dumpTable(OLD_TABLE_NAME, d)
-    dumpTable(NEW_TABLE_NAME, nd)
+    if(len(meme_array) > 0):
+        dumpTable(OLD_TABLE_NAME, d)
+        dumpTable(NEW_TABLE_NAME, nd)
+        with open(MEME_LOG, "a") as f:
+            for m in meme_array:
+                f.write(m + "\n")
+        meme_array.clear()
 
 def openTable(table_name):
     with open(table_name,'rb') as f:

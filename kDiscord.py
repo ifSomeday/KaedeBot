@@ -117,8 +117,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def purge_memes(*args, **kwargs):
         if('msg' in kwargs):
                 if(cfg.checkMessage("meme", msg)):
-            msg = kwargs['msg']
-            await client.send_message(msg.channel, "That command is currently disabled.")
+                        msg = kwargs['msg']
+                        await client.send_message(msg.channel, "That command is currently disabled.")
 
     async def help_command(*args, **kwargs):
         if('msg' in kwargs):
@@ -400,6 +400,15 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             markovChaining.dumpAllTables()
             botLog("saving")
             await asyncio.sleep(1800)
+
+    @client.event
+    async def on_reaction_add(reaction, user):
+        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me):
+            if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
+                await client.add_reaction(reaction.message, '🤖')
+                markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
+            else:
+                botLog("already reacted")
 
     @client.event
     async def on_ready():
