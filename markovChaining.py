@@ -110,7 +110,7 @@ def generateText3(table, builder = None):
         word1, word2, word3 = word2, word3, sText
     output = " ".join(builder) + " "
     if(not (word1, word2, word3) in table):
-        word1, word2, word3 = NONWORD, NONWORD, NONWORDSS
+        word1, word2, word3 = NONWORD, NONWORD, NONWORD
         output = ""
     while True:
         newword = random.choice(table[(word1, word2, word3)])

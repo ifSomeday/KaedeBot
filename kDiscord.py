@@ -97,17 +97,19 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
                 table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
                 i = 0
-				##WILLR test
-				##TODO: is using args[0][1:] breaking things? cMsg should auto filter the command
-				##		either way, the new method should account for this. Determine if do pre/during gen
                 meme_base = msg.content.split()
+                st = time.time()
                 meme = markovChaining.generateText3(table, builder = meme_base[1:])
                 while(i < 10 and len(meme) < 1):
                     meme = markovChaining.generateText3(table, builder = meme_base[1:])
                     botLog("Invalid meme, rebuilding")
                     i += 1
-                meme = re.sub(r"<@\d+>", r"", meme)
-                meme = re.sub(r"@everyone", r"", meme)
+                et1 = time.time()
+                meme = re.sub(r"@everyone", r"everyone", meme)
+                for s in re.finditer(r"<@(\d+)>", meme):
+                    meme = meme.replace(s.group(0), (await client.get_user_info(s.group(1))).name)
+                et2 = time.time()
+                botLog("build meme: " + str(et1 - st) + "\treplace: " + str(et2 - et1))
                 await client.send_message(msg.channel, meme)
 
     async def add_meme(*args, **kwargs):
@@ -272,7 +274,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs and kwargs['msg'].author.server_permissions.manage_server):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "use commands `!addchannel <feature> [<channel id>]`, `!addserver <feature>`, `!removehannel <feature> [<channel id>]` and `!removeserver <feature>` to set up the bot." +
-            "\n\nYou must have the Discord permission *Manage Server* to use this command.\n\nIf using the optional `<channel id>`, the channel must be in the current server.\n\nObviously features can be enabled serverwide, or by channel. " +
+            "\n\nYou must have the Discord permission *Manage Server* to use these commands.\n\nIf using the optional `<channel id>`, the channel must be in the current server.\n\nObviously features can be enabled serverwide, or by channel. " +
             "\n\nThe valid feature types are as follows:\n\t* `meme` handles the `!meme` and `!bsjMe` related commands\n\t* `imagemacro` handles the various *Yuru Yuri* related image macro commands" +
             "\n\t* `deletion` turns on the deletion tracking feature\n\t* `chatresponse` turns on the flavor chat responses\n\t* `floodcontrol` turns on the anti image spam feature (bot needs permission to delete messages)" +
             "\n\t* `draft` makes the channel a draft channel (currently disabled)\n\nUse command `!featureStatus` to see the bots current configuration")
