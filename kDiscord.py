@@ -104,8 +104,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 meme = markovChaining.generateText3(table, builder = meme_base[1:])
                 while(i < 10 and len(meme) < 1):
                     meme = markovChaining.generateText3(table, builder = meme_base[1:])
+                    botLog("Invalid meme, rebuilding")
                     i += 1
                 meme = re.sub(r"<@\d+>", r"", meme)
+                meme = re.sub(r"@everyone", r"", meme)
                 await client.send_message(msg.channel, meme)
 
     async def add_meme(*args, **kwargs):
@@ -403,10 +405,11 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_reaction_add(reaction, user):
-        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.startswith("!")):
+        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.content.startswith("!")):
             if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
                 await client.add_reaction(reaction.message, '🤖')
                 markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
+                await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
             else:
                 botLog("already reacted")
 
