@@ -409,7 +409,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
                 await client.add_reaction(reaction.message, '🤖')
                 markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
-                await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
+                if(cfg.checkMessage("meme", reaction.message)):
+                    await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
             else:
                 botLog("already reacted")
 
