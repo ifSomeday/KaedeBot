@@ -4,6 +4,8 @@ import sys
 import pickle
 import keys
 import os
+import re
+import string
 
 NONWORD = "\n"
 d = {}
@@ -86,6 +88,26 @@ def clearTable():
     global d
     d.clear()
 
+##massive complexity increase
+def generalize(item):
+    return(re.sub('[' + string.punctuation + ']', '', item).lower())
+
+##match generalized item, ignoring nones
+def matcher(pattern):
+    def match(item):
+        return(all(p is None or p.lower() == t.lower() for p, t in zip(pattern, item)))
+    return(match)
+
+def fuzzyGet(pattern, table):
+    matches = filter(matcher(pattern), list(table.keys()))
+    arr = []
+    for m in matches:
+        arr += table[m]
+    if(len(arr) > 0):
+        return(matches, arr)
+    else:
+        return(None, None)
+
 def generateText(table, builder = None):
     word1, word2 = NONWORD, NONWORD
     for sText in builder:
@@ -109,17 +131,20 @@ def generateText3(table, builder = None):
     for sText in builder:
         word1, word2, word3 = word2, word3, sText
     output = " ".join(builder) + " "
-    if(not (word1, word2, word3) in table):
+    matches, choices = fuzzyGet((word1, word2, word3), table)
+    if(choices is None):
         word1, word2, word3 = NONWORD, NONWORD, NONWORD
+        matches, choices = fuzzyGet((word1, word2, word3), table)
         output = ""
     while True:
-        newword = random.choice(table[(word1, word2, word3)])
+        newword = random.choice(choices)
         if(newword == NONWORD):
             return(output)
         elif(len(output + newword + " ") > 2000):
             return(output)
         output += newword + " "
         word1, word2, word3 = word2, word3, newword
+        matches, choices = fuzzyGet((word1, word2, word3), table)
     return(output)
 
 
