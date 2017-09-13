@@ -20,9 +20,15 @@ APPLICATION_NAME = 'KaedeBot Draft Plugin'
 RANGE_FOR_PICKS = 'ADMIN DRAFT SHEET!B3:H'
 #SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
 SPREADSHEET_ID = '1jzI8iSFPV2iJCaCbxwVaBnB_QtGI-h0XHfUDf9auQf8'
-RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N15'
+RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N'
 
 player_array = []
+
+def botLog(text):
+    try:
+        print("draftThread: " +  str(text), flush = True)
+    except:
+        print("draftThread: Logging error. Probably some retard name", flush = True)
 
 def get_credentials():
     credential_dir = ""
@@ -31,7 +37,7 @@ def get_credentials():
         credential_dir = os.path.join(home_dir, '.credentials')
     else:
         credential_dir = "/home/pi/.credentials"
-    print(credential_dir, flush=True)
+    botLog(credential_dir)
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
@@ -46,7 +52,7 @@ def get_credentials():
             credentials = tools.run_flow(flow, store, flags)
         else: # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
-        print('Storing credentials to ' + credential_path)
+        botLog('Storing credentials to ' + credential_path)
     return credentials
 
 
@@ -73,7 +79,7 @@ def main(kstQ, dscQ, draftEvent):
                                 command = build_command(row, service, update=True)
                                 dscQ.put(command)
                     else:
-                        print("bad entry")
+                        botLog("bad entry")
                         break
                 else:
                     break

@@ -54,7 +54,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
 
     ##TODO programatically generate this
     bot_SteamID = SteamID(76561198384957078)
-    kyuoko_toshino = SteamID(75419738)
+    kyouko_toshino = SteamID(75419738)
 
     ##enable debug
     if(debug):
@@ -321,7 +321,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
     def setup_lobby(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.body.steamid_from == kyuoko_toshino.as_64):
+            if(msg.body.steamid_from == kyouko_toshino.as_64):
                 client.get_user(SteamID(msg.body.steamid_from)).send_message("setting up lobby")
                 _lobby_setup_backend()
         pass
@@ -337,7 +337,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
 
     def exit_dota(*args, **kwargs):
         msg = kwargs['msg']
-        if(msg.body.steamid_from == kyuoko_toshino.as_64):
+        if(msg.body.steamid_from == kyouko_toshino.as_64):
             exit()
 
     ##0 is good, anything else is bad
