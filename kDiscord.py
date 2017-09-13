@@ -311,7 +311,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await client.send_message(client.get_channel('133812880654073857'), "Inhouse looking for members.\nLooking for " + str(10 - total_members) + " more players\nContact " + cmd.args[1].persona_name + " on steam.\n(<" + sid.community_url +">)")
 
     async def toggle_draft(*args, **kwargs):
-        return
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128' or msg.author.id == '85148771226234880'):

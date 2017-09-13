@@ -18,8 +18,8 @@ SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
 CLIENT_SECRET_FILE = os.getcwd() + '\\dataStores\\google_api.json'
 APPLICATION_NAME = 'KaedeBot Draft Plugin'
 RANGE_FOR_PICKS = 'ADMIN DRAFT SHEET!B3:H'
-#SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
-SPREADSHEET_ID = '1jzI8iSFPV2iJCaCbxwVaBnB_QtGI-h0XHfUDf9auQf8'
+SPREADSHEET_ID = '1Ue1P6i4U4-1M4l-e9aX5gjNNm0dOZWNqzbVNpuZfNEg'
+#SPREADSHEET_ID = '1jzI8iSFPV2iJCaCbxwVaBnB_QtGI-h0XHfUDf9auQf8'
 RANGE_FOR_AMMR = 'ADMIN DRAFT SHEET!M4:N'
 
 player_array = []
@@ -72,11 +72,13 @@ def main(kstQ, dscQ, draftEvent):
                     if(not "idiotbeard" in row[6].lower()):
                         if(i > last_pick):
                             command = build_command(row, service)
+                            botLog("attempting to print")
                             dscQ.put(command)
                             last_pick = i
                         else:
                             if(player_array[i].isChanged(row)):
                                 command = build_command(row, service, update=True)
+                                botLog("attempting to update")
                                 dscQ.put(command)
                     else:
                         botLog("bad entry")
@@ -85,6 +87,7 @@ def main(kstQ, dscQ, draftEvent):
                     break
             time.sleep(7)
         else:
+            botLog("draft event not set")
             draftEvent.wait()
 
 def build_command(row, service, update=False):
