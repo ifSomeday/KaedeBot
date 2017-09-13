@@ -100,7 +100,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 meme_base = msg.content.split()
                 st = time.time()
                 meme = markovChaining.generateText3(table, builder = meme_base[1:])
-                while(i < 10 and len(meme) < 1):
+                while(i < 10 and len(meme) < 1 or meme.startswith("!")):
                     meme = markovChaining.generateText3(table, builder = meme_base[1:])
                     botLog("Invalid meme, rebuilding")
                     i += 1
