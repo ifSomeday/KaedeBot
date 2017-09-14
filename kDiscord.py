@@ -116,12 +116,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 meme_base = msg.content.split()
                 st = time.time()
                 meme = markovChaining.generateText3(table, builder = meme_base[1:])
-                while(len(meme) < 1 or meme.startswith("!")):
-                    meme = markovChaining.generateText3(table, builder = meme_base[1:])
-                    botLog("Invalid meme, rebuilding")
+                while((meme.strip().startswith("!") or len(meme.strip()) == 0) and i < 10):
                     i += 1
-                    if(i > 10):
-                        break
+                    meme = markovChaining.generateText3(table, builder = [])
+                    botLog("Invalid meme, rebuilding")
+                if(meme.strip().startswith("!") or len(meme.strip()) == 0)
+                    return
                 et1 = time.time()
                 meme = re.sub(r"@everyone", r"everyone", meme)
                 for s in re.finditer(r"<@(\d+)>", meme):
