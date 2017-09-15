@@ -49,7 +49,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if("🐼" in string):
             ##I fucking hate all of you making me put god damn emojis in here
             return(True)
-        if(string.lower().startswith(".yt") or string.lower().startswith(".img")):
+        if(string.lower().startswith(".")):
             return(True)
         return(False)
 
@@ -476,6 +476,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def on_message_delete(message):
         if(cfg.checkMessage("deletion", message) and (not message.author.id == '213099188584579072')):
             if(deleteFilter(message.content)):
+                return
+            if(msg.server.id == '308515912653340682' and not msg.author.id == '171840790803382272'):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
