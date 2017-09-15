@@ -120,7 +120,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                     i += 1
                     meme = markovChaining.generateText3(table, builder = [])
                     botLog("Invalid meme, rebuilding")
-                if(meme.strip().startswith("!") or len(meme.strip()) == 0)
+                if(meme.strip().startswith("!") or len(meme.strip()) == 0):
                     return
                 et1 = time.time()
                 meme = re.sub(r"@everyone", r"everyone", meme)
