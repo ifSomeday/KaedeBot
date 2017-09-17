@@ -468,6 +468,16 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(msg.channel, " ", embed = third)
                 await client.send_message(msg.channel, " ", embed = fourth)
 
+    async def honorary_champs(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            acceptable_ids= ["112786843476439040", "109854391783149568", "85604200356007936", "133811493778096128", "166390891920097280", "166362994735972352"]
+            if(msg.author.id in acceptable_ids and cfg.checkMessage("chatresponse", msg)):
+                logo = "https://cdn.discordapp.com/attachments/321372241830871040/322176298913103873/seal_clubbers_interface.png"
+                champs = create_seal_embed("Seal Clubbers", "Honorary champions", logo, "Truckwaffle", ["waves", "Richie", "MANGO GIRL", "Krenn", "Will"], colour = discord.Colour.gold())
+                await client.send_message(msg.channel, " ", embed = champs)
+                await client.delete_message(msg)
+
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -494,7 +504,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
-        classes.discordCommands.SEAL_EMBEDS : seal_embeds}
+        classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
