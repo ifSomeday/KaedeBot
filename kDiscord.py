@@ -424,6 +424,48 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             elif(callback):
                 await callback(cMsg, msg=msg, command=command)
 
+    def create_seal_embed(team, place, logo_url, captain, player_list, colour = None):
+        emb = discord.Embed()
+        emb.title = team
+        emb.type = "rich"
+        emb.description = place + " place"
+        emb.set_thumbnail(url = logo_url)
+        emb.add_field(name = "Captain", value = captain, inline = False)
+        player_str = ""
+        for i in range(0, len(player_list)):
+            player_str += ("(" + str(i + 1) + ") - " + player_list[i] + "\n")
+        emb.add_field(name = "Players", value = player_str, inline = False)
+        if(not colour is None):
+            emb.colour = colour
+        return(emb)
+
+    async def seal_embeds(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(msg.author.id == "133811493778096128" or msg.author.id == "96665903051046912"):
+                ##Logo Links
+                mc_logo = "https://cdn.discordapp.com/attachments/303070764276645888/358816837506564097/zuQ393jcDV.png"
+                bbb_logo = "https://cdn.discordapp.com/attachments/133812880654073857/358755695346057216/bbbbbbbb.png"
+                united_logo = "https://cdn.discordapp.com/attachments/133812880654073857/358755607131455488/United.png"
+                nelson_logo = "https://cdn.discordapp.com/attachments/303070764276645888/358816766303928320/10KD5sFDALK.png"
+
+                ##Create embeds
+                first = create_seal_embed("Mein Covfefe", "First", mc_logo, "CRAP" ,["Bloodninja", "RiF", "DoosherMcfailNrage", "TanK.鐔孝鵬", "Commander Snuggles"], colour = discord.Colour.gold())
+                second = create_seal_embed("Bristlebrokebackburg Bristlebrokebackblarg Bristlebrokebackblam", "Second", bbb_logo, "Kodos" ,["Potato Farmer", "h!", "Zoompa", "Kabobrocks", "love dodecagon"], colour = discord.Colour.dark_grey())
+                third = create_seal_embed("United", "Third", united_logo, "Panda" , ["Atran", "Aeosynth", "PULLBACKTHEBOLT", "Rabbi-", "SupermaN!"], colour = discord.Colour.dark_gold())
+                fourth = create_seal_embed("In Nelsons We Trust", "Fourth", nelson_logo, "Dream" , ["Linkdx", "aku", "Negative-i-am-a-meat-popsicle", "Blakkout", "Dude Broman, Esq."], colour = discord.Colour.darker_grey())
+
+                ##send embeds
+                await client.send_message(msg.channel, " ", embed = first)
+                await client.send_message(msg.channel, " ", embed = second)
+                await client.send_message(msg.channel, " ", embed = third)
+                await client.send_message(msg.channel, " ", embed = fourth)
+
+    async def test_function(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            pass
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -444,7 +486,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.ADD_SERVER_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_SERVER_PERMISISON : addRemovePermission,
         classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
-        classes.discordCommands.BOT_LIST_RET : print_bot_list}
+        classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
+        classes.discordCommands.SEAL_EMBEDS : seal_embeds}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

@@ -26,7 +26,8 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "removechannel" : classes.discordCommands.REMOVE_CHANNEL_PERMISSION, "addserver" : classes.discordCommands.ADD_SERVER_PERMISSION,
     "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featurestatus" : classes.discordCommands.PERMISSION_STATUS,
     "featurehelp" : classes.discordCommands.PERMISSION_HELP, "lobby" : classes.discordCommands.CREATE_LOBBY,
-    "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST
+    "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST,
+    "test" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS
 }
 
 valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft"]
