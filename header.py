@@ -31,14 +31,17 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
 
 valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft"]
 
-trusted_steam_ids = {
-    ## Admins
-    63813048 : "Tyrannosaurus X", 69243302 : "h!", 64908677 : "Danny", ##Treebeard : JK
-    ## Captains
-    102264839 : "Teresa", 96421460 : "Panda", 157808123 : "Smack", 66198763 : "MJJ",
-    68025723 : "Kodos", 42291565 : "Crap", 17811638 : "Xag", 30999748 : "Dream",
-    81718807 : "Truck", 316353271 : "StarEnd", 180022403 : "Henry", 1437926 : "Burgeoning",
-    111747192 : "Mantis", 83611229 : "Blame", 3231124 : "Finite",
-    ## Others
-    83514255 : "Luke", 75419738 : "Toshino Kyouko !!", 100341395 : "Karen", 519770 : "Krenn"
+##TODO: fill with captains
+##TODO: dump to file so captains can specify other trustworth people
+captain_steam_ids = {
+    63813048 : "Tyrannosaurus X", 69243302 : "h!", 64908677 : "Danny", 96421460 : "Panda",
+
+    83514255 : "Luke", 75419738 : "Toshino Kyouko !!", 100341395 : "Karen"
+}
+
+override_steam_ids = {
+    ##TODO: look up treebeard
+    63813048 : "Tyrannosaurus X", 69243302 : "h!", 64908677 : "Danny", 96421460 : "Panda",
+
+    83514255 : "Luke", 75419738 : "Toshino Kyouko !!", 100341395 : "Karen"
 }

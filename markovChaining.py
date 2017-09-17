@@ -10,6 +10,8 @@ d = {}
 nd = {}
 OLD_TABLE_NAME = os.getcwd() + "/dataStores/memes.pickle"
 NEW_TABLE_NAME = os.getcwd() + "/dataStores/newMemes.pickle"
+MEME_LOG = os.getcwd() + "/dataStores/memes.log"
+meme_array = []
 SUBREDDIT = "copypasta"
 
 ##TODO: rewrite this not retardedly
@@ -17,6 +19,7 @@ SUBREDDIT = "copypasta"
 def addTable(aList, table):
     word1 = NONWORD
     word2 = NONWORD
+    meme_array.append(string)
     for aString in aList:
         if "http" in aString:
             continue
@@ -25,6 +28,20 @@ def addTable(aList, table):
             word1, word2 = word2, word
         table.setdefault((word1, word2),[]).append(NONWORD)
     table.setdefault((word1,word2),[]).append(NONWORD)
+
+def addTable3(aList, table):
+    word1 = NONWORD
+    word2 = NONWORD
+    word3 = NONWORD
+    meme_array.append(string)
+    for aString in aList:
+        if "http" in aString:
+            continue
+        for word in aString.split():
+            table.setdefault((word1, word2, word3),[]).append(word)
+            word1, word2, word3 = word2, word3, word
+        table.setdefault((word1, word2, word3),[]).append(NONWORD)
+    table.setdefault((word1, word2, word3),[]).append(NONWORD)
 
 def addSingle(string, table):
     word1 = NONWORD
@@ -35,13 +52,28 @@ def addSingle(string, table):
         word1, word2 = word2, word
     table.setdefault((word1, word2), []).append(NONWORD)
 
+def addSingle3(string, table):
+    word1 = NONWORD
+    word2 = NONWORD
+    word3 = NONWORD
+    string = string.strip()
+    for word in string.split():
+        table.setdefault((word1, word2, word3), []).append(word)
+        word1, word2, word3 = word2, word3, word
+    table.setdefault((word1, word2, word3), []).append(NONWORD)
+
 def dumpTable(table_name, table):
     with open(table_name,'wb') as f:
         pickle.dump(table, f)
 
 def dumpAllTables():
-    dumpTable(OLD_TABLE_NAME, d)
-    dumpTable(NEW_TABLE_NAME, nd)
+    if(len(meme_array) > 0):
+        dumpTable(OLD_TABLE_NAME, d)
+        dumpTable(NEW_TABLE_NAME, nd)
+        with open(MEME_LOG, "a") as f:
+            for m in meme_array:
+                f.write(m + "\n")
+        meme_array.clear()
 
 def openTable(table_name):
     with open(table_name,'rb') as f:
@@ -70,6 +102,24 @@ def generateText(table, builder = None):
             return(output)
         output += newword + " "
         word1, word2 = word2, newword
+    return(output)
+
+def generateText3(table, builder = None):
+    word1, word2, word3 = NONWORD, NONWORD, NONWORD
+    for sText in builder:
+        word1, word2, word3 = word2, word3, sText
+    output = " ".join(builder) + " "
+    if(not (word1, word2, word3) in table):
+        word1, word2, word3 = NONWORD, NONWORD, NONWORD
+        output = ""
+    while True:
+        newword = random.choice(table[(word1, word2, word3)])
+        if(newword == NONWORD):
+            return(output)
+        elif(len(output + newword + " ") > 2000):
+            return(output)
+        output += newword + " "
+        word1, word2, word3 = word2, word3, newword
     return(output)
 
 

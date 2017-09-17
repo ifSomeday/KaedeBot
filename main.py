@@ -5,7 +5,7 @@ monkey.patch_socket()
 import ksteam as sb
 import kDiscord as db
 import ksteamSlave
-##import draftThread as dt
+import draftThread as dt
 import threading
 import random, string
 import keys, classes

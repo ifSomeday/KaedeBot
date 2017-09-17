@@ -24,6 +24,7 @@ import classes
 import time
 import os
 import pickle
+import header
 
 import keys, edit_distance
 
@@ -33,6 +34,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
     bot_SteamID = None
 
     hosted = False
+
+    kyouko_toshino = SteamID(75419738)
 
     d = {}
 
@@ -103,10 +106,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
         ##TODO: check you have permission to release
         msgT = msg.body.message.decode("utf-8").rstrip('\x00')
         if(len(msgT) > 0):
-            if(msgT == "release"):
+            if(msgT == "release" and msg.body.steamid_from == kyouko_toshino.as_64):
                 botLog("releasing")
                 botCleanup()
-            if(msgT == "lobby"):
+            if(msgT == "lobby" and SteamID(msg.body.steamid_from).as_32 in list(header.captain_steam_ids.keys())):
                 hosted = False
                 hostLobby(tournament=True)
 

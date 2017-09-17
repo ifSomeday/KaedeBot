@@ -27,13 +27,20 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     cfg = classes.discordConfigHelper()
 
+
     def botLog(text):
+        """
+        logs a string. Adds bot name, and forces a flush
+        """
         try:
             print("DiscordBot: " +  str(text), flush = True)
         except:
             print("DiscordBot: Logging error. Probably some retard name", flush = True)
 
     def deleteFilter(string):
+        """
+        Determines if a string is eligible for revivign through deletion feature
+        """
         botLog(string)
         if(string.startswith("!") and (string[1:].split()[0].lower() in header.chat_command_translation)):
             return(True)
@@ -42,20 +49,23 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if("🐼" in string or "卐" in string):
             ##I fucking hate all of you making me put god damn emojis in here
             return(True)
-        if(string.lower().startswith(".yt") or string.lower().startswith(".img")):
+        if(string.lower().startswith(".")):
             return(True)
         return(False)
 
-    async def sendMessage(channel, string):
-        await client.send_message(channel, string)
-
     async def cmdSendMsg(*args, **kwargs):
+        """
+        Sends a discord message. For use by external threads, utilizting the Discord command queue
+        """
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
-            await sendMessage(cmd.args[0], cmd.args[1])
+            await client.send_message(cmd.args[0], cmd.args[1])
 
     ##Call and Response
     async def processMessage(client, message):
+        """
+        processes all incoming messages, and determines what action, if any, should be taken
+        """
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
@@ -73,6 +83,9 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(message.channel, "quack quack")
 
     async def pm_command(*args, **kwargs):
+        """
+        processes all incoming PMS, and determines what action, if any, should be taken
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             split_string = msg.content.find(' ')
@@ -92,68 +105,98 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await client.send_message(client.get_channel(pm_channel), pm_content)
 
     async def send_meme(*args, **kwargs):
+        """
+        builds, validates, and sends a meme message
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
                 table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
                 i = 0
-				##WILLR test
-				##TODO: is using args[0][1:] breaking things? cMsg should auto filter the command
-				##		either way, the new method should account for this. Determine if do pre/during gen
                 meme_base = msg.content.split()
-                meme = markovChaining.generateText(table, builder = meme_base[1:])
-                while(i < 10 and len(meme) < 1):
-                    meme = markovChaining.generateText(table, builder = meme_base[1:])
+                st = time.time()
+                meme = markovChaining.generateText3(table, builder = meme_base[1:])
+                while((meme.strip().startswith("!") or len(meme.strip()) == 0) and i < 10):
                     i += 1
-                meme = re.sub(r"<@\d+>", r"", meme)
+                    meme = markovChaining.generateText3(table, builder = [])
+                    botLog("Invalid meme, rebuilding")
+                if(meme.strip().startswith("!") or len(meme.strip()) == 0):
+                    return
+                et1 = time.time()
+                meme = re.sub(r"@everyone", r"everyone", meme)
+                for s in re.finditer(r"<@(\d+)>", meme):
+                    meme = meme.replace(s.group(0), (await client.get_user_info(s.group(1))).name)
+                et2 = time.time()
+                botLog("build meme: " + str(et1 - st) + "\treplace: " + str(et2 - et1))
                 await client.send_message(msg.channel, meme)
 
     async def add_meme(*args, **kwargs):
+        """
+        adds a new meme
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):
-                markovChaining.addSingle(msg.content[len("!newmeme"):], markovChaining.nd)
+                markovChaining.addSingle3(msg.content[len("!newmeme"):], markovChaining.nd)
                 await client.send_message(msg.channel, "new meme added, thanks!")
 
     async def purge_memes(*args, **kwargs):
+        """
+        purges the meme database. Command is currently disabled
+        """
         if('msg' in kwargs):
-            msg = kwargs['msg']
-            await client.send_message(msg.channel, "That command is currently disabled.")
+                if(cfg.checkMessage("meme", msg)):
+                        msg = kwargs['msg']
+                        await client.send_message(msg.channel, "That command is currently disabled.")
 
     async def help_command(*args, **kwargs):
+        """
+        Displays an (outdated) help command
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "Use !meme to get a spicy meme\nUse !newmeme to add your own dank memes\nUse !MsjMe to get BSJ memes\nUse !BsjName to get your BSJ Name\nUse !twitter to see my twitter counterpart")
 
     async def bsj_meme(*args, **kwargs):
+        """
+        builds and sends a BSJ meme
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):
                 await client.send_message(msg.channel, BsjFacts.getFact())
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def bsj_name(*args, **kwargs):
+        """
+        Answers the biggest question in life... what does BSJ actually stand for?
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("meme", msg)):
                 await client.send_message(msg.channel, BsjFacts.bsjName())
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def twitter(*args, **kwargs):
+        """
+        sends the bot's twitter
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("chatresponse", msg)):
                 await client.send_message(msg.channel, "Follow my twitter counterpart !!\nhttps://twitter.com/NameIsBot")
 
     async def steam_status(*args, **kwargs):
+        """
+        Requests the steam bot return its status. Response from steam thread is placed into the Discord command queue
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkMessage("chatresponse", msg)):
                 kstQ.put(classes.command(classes.steamCommands.STATUS_4D, [msg.channel]))
 
     async def steam_leaderboard(*args, **kwargs):
+        """
+        Requests the steam inhouse leaderboard. Resposne from steam thread is placed into the Discord command queue
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             sMsg = msg.content.split()
@@ -164,11 +207,17 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             kstQ.put(classes.command(classes.steamCommands.LEADERBOARD_4D, [msg.channel, str(spots)]))
 
     async def image_macro_wrapper(*args, **kwargs):
+        """
+        Wrapper for image macro commands. Determines what image is being requested
+        """
         if('msg' in kwargs):
             if(cfg.checkMessage("imagemacro", kwargs['msg'])):
                 await spam_check(args[0], msg=kwargs['msg'], command=kwargs['command'], cb=image_macro)
 
     async def image_macro(*args, **kwargs):
+        """
+        Loads and sends the actual image macro
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             await client.delete_message(msg)
@@ -178,6 +227,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
 
     async def addRemovePermission(*args, **kwargs):
+        """
+        Adds or removes a permission to a server or channel
+        Handles request validation and overrides
+        """
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
@@ -218,7 +271,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(msg.channel, "Done !!")
             else:
                 await client.send_message(msg.channel, "You need the *Manage Server* Discord permission to do that !!")
-
 
     def featureListHelper(server, server_channels, glob_feat, single_feat, feat_type):
         if(server.id in cfg.config_dict[feat_type + "Server"]):
@@ -280,7 +332,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs and kwargs['msg'].author.server_permissions.manage_server):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "use commands `!addchannel <feature> [<channel id>]`, `!addserver <feature>`, `!removehannel <feature> [<channel id>]` and `!removeserver <feature>` to set up the bot." +
-            "\n\nYou must have the Discord permission *Manage Server* to use this command.\n\nIf using the optional `<channel id>`, the channel must be in the current server.\n\nObviously features can be enabled serverwide, or by channel. " +
+            "\n\nYou must have the Discord permission *Manage Server* to use these commands.\n\nIf using the optional `<channel id>`, the channel must be in the current server.\n\nObviously features can be enabled serverwide, or by channel. " +
             "\n\nThe valid feature types are as follows:\n\t* `meme` handles the `!meme` and `!bsjMe` related commands\n\t* `imagemacro` handles the various *Yuru Yuri* related image macro commands" +
             "\n\t* `deletion` turns on the deletion tracking feature\n\t* `chatresponse` turns on the flavor chat responses\n\t* `floodcontrol` turns on the anti image spam feature (bot needs permission to delete messages)" +
             "\n\t* `draft` makes the channel a draft channel (currently disabled)\n\nUse command `!featureStatus` to see the bots current configuration")
@@ -290,7 +342,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cmd = kwargs['cmd']
             #bChannel = client.get_channel('320033818083983361')
             resr = await build_draft_message(row = cmd.args[0])
-            bChannel = client.get_channel('315212408740380672')
+            bChannel = client.get_channel('303070764276645888')
             draft_messages.append(await client.send_message(bChannel, resr))
 
     async def build_draft_message(*args, **kwargs):
@@ -317,7 +369,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await client.send_message(client.get_channel('133812880654073857'), "Inhouse looking for members.\nLooking for " + str(10 - total_members) + " more players\nContact " + cmd.args[1].persona_name + " on steam.\n(<" + sid.community_url +">)")
 
     async def toggle_draft(*args, **kwargs):
-        return
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128' or msg.author.id == '85148771226234880'):
@@ -412,6 +463,17 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await asyncio.sleep(1800)
 
     @client.event
+    async def on_reaction_add(reaction, user):
+        if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.content.startswith("!")):
+            if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
+                await client.add_reaction(reaction.message, '🤖')
+                markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
+                if(cfg.checkMessage("meme", reaction.message)):
+                    await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
+            else:
+                botLog("already reacted")
+
+    @client.event
     async def on_ready():
         botLog("discord bot Online")
         await client.change_presence(game=discord.Game(name='Yuru Yuri San Hai !!'))
@@ -420,6 +482,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def on_message_delete(message):
         if(cfg.checkMessage("deletion", message) and (not message.author.id == '213099188584579072')):
             if(deleteFilter(message.content)):
+                return
+            if(message.server.id == '308515912653340682' and not message.author.id == '171840790803382272'):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
