@@ -39,7 +39,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             return(True)
         if(not re.search(keys.SECRET_REGEX_FILTER, string) == None or not re.search(keys.SECRET_REGEX_FILTER2, string) == None):
             return(True)
-        if("🐼" in string):
+        if("🐼" in string or "卐" in string):
             ##I fucking hate all of you making me put god damn emojis in here
             return(True)
         if(string.lower().startswith(".yt") or string.lower().startswith(".img")):
@@ -107,14 +107,13 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                     i += 1
                 meme = re.sub(r"<@\d+>", r"", meme)
                 await client.send_message(msg.channel, meme)
-            else:
-                await client.send_message(msg.channel, "Please use that command in an appropriate channel.")
 
     async def add_meme(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            markovChaining.addSingle(msg.content[len("!newmeme"):], markovChaining.nd)
-            await client.send_message(msg.channel, "new meme added, thanks!")
+            if(cfg.checkMessage("meme", msg)):
+                markovChaining.addSingle(msg.content[len("!newmeme"):], markovChaining.nd)
+                await client.send_message(msg.channel, "new meme added, thanks!")
 
     async def purge_memes(*args, **kwargs):
         if('msg' in kwargs):
@@ -145,12 +144,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def twitter(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, "Follow my twitter counterpart !!\nhttps://twitter.com/NameIsBot")
+            if(cfg.checkMessage("chatresponse", msg)):
+                await client.send_message(msg.channel, "Follow my twitter counterpart !!\nhttps://twitter.com/NameIsBot")
 
     async def steam_status(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            kstQ.put(classes.command(classes.steamCommands.STATUS_4D, [msg.channel]))
+            if(cfg.checkMessage("chatresponse", msg)):
+                kstQ.put(classes.command(classes.steamCommands.STATUS_4D, [msg.channel]))
 
     async def steam_leaderboard(*args, **kwargs):
         if('msg' in kwargs):
@@ -174,8 +175,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if('command' in kwargs):
                 command = kwargs['command']
                 await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + header.chat_macro_translation[command])
-            else:
-                await client.send_message(msg.channel, "Sorry, you aren't anime enough. Please contact a weeb if you believe this is in error.")
 
 
     async def addRemovePermission(*args, **kwargs):
@@ -241,9 +240,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             return(output)
 
     async def permissionStatus(*args, **kwargs):
-        if('msg' in kwargs and kwargs['msg'].author.server_permissions.manage_server):
+        if('msg' in kwargs and (kwargs['msg'].author.server_permissions.manage_server or kwargs['msg'].author.id == '133811493778096128')):
             msg = kwargs['msg']
             server = msg.server
+            if(len(args[0]) > 1):
+                try:
+                    server = client.get_server(cMsg[1])
+                except:
+                    server = msg.server
             channel = msg.channel
             server_channels = list(msg.server.channels)
             ##TODO: these are possible with clever use of for .. if .. in a single line
