@@ -7,6 +7,7 @@ import praw
 import threading
 import classes
 import re
+#import draftThread as dt
 import markovChaining, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
@@ -342,12 +343,17 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cmd = kwargs['cmd']
             #bChannel = client.get_channel('320033818083983361')
             resr = await build_draft_message(row = cmd.args[0])
-            bChannel = client.get_channel('303070764276645888')
+            #bChannel = client.get_channel('303070764276645888')
+            bChannel = client.get_channel('315212408740380672')
             draft_messages.append(await client.send_message(bChannel, resr))
 
     async def build_draft_message(*args, **kwargs):
         row = kwargs['row']
-        start = "----------\n" if(not int(row[0]) == 1) else ""
+        start = ""
+        if(int(row[2]) == 1):
+            start = "===============\n**ROUND " + str(row[1]) + "**\n===============\n"
+        else:
+            start = "----------\n"
         return(start + (header.base_draft_message % (str(row[1]), str(row[2]), str(row[0]), str(row[4]), str(row[5]), str(row[6]), str(row[7]))))
 
     async def update_draft_message(*args, **kwargs):
@@ -371,7 +377,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def toggle_draft(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.author.id == '127651622628229120' or msg.author.id == '133811493778096128' or msg.author.id == '85148771226234880'):
+            acceptable_ids= ["133811493778096128", "85148771226234880", "166390891920097280", "96665903051046912", "127651622628229120"]
+            if(msg.author.id in acceptable_ids):
                 if(draftEvent.is_set()):
                     draftEvent.clear()
                 else:
@@ -543,4 +550,6 @@ if(__name__ == "__main__"):
     dscQ = queue.Queue()
     factoryQ = queue.Queue()
     draft_event = threading.Event()
+    #drft = threading.Thread(target = dt.main, args=(kstQ, dscQ, draft_event,))
+    #drft.start()
     discBot(kstQ, dscQ, factoryQ, draft_event)
