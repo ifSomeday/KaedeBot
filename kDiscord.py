@@ -428,7 +428,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         emb = discord.Embed()
         emb.title = team
         emb.type = "rich"
-        emb.description = place + " place"
+        emb.description = place
         emb.set_thumbnail(url = logo_url)
         emb.add_field(name = "Captain", value = captain, inline = False)
         player_str = ""
@@ -450,10 +450,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 nelson_logo = "https://cdn.discordapp.com/attachments/303070764276645888/358816766303928320/10KD5sFDALK.png"
 
                 ##Create embeds
-                first = create_seal_embed("Mein Covfefe", "First", mc_logo, "CRAP" ,["Bloodninja", "RiF", "DoosherMcfailNrage", "TanK.鐔孝鵬", "Commander Snuggles"], colour = discord.Colour.gold())
-                second = create_seal_embed("Bristlebrokebackburg Bristlebrokebackblarg Bristlebrokebackblam", "Second", bbb_logo, "Kodos" ,["Potato Farmer", "h!", "Zoompa", "Kabobrocks", "love dodecagon"], colour = discord.Colour.dark_grey())
-                third = create_seal_embed("United", "Third", united_logo, "Panda" , ["Atran", "Aeosynth", "PULLBACKTHEBOLT", "Rabbi-", "SupermaN!"], colour = discord.Colour.dark_gold())
-                fourth = create_seal_embed("In Nelsons We Trust", "Fourth", nelson_logo, "Dream" , ["Linkdx", "aku", "Negative-i-am-a-meat-popsicle", "Blakkout", "Dude Broman, Esq."], colour = discord.Colour.darker_grey())
+                first = create_seal_embed("Mein Covfefe", "First place", mc_logo, "CRAP" ,["Bloodninja", "RiF", "DoosherMcfailNrage", "TanK.鐔孝鵬", "Commander Snuggles"], colour = discord.Colour.gold())
+                second = create_seal_embed("Bristlebrokebackburg Bristlebrokebackblarg Bristlebrokebackblam", "Second place", bbb_logo, "Kodos" ,["Potato Farmer", "h!", "Zoompa", "Kabobrocks", "love dodecagon"], colour = discord.Colour.dark_grey())
+                third = create_seal_embed("United", "Tied third/fourth place", united_logo, "Panda" , ["Atran", "Aeosynth", "PULLBACKTHEBOLT", "Rabbi-", "SupermaN!"], colour = discord.Colour.dark_gold())
+                fourth = create_seal_embed("In Nelsons We Trust", "Tied third/fourth place", nelson_logo, "Dream" , ["Linkdx", "aku", "Negative-i-am-a-meat-popsicle", "Blakkout", "Dude Broman, Esq."], colour = discord.Colour.dark_gold())
 
                 ##send embeds
                 await client.send_message(msg.channel, " ", embed = first)
