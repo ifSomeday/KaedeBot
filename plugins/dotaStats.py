@@ -33,6 +33,7 @@ def load_player_dict():
     if(os.path.isfile(PLAYER_DICT_NAME)):
         with open(PLAYER_DICT_NAME, "rb") as f:
             return(pickle.load(f))
+    return({})
 
 def save_player_dict():
     with open(PLAYER_DICT_NAME, "wb") as f:
@@ -63,7 +64,10 @@ async def associate_player(msg, cMsg, user, client):
         if(any(x in cMsg[2] for x in acceptable_links)):
             botLog("found in link form")
             match = re.search(url_matcher, cMsg[2])
-            player_id = match.group(1)
+            if(not match is None):
+                player_id = match.group(1)
+            else:
+                return(False)
             botLog(player_id)
         else:
             try:
@@ -80,6 +84,8 @@ async def associate_player(msg, cMsg, user, client):
                 emb = steam_acc_embed_od(r)
                 await client.send_message(msg.channel, "Associated *" + user.name + "* with: ", embed = emb)
                 return(True)
+            else:
+                return(False)
         else:
             botLog("no info provided")
             return(False)
@@ -90,15 +96,33 @@ async def display_self_association(msg, cMsg, client):
         r = od.get_players(player["steam"].as_32)
         emb = steam_acc_embed_od(r)
         await client.send_message(msg.channel, "Your account is currently associated with: ", embed = emb)
+    else:
+        await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
 
 async def player_on_hero(msg, cMsg, client):
     on_index = cMsg.index("on")
     player = None
-    if(on_index == 1):
+    botLog(on_index)
+    botLog(cMsg)
+    if(on_index == 1 or (on_index == 2 and cMsg[1] == "me")):
+        if(not msg.author.name in player_dict):
+            await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
+            return
         player = player_dict[msg.author.name]
     elif(on_index < len(cMsg) - 1):
-        pass
-    hero = cMsg[on_index + 1]
+        input_name = ' '.join(msg.content[1:].split()[1 : on_index]).strip()
+        if(input_name in player_dict):
+            player = player_dict[input_name]
+        else:
+            possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
+            botLog(possible_matches)
+            if(len(possible_matches) is 0):
+                await client.send_message(msg.channel, "Unable to find player. Are they registered?")
+                return
+            else:
+                await client.send_message(msg.channel, "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered.")
+                player = player_dict[possible_matches[0]]
+    hero = ' '.join(cMsg[on_index + 1:])
     possible_matches = difflib.get_close_matches(hero, hero_dict.keys())
     botLog(possible_matches)
     if(len(possible_matches) is 0):
@@ -114,7 +138,8 @@ def hero_card_embed(res, player, hero):
     emb = discord.Embed()
     emb.title = player["discord"].name + " on " + hero["localized_name"]
     emb.type = "rich"
-    ##emb.description = ""TODO: date time stuff
+    emb.description = "Card still WIP"
+    emb.set_thumbnail(url = "http://cdn.dota2.com/apps/dota2/images/heroes/" + hero["name"].replace("npc_dota_hero_", "") + "_full.png")
     emb.add_field(name = "Games Played", value = str(res["games"]), inline = True)
     emb.add_field(name = "Winrate", value = str(round(res["win"] * 100 / res["games"], 2)) + "%", inline = True)
     emb.add_field(name = "Wins", value = str(res["win"]), inline = True)
@@ -157,11 +182,10 @@ async def open_dota_main(*args, **kwargs):
         cMsg  = args[0]
         sender, players, failed, success = get_players_message(msg)
         if(cMsg[1] == "add"):
-            botLog("adding player")
             res = await associate_player(msg, cMsg, msg.author, client)
             if(not res):
-                await client.send_message(msg.channel, "Please provide your opendota, dotabuff, steam id32, or steam id64")
-        elif(cMsg[1] == "me"):
+                await client.send_message(msg.channel, "Unable to register.\nPlease provide your opendota/dotabuff link, or steam ID32/ID64\n`!od add [opendota|dotabuff|steam_id32|steam_id64]`")
+        elif(cMsg[1] == "me" and len(cMsg) == 2):
             await display_self_association(msg, cMsg, client)
         elif("on" in cMsg):
             await player_on_hero(msg, cMsg, client)
