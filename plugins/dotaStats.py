@@ -8,6 +8,7 @@ import re
 import classes
 import difflib
 import datetime
+import colorsys
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 player_dict = {}
@@ -145,8 +146,6 @@ async def display_self_association(msg, cMsg, client):
 async def player_on_hero(msg, cMsg, client):
     on_index = cMsg.index("on")
     player = None
-    botLog(on_index)
-    botLog(cMsg)
     if(on_index == 1 or (on_index == 2 and cMsg[1] == "me")):
         if(not msg.author.name in player_dict):
             await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
@@ -192,10 +191,10 @@ def hero_card_embed(res, player, hero):
     emb.description = "Card still WIP"
     emb.set_thumbnail(url = "http://cdn.dota2.com/apps/dota2/images/heroes/" + hero["name"].replace("npc_dota_hero_", "") + "_full.png")
     emb.add_field(name = "Games Played", value = str(res["games"]), inline = True)
-    emb.add_field(name = "Winrate", value = str(round(res["win"] * 100 / res["games"], 2)) + "%", inline = True)
+    emb.add_field(name = "Winrate", value = str(round(res["win"] * 100 / max(res["games"], 1), 2)) + "%", inline = True)
     emb.add_field(name = "Wins", value = str(res["win"]), inline = True)
     emb.add_field(name = "Loses", value = str(res["games"] - res["win"]), inline = True)
-    emb.colour = discord.Colour.green()
+    emb.colour = get_wr_color(res["win"] / max(res["games"], 1))
     return(emb)
 
 def steam_acc_embed_od(res):
@@ -235,6 +234,19 @@ def get_players_message(msg):
             ##dont use these additional mentions for now
             #success = False
     return(sender, players, failed, success)
+
+def get_wr_color(winrate):
+    h = winrate / 3
+    col = discord.Colour.default()
+    r, g, b = colorsys.hsv_to_rgb(h, 1, 255)
+    col.value = int(r) << 16 | int(g) << 8 | int(b)
+    return(col)
+
+def __associate_player_backend(user, steam_id):
+    acc = SteamID(int(steam_id))
+    global player_dict
+    player_dict[user.name] = {"discord" : user, "steam" : acc}
+    save_player_dict()
 
 def init(chat_command_translation, function_translation):
     function_translation[classes.discordCommands.OPENDOTA] = open_dota_main
