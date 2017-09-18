@@ -9,6 +9,7 @@ import classes
 import difflib
 import datetime
 import colorsys
+import io
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 player_dict = {}
@@ -66,20 +67,17 @@ def __associate_player_backend(user, steam_id):
 async def get_players_wordcloud(msg, cMsg, client):
     player = None
     if(len(cMsg) == 2 or (any(x in cMsg for x in ["me", "my"]))):
-        botLog("for author")
         if(msg.author.name in player_dict):
             player = player_dict[msg.author.name]
         else:
             await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
             return
     else:
-        botLog("for user")
         wc_index = cMsg.index("wordcloud")
         if(not wc_index == len(cMsg) - 1):
-            await client.send_message(msg.channel, "Invalid format.\nTry `!od [me|my|player_name] wordcloud`")
+            await client.send_message(msg.channel, "Invalid format.\nTry `!od ['me'|'my'|<player_name>] wordcloud`")
             return
         else:
-            botLog("entering")
             input_name = ' '.join(msg.content[1:].split()[1 : wc_index]).strip()
             if(input_name in player_dict):
                 player = player_dict[input_name]
@@ -92,14 +90,14 @@ async def get_players_wordcloud(msg, cMsg, client):
                 else:
                     await client.send_message(msg.channel, "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered.")
                     player = player_dict[possible_matches[0]]
-    botLog("preparing get")
     r = od.get_players_wordcloud(player["steam"].as_32)
     wordcloud_freq = r["my_word_counts"]
-    botLog("got")
-    wc = WordCloud(background_color="white", sacle=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
+    wc = WordCloud(background_color="white", scale=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
     img = wc.to_image()
-    botLog("made image")
-    await client.send_message(msg.channel, fp=img, filename="wordcloud.png" )
+    imgBytes = io.BytesIO()
+    img.save(imgBytes, format="PNG")
+    imgBytes.seek(0)
+    await client.send_file(msg.channel, imgBytes, filename="wordcloud.png" , content = player["discord"].name + "'s wordcloud:")
 
 async def associate_player(msg, cMsg, user, client):
     if(len(cMsg) > 2):
@@ -157,7 +155,6 @@ async def player_on_hero(msg, cMsg, client):
             player = player_dict[input_name]
         else:
             possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
-            botLog(possible_matches)
             if(len(possible_matches) is 0):
                 await client.send_message(msg.channel, "Unable to find player. Are they registered?")
                 return
@@ -166,7 +163,6 @@ async def player_on_hero(msg, cMsg, client):
                 player = player_dict[possible_matches[0]]
     hero = ' '.join(cMsg[on_index + 1:])
     possible_matches = difflib.get_close_matches(hero, hero_dict.keys())
-    botLog(possible_matches)
     if(len(possible_matches) is 0):
         await client.send_message(msg.channel, "Please spell hero name correctly")
         return
@@ -261,7 +257,7 @@ async def open_dota_main(*args, **kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
         cMsg  = args[0]
-        if(not msg.server.id == 213086692683415552):
+        if(not msg.server.id == "213086692683415552"):
             return
         sender, players, failed, success = get_players_message(msg)
         if(cMsg[1] == "add"):
@@ -273,7 +269,6 @@ async def open_dota_main(*args, **kwargs):
         elif("on" in cMsg):
             await player_on_hero(msg, cMsg, client)
         elif("wordcloud" in cMsg):
-            botLog("getting wordcloud")
             await get_players_wordcloud(msg, cMsg, client)
         else:
             pass
