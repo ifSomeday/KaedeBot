@@ -1,4 +1,6 @@
 from plugins import opendota
+from steam import SteamID
+from wordcloud import WordCloud
 import os
 import pickle
 import discord
@@ -6,7 +8,6 @@ import re
 import classes
 import difflib
 import datetime
-from steam import SteamID
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 player_dict = {}
@@ -29,6 +30,14 @@ def botLog(text):
     except:
         print("dotaStats: Logging error. Probably some retard name", flush = True)
 
+########  ####  ######  ########    ########  #######   #######  ##        ######
+##     ##  ##  ##    ##    ##          ##    ##     ## ##     ## ##       ##    ##
+##     ##  ##  ##          ##          ##    ##     ## ##     ## ##       ##
+##     ##  ##  ##          ##          ##    ##     ## ##     ## ##        ######
+##     ##  ##  ##          ##          ##    ##     ## ##     ## ##             ##
+##     ##  ##  ##    ##    ##          ##    ##     ## ##     ## ##       ##    ##
+########  ####  ######     ##          ##     #######   #######  ########  ######
+
 def load_player_dict():
     if(os.path.isfile(PLAYER_DICT_NAME)):
         with open(PLAYER_DICT_NAME, "rb") as f:
@@ -39,23 +48,57 @@ def save_player_dict():
     with open(PLAYER_DICT_NAME, "wb") as f:
         pickle.dump(player_dict, f)
 
-def get_players_message(msg):
-    sender = None
-    players = []
-    failed = []
-    success = True
-    if(msg.author.name in player_dict):
-        sender = player_dict[msg.author.name]
-    else:
-        success = False
-    for user in msg.mentions:
-        if(user.id in player_dict):
-            players.append(player_dict[user.name])
+def __associate_player_backend(user, steam_id):
+    acc = SteamID(int(steam_id))
+    global player_dict
+    player_dict[user.name] = {"discord" : user, "steam" : acc}
+    save_player_dict()
+
+   ###     ######  ##    ## ##    ##  ######
+  ## ##   ##    ##  ##  ##  ###   ## ##    ##
+ ##   ##  ##         ####   ####  ## ##
+##     ##  ######     ##    ## ## ## ##
+#########       ##    ##    ##  #### ##
+##     ## ##    ##    ##    ##   ### ##    ##
+##     ##  ######     ##    ##    ##  ######
+
+async def get_players_wordcloud(msg, cMsg, client):
+    player = None
+    if(len(cMsg) == 2 or (any(x in cMsg for x in ["me", "my"]))):
+        botLog("for author")
+        if(msg.author.name in player_dict):
+            player = player_dict[msg.author.name]
         else:
-            failed.append(user)
-            ##dont use these additional mentions for now
-            #success = False
-    return(sender, players, failed, success)
+            await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
+            return
+    else:
+        botLog("for user")
+        wc_index = cMsg.index("wordcloud")
+        if(not wc_index == len(cMsg) - 1):
+            await client.send_message(msg.channel, "Invalid format.\nTry `!od [me|my|player_name] wordcloud`")
+            return
+        else:
+            botLog("entering")
+            input_name = ' '.join(msg.content[1:].split()[1 : wc_index]).strip()
+            if(input_name in player_dict):
+                player = player_dict[input_name]
+            else:
+                possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
+                botLog(possible_matches)
+                if(len(possible_matches) is 0):
+                    await client.send_message(msg.channel, "Unable to find player. Are they registered?")
+                    return
+                else:
+                    await client.send_message(msg.channel, "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered.")
+                    player = player_dict[possible_matches[0]]
+    botLog("preparing get")
+    r = od.get_players_wordcloud(player["steam"].as_32)
+    wordcloud_freq = r["my_word_counts"]
+    botLog("got")
+    wc = WordCloud(background_color="white", sacle=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
+    img = wc.to_image()
+    botLog("made image")
+    await client.send_message(msg.channel, fp=img, filename="wordcloud.png" )
 
 async def associate_player(msg, cMsg, user, client):
     if(len(cMsg) > 2):
@@ -134,6 +177,14 @@ async def player_on_hero(msg, cMsg, client):
     emb = hero_card_embed(hero_stats, player, hero)
     await client.send_message(msg.channel, "", embed = emb)
 
+######## ##     ## ########  ######## ########   ######
+##       ###   ### ##     ## ##       ##     ## ##    ##
+##       #### #### ##     ## ##       ##     ## ##
+######   ## ### ## ########  ######   ##     ##  ######
+##       ##     ## ##     ## ##       ##     ##       ##
+##       ##     ## ##     ## ##       ##     ## ##    ##
+######## ##     ## ########  ######## ########   ######
+
 def hero_card_embed(res, player, hero):
     emb = discord.Embed()
     emb.title = player["discord"].name + " on " + hero["localized_name"]
@@ -159,13 +210,31 @@ def steam_acc_embed_od(res):
     emb.colour = discord.Colour.blue()
     return(emb)
 
+##     ## ####  ######   ######
+###   ###  ##  ##    ## ##    ##
+#### ####  ##  ##       ##
+## ### ##  ##   ######  ##
+##     ##  ##        ## ##
+##     ##  ##  ##    ## ##    ##
+##     ## ####  ######   ######
 
-
-def __associate_player_backend(user, steam_id):
-    acc = SteamID(int(steam_id))
-    global player_dict
-    player_dict[user.name] = {"discord" : user, "steam" : acc}
-    save_player_dict()
+def get_players_message(msg):
+    sender = None
+    players = []
+    failed = []
+    success = True
+    if(msg.author.name in player_dict):
+        sender = player_dict[msg.author.name]
+    else:
+        success = False
+    for user in msg.mentions:
+        if(user.id in player_dict):
+            players.append(player_dict[user.name])
+        else:
+            failed.append(user)
+            ##dont use these additional mentions for now
+            #success = False
+    return(sender, players, failed, success)
 
 def init(chat_command_translation, function_translation):
     function_translation[classes.discordCommands.OPENDOTA] = open_dota_main
@@ -180,6 +249,8 @@ async def open_dota_main(*args, **kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
         cMsg  = args[0]
+        if(not msg.server.id == 213086692683415552):
+            return
         sender, players, failed, success = get_players_message(msg)
         if(cMsg[1] == "add"):
             res = await associate_player(msg, cMsg, msg.author, client)
@@ -189,6 +260,9 @@ async def open_dota_main(*args, **kwargs):
             await display_self_association(msg, cMsg, client)
         elif("on" in cMsg):
             await player_on_hero(msg, cMsg, client)
+        elif("wordcloud" in cMsg):
+            botLog("getting wordcloud")
+            await get_players_wordcloud(msg, cMsg, client)
         else:
             pass
 
