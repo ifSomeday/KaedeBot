@@ -7,6 +7,7 @@ import praw
 import threading
 import classes
 import re
+from plugins import dotaStats
 #import draftThread as dt
 import markovChaining, keys, BSJ, os, header
 from steam import SteamID
@@ -76,7 +77,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             await client.send_typing(message.channel)
-            await function_translation[command](cMsg, msg = message, command = command)
+            await function_translation[command](cMsg, msg = message, command = command, client = client)
         if((ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6) and cfg.checkMessage("chatresponse", message)):
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
@@ -376,6 +377,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def toggle_draft(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             acceptable_ids= ["133811493778096128", "85148771226234880", "166390891920097280", "96665903051046912", "127651622628229120"]
             if(msg.author.id in acceptable_ids):
@@ -550,6 +552,9 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     @client.event
     async def on_message(message):
         await processMessage(client, message)
+
+    ##TODO: switch to entirely plugins approach
+    header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
