@@ -179,6 +179,8 @@ async def open_dota_main(*args, **kwargs):
     if('msg' in kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
+        if(not msg.server.id == '133812880654073857'):
+            return
         cMsg  = args[0]
         sender, players, failed, success = get_players_message(msg)
         if(cMsg[1] == "add"):
