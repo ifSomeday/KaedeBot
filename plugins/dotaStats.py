@@ -67,11 +67,10 @@ def __associate_player_backend(user, steam_id):
 async def get_players_wordcloud(msg, cMsg, client):
     player = None
     if(len(cMsg) == 2 or (any(x in cMsg for x in ["me", "my"]))):
-        if(msg.author.name in player_dict):
-            player = player_dict[msg.author.name]
-        else:
-            await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
-            return
+        player, resp = get_player_from_author(msg)
+        if(player is None):
+            await client.send_message(msg.channel, resp)
+            return(res)
     else:
         wc_index = cMsg.index("wordcloud")
         if(not wc_index == len(cMsg) - 1):
@@ -79,17 +78,11 @@ async def get_players_wordcloud(msg, cMsg, client):
             return
         else:
             input_name = ' '.join(msg.content[1:].split()[1 : wc_index]).strip()
-            if(input_name in player_dict):
-                player = player_dict[input_name]
-            else:
-                possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
-                botLog(possible_matches)
-                if(len(possible_matches) is 0):
-                    await client.send_message(msg.channel, "Unable to find player. Are they registered?")
+            player, res = get_player_from_name(input_name)
+            if(not res is None):
+                await client.send_message(msg.channel, resp)
+                if(player is None):
                     return
-                else:
-                    await client.send_message(msg.channel, "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered.")
-                    player = player_dict[possible_matches[0]]
     r = od.get_players_wordcloud(player["steam"].as_32)
     wordcloud_freq = r["my_word_counts"]
     wc = WordCloud(background_color="white", scale=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
@@ -141,36 +134,75 @@ async def display_self_association(msg, cMsg, client):
     else:
         await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
 
-async def player_on_hero(msg, cMsg, client):
+async def player_on_hero_with_side(msg, cMsg, client):
+    on_index = cMsg.index("on")
+    as_index = cMsg.index("as")
+    player = None
+    input_name = None
+    hero_string = None
+    team_string = None
+    params = {}
+    if((on_index == 1 or as_index == 1) or ((on_index == 2 or as_index == 2) and cMsg[1] == "me")):
+        player, resp = get_player_from_author(msg)
+        if(player is None):
+            await client.send_message(msg.channel, resp)
+            return(res)
+    if(on_index < as_index):
+        input_name = ' '.join(msg.content[1:].split()[1 : on_index]).strip()
+        team_string = ' '.join(msg.content[1:].split()[on_index + 1 : as_index]).strip()
+        hero_string = ' '.join(msg.content[1:].split()[as_index + 1 :]).strip()
+    else:
+        input_name = ' '.join(msg.content[1:].split()[1 : as_index]).strip()
+        hero_string = ' '.join(msg.content[1:].split()[as_index + 1 : on_index]).strip()
+        team_string = ' '.join(msg.content[1:].split()[on_index + 1 :]).strip()
+    if(player is None):
+        player, resp = get_player_from_name(input_name)
+        if(not resp is None):
+            await client.send_message(msg.channel, resp)
+            if(player is None):
+                return
+    team_string = team_string.replace("the", "").strip().lower()
+    if(team_string in ["r", "radiant"]):
+        params["is_radiant"] = 1
+    elif(team_string in ["d", "dire"]):
+        params["is_radiant"] = 0
+    else:
+        await client.send_message(msg.channel, "Unable to parse side.\nPlease use 'r', 'd', 'radiant', or 'dire'")
+    await __get_hero_on_player_backend(msg, client, hero_string, player, params)
+
+
+async def player_on_hero(msg, cMsg, client, params=None):
     on_index = cMsg.index("on")
     player = None
     if(on_index == 1 or (on_index == 2 and cMsg[1] == "me")):
-        if(not msg.author.name in player_dict):
-            await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
-            return
-        player = player_dict[msg.author.name]
+        player, resp = get_player_from_author(msg)
+        if(player is None):
+            await client.send_message(msg.channel, resp)
+            return(res)
     elif(on_index < len(cMsg) - 1):
         input_name = ' '.join(msg.content[1:].split()[1 : on_index]).strip()
-        if(input_name in player_dict):
-            player = player_dict[input_name]
-        else:
-            possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
-            if(len(possible_matches) is 0):
-                await client.send_message(msg.channel, "Unable to find player. Are they registered?")
+        player, resp = get_player_from_name(input_name)
+        if(not res is None):
+            await client.send_message(msg.channel, resp)
+            if(player is None):
                 return
-            else:
-                await client.send_message(msg.channel, "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered.")
-                player = player_dict[possible_matches[0]]
-    hero = ' '.join(cMsg[on_index + 1:])
-    possible_matches = difflib.get_close_matches(hero, hero_dict.keys())
+    heroString = ' '.join(cMsg[on_index + 1:])
+    await __get_hero_on_player_backend(msg, client, heroString, player, params=params)
+
+async def __get_hero_on_player_backend(msg, client, heroString, player, params=None):
+    possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
     if(len(possible_matches) is 0):
         await client.send_message(msg.channel, "Please spell hero name correctly")
         return
     hero = hero_dict[possible_matches[0]]
-    r = od.get_players_heroes(player["steam"].as_32, params = {"hero_id" :hero["id"]})
+    if(params is None):
+        params = {}
+    params["hero_id"] = hero["id"]
+    r = od.get_players_heroes(player["steam"].as_32, params = params)
     hero_stats = r[0]
     emb = hero_card_embed(hero_stats, player, hero)
     await client.send_message(msg.channel, "", embed = emb)
+
 
 ######## ##     ## ########  ######## ########   ######
 ##       ###   ### ##     ## ##       ##     ## ##    ##
@@ -212,6 +244,27 @@ def steam_acc_embed_od(res):
 ##     ##  ##        ## ##
 ##     ##  ##  ##    ## ##    ##
 ##     ## ####  ######   ######
+
+def get_player_from_author(msg):
+    if(not msg.author.name in player_dict):
+        resp  = "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`"
+        return(None, resp)
+    player = player_dict[msg.author.name]
+    return(player, None)
+
+def get_player_from_name(input_name):
+    if(input_name in player_dict):
+        player = player_dict[input_name]
+        return(player, None)
+    else:
+        possible_matches = difflib.get_close_matches(input_name, player_dict.keys())
+        if(len(possible_matches) is 0):
+            resp = "Unable to find player. Are they registered?"
+            return(None, resp)
+        else:
+            resp =  "Unable to match exact player. Using approximation '" + possible_matches[0] +"'\nIf this is incorrect, check your spelling and make sure they are registered."
+            player = player_dict[possible_matches[0]]
+            return(player, resp)
 
 def get_players_message(msg):
     sender = None
@@ -267,7 +320,10 @@ async def open_dota_main(*args, **kwargs):
         elif(cMsg[1] == "me" and len(cMsg) == 2):
             await display_self_association(msg, cMsg, client)
         elif("on" in cMsg):
-            await player_on_hero(msg, cMsg, client)
+            if("as" in cMsg):
+                await player_on_hero_with_side(msg, cMsg, client)
+            else:
+                await player_on_hero(msg, cMsg, client)
         elif("wordcloud" in cMsg):
             await get_players_wordcloud(msg, cMsg, client)
         else:
