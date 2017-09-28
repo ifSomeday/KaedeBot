@@ -54,12 +54,6 @@ def save_player_dict():
     with open(PLAYER_DICT_NAME, "wb") as f:
         pickle.dump(player_dict, f)
 
-def __associate_player_backend(user, steam_id):
-    acc = SteamID(int(steam_id))
-    global player_dict
-    player_dict[user.name] = {"discord" : user, "steam" : acc}
-    save_player_dict()
-
    ###     ######  ##    ## ##    ##  ######
   ## ##   ##    ##  ##  ##  ###   ## ##    ##
  ##   ##  ##         ####   ####  ## ##
@@ -71,6 +65,10 @@ def __associate_player_backend(user, steam_id):
 async def determine_request_type(msg, cMsg, client):
     req_index = -1
     player = None
+    ##add is a special case
+    if(cMsg[1] in ["add", "register"]):
+        await associate_player(msg, cMsg, client)
+        return
     ##determine who is being talked about
     if(cMsg[1] in ["me", "my"]):
         req_index = 2
@@ -131,8 +129,11 @@ async def determine_request_type(msg, cMsg, client):
         await request(cMsg, client = client, msg = msg, mod = req_specifier, player = player, params = params)
 
 
+
 async def get_players_wordcloud(*args, **kwargs):
     await __get_players_wordcloud(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'])
+
+
 
 async def __get_players_wordcloud(msg, player, client, params):
     r = od.get_players_wordcloud(player["steam"].as_32, params = params)
@@ -151,8 +152,11 @@ async def __get_players_wordcloud(msg, player, client, params):
     await client.send_file(msg.channel, imgBytes, filename="wordcloud.png" , content = player["discord"].name + "'s wordcloud:")
 
 
+
 async def get_players_wardmap(*args, **kwargs):
     await __get_players_wardmap(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'], kwargs['mod'])
+
+
 
 async def __get_players_wardmap(msg, player, client, params, req_specifier=None):
     wardmap = create_ward_heatmap(player['steam'].as_32, obs=True, params = params)
@@ -164,8 +168,12 @@ async def __get_players_wardmap(msg, player, client, params, req_specifier=None)
         return
     await client.send_file(msg.channel, wardmap, filename="wardmap.png" , content = player["discord"].name + "'s wardmap:")
 
+
+
 async def get_player_summary(*args, **kwargs):
     await __get_player_summary(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'], kwargs['mod'])
+
+
 
 async def __get_player_summary(msg, player, client, params, num = None):
     #TODO: add checks for date and stuff too
@@ -188,7 +196,27 @@ async def __get_player_summary(msg, player, client, params, num = None):
     await client.send_message(msg.channel, " ", embed = emb)
     pass
 
-async def associate_player(msg, cMsg, user, client):
+
+
+async def display_player_profile(*args, **kwargs):
+    await __display_player_profile(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'])
+
+
+
+async def __display_player_profile(msg, player, client, params):
+    r = od.get_players(player["steam"].as_32)
+    emb = steam_acc_embed_od(r)
+    await client.send_message(msg.channel, "Your account is currently associated with: ", embed = emb)
+
+
+
+async def player_on_hero_test(*args, **kwargs):
+    await __get_hero_on_player_backend(kwargs['msg'], kwargs['client'], kwargs['mod'], kwargs['player'], params=kwargs['params'])
+
+
+
+async def associate_player(msg, cMsg, client):
+    user = msg.author
     if(len(cMsg) > 2):
         player_id = None
         acceptable_links = ["opendota.com/players", "dotabuff.com/players", "dotabuff.com/esports/players"]
@@ -221,16 +249,7 @@ async def associate_player(msg, cMsg, user, client):
             botLog("no info provided")
             return(False)
 
-async def display_player_profile(*args, **kwargs):
-    await __display_player_profile(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'])
 
-async def __display_player_profile(msg, player, client, params):
-    r = od.get_players(player["steam"].as_32)
-    emb = steam_acc_embed_od(r)
-    await client.send_message(msg.channel, "Your account is currently associated with: ", embed = emb)
-
-async def player_on_hero_test(*args, **kwargs):
-    await __get_hero_on_player_backend(kwargs['msg'], kwargs['client'], kwargs['mod'], kwargs['player'], params=kwargs['params'])
 
 async def __get_hero_on_player_backend(msg, client, heroString, player, params=None):
     possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
