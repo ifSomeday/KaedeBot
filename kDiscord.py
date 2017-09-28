@@ -537,7 +537,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_typing(channel, user, when):
-        if(user.id == "225768977115250688"):
+        if(user.id == "225768977115250688" and not channel.server.id == '308515912653340682'):
             await client.send_typing(channel)
 
     @client.event
