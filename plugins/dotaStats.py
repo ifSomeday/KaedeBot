@@ -12,6 +12,7 @@ import difflib
 import datetime
 import colorsys
 import io
+import os
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 MAP_IMAGE_NAME = os.getcwd() + "/dataStores/detailed_700.png"
@@ -92,9 +93,19 @@ async def determine_request_type(msg, cMsg, client):
                 if(player is None):
                     return
     ##get the request function
+    request = None
     if(req_index == -1):
         await client.send_message(msg.channel, "Unable to deterine what command is being requested")
-    request = reqs[cMsg[req_index]]
+    if(not cMsg[req_index] in reqs.keys()):
+        possible_matches = difflib.get_close_matches(cMsg[req_index], reqs.keys())
+        if(len(possible_matches) == 0):
+            await client.send_message(msg.channel, "Unknown request. Check your spelling!")
+            return
+        else:
+            await client.send_message(msg.channel, "Unknown request. Using best guess for request of `" + possible_matches[0] + "`")
+            request = reqs[possible_matches[0]]
+    else:
+        request = reqs[cMsg[req_index]]
     ##find modifiers
     modifier_loc = []
     for i in range(req_index + 1, req_index + 1 + len(cMsg[req_index+1:])):
@@ -108,6 +119,8 @@ async def determine_request_type(msg, cMsg, client):
         r = modifiers[cMsg[modifier_loc[i]]](' '.join(cMsg[start_index : end_index]))
         if(not r[0] is None):
             params[r[0]] = r[1]
+        else:
+            await client.send_message(msg.channel, "Invalid parameter for modifier `" + cMsg[modifier_loc[i]] +"`, skipping...")
     botLog(params)
     req_specifier = None
     if(len(modifier_loc) == 0 and not req_index + 1 == len(cMsg)):
@@ -124,6 +137,12 @@ async def get_players_wordcloud(*args, **kwargs):
 async def __get_players_wordcloud(msg, player, client, params):
     r = od.get_players_wordcloud(player["steam"].as_32, params = params)
     wordcloud_freq = r["my_word_counts"]
+    if(len(wordcloud_freq) == 0):
+        if(not 'hero_id' in params):
+            await client.send_message(msg.channel, "Unable to get wordcloud data for " + player["discord"].name)
+        else:
+            await client.send_message(msg.channel, "Unable to get hero specific wordcloud data for " + player["discord"].name)
+        return
     wc = WordCloud(background_color="white", scale=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
     img = wc.to_image()
     imgBytes = io.BytesIO()
@@ -137,6 +156,12 @@ async def get_players_wardmap(*args, **kwargs):
 
 async def __get_players_wardmap(msg, player, client, params, req_specifier=None):
     wardmap = create_ward_heatmap(player['steam'].as_32, obs=True, params = params)
+    if(wardmap is None):
+        if(not 'hero_id' in params):
+            await client.send_message(msg.channel, "Unable to get wardmap data for " + player["discord"].name)
+        else:
+            await client.send_message(msg.channel, "Unable to get hero specific wardmap data for " + player["discord"].name)
+        return
     await client.send_file(msg.channel, wardmap, filename="wardmap.png" , content = player["discord"].name + "'s wardmap:")
 
 async def get_player_summary(*args, **kwargs):
@@ -144,11 +169,22 @@ async def get_player_summary(*args, **kwargs):
 
 async def __get_player_summary(msg, player, client, params, num = None):
     #TODO: add checks for date and stuff too
-    if(not 'limit' in params):
+    limit = None
+    if(not any(x in params for x in ['date', 'limit'])):
         params['limit'] = 20
+        limit = "20 games"
+    else:
+        if('limit' in params):
+            limit = str(params['limit']) + " games"
+        if('date' in params):
+            if(not limit is None):
+                limit += " , "
+            else:
+                limit = ''
+            limit += str(params['date']) + " days"
     r = od.get_players_totals(player["steam"].as_32, params = params)
     r = rewrite_totals_object(r)
-    emb = player_summary_embed(r, player, params['limit'])
+    emb = player_summary_embed(r, player, limit)
     await client.send_message(msg.channel, " ", embed = emb)
     pass
 
@@ -245,13 +281,13 @@ def steam_acc_embed_od(res):
     emb.colour = discord.Colour.blue()
     return(emb)
 
-def player_summary_embed(res, player, num = None):
+def player_summary_embed(res, player, limit = None):
     emb = discord.Embed()
     emb.title = player["discord"].name + "'s Summary"
-    if(num is None):
-        emb.description = "Alltime games"
+    if(limit is None):
+        emb.description = "All time"
     else:
-        emb.description = "Recent " + str(num) + " games"
+        emb.description = "Recent " + limit
     emb.type = "rich"
     emb.set_thumbnail(url = player["discord"].avatar_url)
     emb.add_field(name = "Kills", value = get_totals_str(res["kills"]), inline = True)
@@ -308,6 +344,8 @@ def create_ward_heatmap(player_id, obs=True, params = None):
     r = od.get_players_wardmap(player_id, params = params)
     j = r["obs"] if obs else r["sen"]
     pt_arr = []
+    if(len(j) == 0):
+        return(None)
     for x in j.keys():
         for y in j[x].keys():
             for i in range(0, int(j[x][y])):
@@ -377,11 +415,29 @@ def on_modifier(sideString):
     side = side_dict[possible_matches[0]]
     return("is_radiant", side)
 
+def recent_modifier(game_limit):
+    if(game_limit is ''):
+        game_limit = 20
+    try:
+        game_limit = int(game_limit)
+    except:
+        return((None, None))
+    return("limit", game_limit)
+
+def days_modifier(days_limit):
+    if(days_limit is ''):
+        days_limit = 30
+    try:
+        days_limit = int(days_limit)
+    except:
+        return((None, None))
+    return("date", days_limit)
 
 reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
         "add" : associate_player, "summary" : get_player_summary}
-modifiers = {"on" : on_modifier, "since" : "since mod", "after" : "afte mod", "past" : "past mod", "as" : as_modifier}
+modifiers = {"on" : on_modifier, "recent" : recent_modifier,
+            "as" : as_modifier, "days" : days_modifier}
 
 
 async def open_dota_main(*args, **kwargs):
@@ -391,8 +447,14 @@ async def open_dota_main(*args, **kwargs):
         if(not msg.server.id == '133812880654073857'):
             return
         cMsg  = args[0]
-        if(not msg.server.id == "213086692683415552"):
-            return
+        ##NOTE: TESTING DIFFERENCSE
+        if(os.name == 'nt'):
+            if(not (msg.server.id == "213086692683415552" or msg.channel.id == '303070764276645888')):
+                return
+        else:
+            if(msg.channel.id == '303070764276645888' or not msg.server.id == '133812880654073857'):
+                return
+
         sender, players, failed, success = get_players_message(msg)
         await determine_request_type(msg, cMsg, client)
         #
@@ -406,15 +468,3 @@ async def open_dota_main(*args, **kwargs):
                 await client.send_message(msg.channel, "Unable to register.\nPlease provide your opendota/dotabuff link, or steam ID32/ID64\n`!od add [opendota|dotabuff|steam_id32|steam_id64]`")
         elif(cMsg[1] == "me" and len(cMsg) == 2):
             await display_self_association(msg, cMsg, client)
-        elif("on" in cMsg):
-            if("as" in cMsg):
-                await player_on_hero_with_side(msg, cMsg, client)
-            else:
-                await player_on_hero(msg, cMsg, client)
-        elif("wordcloud" in cMsg):
-            await get_players_wordcloud(msg, cMsg, client)
-        else:
-            await client.send_message(msg.channel, "Unknown command")
-
-
-        #await client.send_message(msg.channel, "test")
