@@ -221,14 +221,13 @@ async def associate_player(msg, cMsg, user, client):
             botLog("no info provided")
             return(False)
 
-async def display_self_association(msg, cMsg, client):
-    if(msg.author.name in player_dict):
-        player = player_dict[msg.author.name]
-        r = od.get_players(player["steam"].as_32)
-        emb = steam_acc_embed_od(r)
-        await client.send_message(msg.channel, "Your account is currently associated with: ", embed = emb)
-    else:
-        await client.send_message(msg.channel, "You are not registered. Please add your account with `!od add [opendota|dotabuff|steam_id32|steam_id64]`")
+async def display_player_profile(*args, **kwargs):
+    await __display_player_profile(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'])
+
+async def __display_player_profile(msg, player, client, params):
+    r = od.get_players(player["steam"].as_32)
+    emb = steam_acc_embed_od(r)
+    await client.send_message(msg.channel, "Your account is currently associated with: ", embed = emb)
 
 async def player_on_hero_test(*args, **kwargs):
     await __get_hero_on_player_backend(kwargs['msg'], kwargs['client'], kwargs['mod'], kwargs['player'], params=kwargs['params'])
@@ -293,7 +292,7 @@ def player_summary_embed(res, player, limit = None):
     emb.add_field(name = "Kills", value = get_totals_str(res["kills"]), inline = True)
     emb.add_field(name = "Deaths", value = get_totals_str(res["deaths"]), inline = True)
     emb.add_field(name = "Assists", value = get_totals_str(res["assists"]), inline = True)
-    emb.add_field(name = "KDA", value = str(res["kda"]['sum'] / res["kda"]["n"]), inline = True)
+    emb.add_field(name = "KDA", value = str(round(res["kda"]['sum'] / res["kda"]["n"], 2)), inline = True)
     return(emb)
 
 
@@ -314,7 +313,7 @@ def rewrite_totals_object(obj_in):
 def get_totals_str(field):
     n = float(field['n'])
     s = float(field['sum'])
-    return( str(s / n) + "(" +str(s) + ")")
+    return(str(round(s / n, 2)) + "(" + str(round(s, 2)) + ")")
 
 def get_player_from_author(msg):
     if(not msg.author.name in player_dict):
@@ -435,7 +434,8 @@ def days_modifier(days_limit):
 
 reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
-        "add" : associate_player, "summary" : get_player_summary}
+        "add" : associate_player, "summary" : get_player_summary,
+        "profile" : display_player_profile}
 modifiers = {"on" : on_modifier, "recent" : recent_modifier,
             "as" : as_modifier, "days" : days_modifier}
 
@@ -447,7 +447,7 @@ async def open_dota_main(*args, **kwargs):
         cMsg  = args[0]
         ##NOTE: TESTING DIFFERENCSE
         if(os.name == 'nt'):
-            if(not (msg.server.id == "213086692683415552" or msg.channel.id == '303070764276645888')):
+            if(not msg.server.id == "213086692683415552" and not msg.channel.id == '303070764276645888'):
                 return
         else:
             if(msg.channel.id == '303070764276645888' or not msg.server.id == '133812880654073857'):
