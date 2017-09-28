@@ -12,6 +12,7 @@ import difflib
 import datetime
 import colorsys
 import io
+import os
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 MAP_IMAGE_NAME = os.getcwd() + "/dataStores/detailed_700.png"
@@ -92,9 +93,19 @@ async def determine_request_type(msg, cMsg, client):
                 if(player is None):
                     return
     ##get the request function
+    request = None
     if(req_index == -1):
         await client.send_message(msg.channel, "Unable to deterine what command is being requested")
-    request = reqs[cMsg[req_index]]
+    if(not cMsg[req_index] in reqs.keys()):
+        possible_matches = difflib.get_close_matches(cMsg[req_index], reqs.keys())
+        if(len(possible_matches) == 0):
+            await client.send_message(msg.channel, "Unknown request. Check your spelling!")
+            return
+        else:
+            await client.send_message(msg.channel, "Unknown request. Using best guess for request of `" + possible_matches[0] + "`")
+            request = reqs[possible_matches[0]]
+    else:
+        request = reqs[cMsg[req_index]]
     ##find modifiers
     modifier_loc = []
     for i in range(req_index + 1, req_index + 1 + len(cMsg[req_index+1:])):
@@ -124,6 +135,12 @@ async def get_players_wordcloud(*args, **kwargs):
 async def __get_players_wordcloud(msg, player, client, params):
     r = od.get_players_wordcloud(player["steam"].as_32, params = params)
     wordcloud_freq = r["my_word_counts"]
+    if(len(wordcloud_freq) == 0):
+        if(not 'hero_id' in params):
+            await client.send_message(msg.channel, "Unable to get wordcloud data for " + player["discord"].name)
+        else:
+            await client.send_message(msg.channel, "Unable to get hero specific wordcloud data for " + player["discord"].name)
+        return
     wc = WordCloud(background_color="white", scale=2, prefer_horizontal=0.5).generate_from_frequencies(wordcloud_freq)
     img = wc.to_image()
     imgBytes = io.BytesIO()
@@ -137,6 +154,12 @@ async def get_players_wardmap(*args, **kwargs):
 
 async def __get_players_wardmap(msg, player, client, params, req_specifier=None):
     wardmap = create_ward_heatmap(player['steam'].as_32, obs=True, params = params)
+    if(wardmap is None):
+        if(not 'hero_id' in params):
+            await client.send_message(msg.channel, "Unable to get wardmap data for " + player["discord"].name)
+        else:
+            await client.send_message(msg.channel, "Unable to get hero specific wardmap data for " + player["discord"].name)
+        return
     await client.send_file(msg.channel, wardmap, filename="wardmap.png" , content = player["discord"].name + "'s wardmap:")
 
 async def get_player_summary(*args, **kwargs):
@@ -308,6 +331,8 @@ def create_ward_heatmap(player_id, obs=True, params = None):
     r = od.get_players_wardmap(player_id, params = params)
     j = r["obs"] if obs else r["sen"]
     pt_arr = []
+    if(len(j) == 0):
+        return(None)
     for x in j.keys():
         for y in j[x].keys():
             for i in range(0, int(j[x][y])):
@@ -389,8 +414,13 @@ async def open_dota_main(*args, **kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
         cMsg  = args[0]
-        if(not msg.server.id == "213086692683415552"):
-            return
+        ##NOTE: TESTING DIFFERENCSE
+        if(os.name == 'nt'):
+            if(not msg.server.id == "213086692683415552" or not msg.channel.id == '303070764276645888'):
+                return
+        else:
+            if(not msg.server.id == '133812880654073857')
+
         sender, players, failed, success = get_players_message(msg)
         await determine_request_type(msg, cMsg, client)
         #
@@ -404,15 +434,3 @@ async def open_dota_main(*args, **kwargs):
                 await client.send_message(msg.channel, "Unable to register.\nPlease provide your opendota/dotabuff link, or steam ID32/ID64\n`!od add [opendota|dotabuff|steam_id32|steam_id64]`")
         elif(cMsg[1] == "me" and len(cMsg) == 2):
             await display_self_association(msg, cMsg, client)
-        elif("on" in cMsg):
-            if("as" in cMsg):
-                await player_on_hero_with_side(msg, cMsg, client)
-            else:
-                await player_on_hero(msg, cMsg, client)
-        elif("wordcloud" in cMsg):
-            await get_players_wordcloud(msg, cMsg, client)
-        else:
-            await client.send_message(msg.channel, "Unknown command")
-
-
-        #await client.send_message(msg.channel, "test")
