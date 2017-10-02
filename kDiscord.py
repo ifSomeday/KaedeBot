@@ -421,17 +421,18 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             command = kwargs['command']
             callback = kwargs['cb']
             cMsg = args[0]
-            if(not any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
-                if(msg.author.id in media_messages and not msg.author.id == '213099188584579072'):
-                    if(time.time() - media_messages[msg.author.id] < 60):
-                        await client.delete_message(msg)
-                        await client.send_message(msg.channel, msg.author.mention + " please refrain from spamming !!")
-                else:
-                    media_messages[msg.author.id] = time.time()
-                    if(callback):
-                        await callback(cMsg, msg=msg, command=command)
-            elif(callback):
-                await callback(cMsg, msg=msg, command=command)
+            if(msg.author.id in media_messages and not msg.author.id == '213099188584579072'):
+                if(time.time() - media_messages[msg.author.id] < 60):
+                    await client.delete_message(msg)
+                    await client.send_message(msg.channel, msg.author.mention + " please refrain from spamming !!")
+            else:
+                botLog("preparing to callback")
+                media_messages[msg.author.id] = time.time()
+                if(callback):
+                    botLog("executing callback")
+                    await callback(cMsg, msg=msg, command=command)
+            #elif(callback):
+            #    await callback(cMsg, msg=msg, command=command)
 
     def create_seal_embed(team, place, logo_url, captain, player_list, colour = None):
         emb = discord.Embed()
