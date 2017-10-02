@@ -127,7 +127,8 @@ async def determine_request_type(msg, cMsg, client):
         req_specifier = ' '.join(cMsg[req_index + 1 : modifier_loc[0]])
     if(not request is None):
         await request(cMsg, client = client, msg = msg, mod = req_specifier, player = player, params = params)
-
+    else:
+        await client.send_message(msg.channel, "Unknown error in command processing.")
 
 
 async def get_players_wordcloud(*args, **kwargs):
@@ -179,8 +180,13 @@ async def __get_player_summary(msg, player, client, params, num = None):
     #TODO: add checks for date and stuff too
     limit = None
     if(not any(x in params for x in ['date', 'limit'])):
-        params['limit'] = 20
-        limit = "20 games"
+        try:
+            num = int(num)
+        except Exception as e:
+            await client.send_message(msg.channel, "Uknown number of games, defaulting to 20")
+            num = None
+        params['limit'] = num if not num is None else 20
+        limit = str(params['limit']) + " games"
     else:
         if('limit' in params):
             limit = str(params['limit']) + " games"
@@ -311,7 +317,12 @@ def player_summary_embed(res, player, limit = None):
     emb.add_field(name = "Kills", value = get_totals_str(res["kills"]), inline = True)
     emb.add_field(name = "Deaths", value = get_totals_str(res["deaths"]), inline = True)
     emb.add_field(name = "Assists", value = get_totals_str(res["assists"]), inline = True)
-    emb.add_field(name = "KDA", value = str(round(res["kda"]['sum'] / res["kda"]["n"], 2)), inline = True)
+    emb.add_field(name = "KDA", value = get_partial_totals_str(res["kda"]), inline = True)
+
+    emb.add_field(name = "Last Hits", value = get_partial_totals_str(res["last_hits"]), inline = True)
+    emb.add_field(name = "Denies", value = get_partial_totals_str(res["denies"]), inline = True)
+    emb.add_field(name = "GPM", value = get_partial_totals_str(res["gold_per_min"]), inline = True)
+    emb.add_field(name = "XPM", value = get_partial_totals_str(res["xp_per_min"]), inline = True)
     return(emb)
 
 
@@ -328,6 +339,11 @@ def rewrite_totals_object(obj_in):
     for item in obj_in:
         obj_out[item['field']] = item
     return(obj_out)
+
+def get_partial_totals_str(field):
+    n = float(field["n"])
+    s = float(field['sum'])
+    return(str(round(s / n, 2)))
 
 def get_totals_str(field):
     n = float(field['n'])
