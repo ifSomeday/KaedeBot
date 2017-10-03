@@ -214,7 +214,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         """
         if('msg' in kwargs):
             if(cfg.checkMessage("imagemacro", kwargs['msg'])):
-                if(cfg.checkMessage("floodcontrol"), kwargs['msg']):
+                if(cfg.checkMessage("floodcontrol", kwargs['msg'])):
                     await spam_check(args[0], msg=kwargs['msg'], command=kwargs['command'], cb=image_macro)
                 else:
                     await image_macro(args[0], msg=kwargs['msg'], command=kwargs['command'])
@@ -428,14 +428,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 if(time.time() - media_messages[msg.author.id] < 60):
                     await client.delete_message(msg)
                     await client.send_message(msg.channel, msg.author.mention + " please refrain from spamming !!")
-                else:
-                    botLog("preparing to callback")
-                    media_messages[msg.author.id] = time.time()
-                    if(callback):
-                        botLog("executing callback")
-                        await callback(cMsg, msg=msg, command=command)
-            #elif(callback):
-            #    await callback(cMsg, msg=msg, command=command)
+                    return
+            media_messages[msg.author.id] = time.time()
+            if(callback):
+                await callback(cMsg, msg=msg, command=command)
 
     def create_seal_embed(team, place, logo_url, captain, player_list, colour = None):
         emb = discord.Embed()

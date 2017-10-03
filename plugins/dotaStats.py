@@ -479,8 +479,6 @@ async def open_dota_main(*args, **kwargs):
     if('msg' in kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
-        if(not msg.server.id == '133812880654073857'):
-            return
         cMsg  = args[0]
         ##NOTE: TESTING DIFFERENCSE
         if(os.name == 'nt'):
