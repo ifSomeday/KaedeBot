@@ -9,8 +9,8 @@ class openDotaPlugin:
         pass
 
     ##MATCH RELATED REQUESTS
-    def get_match(self, match_id):
-        r = requests.get(self.BASE_URL + "matches/" + str(match_id))
+    def get_match(self, match_id, params = None):
+        r = requests.get(self.BASE_URL + "matches/" + str(match_id), params=params)
         js = r.json()
         return(js)
 

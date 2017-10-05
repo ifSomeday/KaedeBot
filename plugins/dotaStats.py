@@ -21,8 +21,10 @@ client = None
 url_matcher = r"\w+?.com\/(?:esports\/)?players\/(\d+)"
 od = opendota.openDotaPlugin()
 hero_dict = {}
+hero_dict2 = {}
 for j in od.get_heroes():
     hero_dict[j["localized_name"].lower()] = j
+    hero_dict2[j["id"]] = j
 
 ##dict entry format: name : discord object, steamId object
 ##TODO: use difflib
@@ -156,6 +158,22 @@ async def __get_players_wordcloud(msg, player, client, params):
 
 async def get_players_wardmap(*args, **kwargs):
     await __get_players_wardmap(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'], kwargs['mod'])
+
+async def match_details(*args, **kwargs):
+    await __match_details_backend(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'], kwargs['mod'])
+
+
+async def __match_details_backend(msg, player, client, params, req_specifier=None):
+    try:
+        req_specifier = int(req_specifier)
+    except:
+        req_specifier = None
+    if(req_specifier is None):
+        await client.send_message(msg.channel, "Invalid match ID specified")
+        return
+    r = od.get_match(req_specifier, params = params)
+    emb =  match_summary_embed(r)
+    await client.send_message(msg.channel, " ", embed = emb)
 
 
 
@@ -325,6 +343,25 @@ def player_summary_embed(res, player, limit = None):
     emb.add_field(name = "XPM", value = get_partial_totals_str(res["xp_per_min"]), inline = True)
     return(emb)
 
+def match_summary_embed(res):
+    emb = discord.Embed()
+    emb.title = "Match ID " + str(res["match_id"])
+    emb.type = "rich"
+    emb.description = "Radiant" if res["radiant_win"] else "Dire" + " Victory"
+    rad_str = ""
+    dire_str = ""
+    for player in res["players"]:
+        tmp = quick_player_info(player) + "\t\n\n"
+        if(player["player_slot"] in range(0, 5)):
+            rad_str += tmp
+        elif(player["player_slot"] in range(128, 133)):
+            dire_str += tmp
+    ##TODO: add team names
+    emb.add_field(name = "Match details:", value = quick_game_details(res), inline = False)
+    emb.add_field(name = "Radiant:", value = rad_str)
+    emb.add_field(name = "Dire:", value = dire_str)
+    return(emb)
+
 
 ##     ## ####  ######   ######
 ###   ###  ##  ##    ## ##    ##
@@ -333,6 +370,29 @@ def player_summary_embed(res, player, limit = None):
 ##     ##  ##        ## ##
 ##     ##  ##  ##    ## ##    ##
 ##     ## ####  ######   ######
+
+def quick_game_details(res):
+    length = "**Duration:** " + str(res["duration"] // 60) + ":" + str(res["duration"] % 60)
+    rad_score = res["radiant_score"]
+    dire_score = res["dire_score"]
+    score = "**Score:** " + str(rad_score) + " - " + str(dire_score)
+    gold = res["radiant_gold_adv"][-1] ##Get last enty
+    botLog(gold)
+    xp = res["radiant_xp_adv"][-1] ##Get last entry
+    botLog(xp)
+    gold_str = "**Gold:** +" + str(abs(gold)) + (" Radiant" if gold >= 0 else " Dire")
+    xp_str = "**Experience:** +" + str(abs(xp)) + (" Radiant" if xp >= 0 else " Dire")
+    return(length + "\n" + score + "\n" + gold_str + "\n" + xp_str)
+
+
+
+def quick_player_info(player):
+    hero_name = hero_dict2[player["hero_id"]]["localized_name"]
+    kda = str(player["kills"]) + "/" + str(player["deaths"]) + "/" + str(player["assists"])
+    name = player["personaname"] ##player["name"]
+    last_hits = player["last_hits"]
+    networth = player["gold_t"][-1]
+    return("**" + name + "** *" + hero_name + "*\nKDA: " + kda + "\nLast Hits: " + str(last_hits) + "\nNetworth: " + str(networth))
 
 def rewrite_totals_object(obj_in):
     obj_out = {}
@@ -393,24 +453,6 @@ def create_ward_heatmap(player_id, obs=True, params = None):
     imgBytes.seek(0)
     return(imgBytes)
 
-def get_players_message(msg):
-    sender = None
-    players = []
-    failed = []
-    success = True
-    if(msg.author.name in player_dict):
-        sender = player_dict[msg.author.name]
-    else:
-        success = False
-    for user in msg.mentions:
-        if(user.id in player_dict):
-            players.append(player_dict[user.name])
-        else:
-            failed.append(user)
-            ##dont use these additional mentions for now
-            #success = False
-    return(sender, players, failed, success)
-
 def get_wr_color(winrate):
     h = winrate / 3
     col = discord.Colour.default()
@@ -470,7 +512,7 @@ def days_modifier(days_limit):
 reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
         "add" : associate_player, "summary" : get_player_summary,
-        "profile" : display_player_profile}
+        "profile" : display_player_profile, "match" : match_details}
 modifiers = {"on" : on_modifier, "recent" : recent_modifier,
             "as" : as_modifier, "days" : days_modifier}
 
@@ -487,17 +529,5 @@ async def open_dota_main(*args, **kwargs):
         else:
             if(msg.channel.id == '303070764276645888' or not msg.server.id == '133812880654073857'):
                 return
-
-        sender, players, failed, success = get_players_message(msg)
         await determine_request_type(msg, cMsg, client)
-        #
-        #
         return
-        #
-        #
-        if(cMsg[1] == "add"):
-            res = await associate_player(msg, cMsg, msg.author, client)
-            if(not res):
-                await client.send_message(msg.channel, "Unable to register.\nPlease provide your opendota/dotabuff link, or steam ID32/ID64\n`!od add [opendota|dotabuff|steam_id32|steam_id64]`")
-        elif(cMsg[1] == "me" and len(cMsg) == 2):
-            await display_self_association(msg, cMsg, client)
