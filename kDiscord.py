@@ -7,6 +7,8 @@ import praw
 import threading
 import classes
 import re
+import sys
+import operator
 from plugins import dotaStats
 #import draftThread as dt
 import markovChaining, keys, BSJ, os, header
@@ -483,7 +485,33 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            pass
+            if(not msg.author.id == '133811493778096128'):
+                return
+            count_dict = {}
+            word_dict = {}
+            total_dict = {}
+            quick_ref = {}
+            count = 0
+            async for message in client.logs_from(msg.channel, limit=sys.maxsize):
+                count += 1
+                if(not message.author.id in count_dict):
+                    count_dict[message.author.id] = 0
+                    word_dict[message.author.id] = 0
+                    quick_ref[message.author.id] = message.author.name
+                count_dict[message.author.id] += 1
+                word_dict[message.author.id] += len(message.content.split())
+                if(count % 10000 == 0):
+                    botLog(count)
+            botLog("sorting")
+            for user in count_dict.keys():
+                total_dict[user] = float(word_dict[user]) / float(count_dict[user])
+            sorted_tot = sorted(total_dict.items(), key=operator.itemgetter(1), reverse=True)
+            botLog("Writing")
+            with open("avg_word_count.txt", "w", encoding='utf-8') as f:
+                for item in sorted_tot:
+                    f.write(item[0] + "\t\t\t" + quick_ref[item[0]] + "\t\t\t" + str(item[1]) + "\t\t\t" + str(count_dict[item[0]]) + "\n")
+            botLog("done")
+
 
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
