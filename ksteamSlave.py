@@ -70,7 +70,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     @dota.on('ready')
     def ready0():
         botLog("Dota is ready")
-        hostLobby(tournament=True)
+        if(hosted is False):
+            hostLobby(tournament=True)
 
     @dota.on('notready')
     def reload():
