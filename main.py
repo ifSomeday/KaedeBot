@@ -7,7 +7,6 @@ import kDiscord as db
 import ksteamSlave
 import draftThread as dt
 import threading
-import random, string
 import keys, classes
 from threading import Event
 import queue
@@ -62,9 +61,7 @@ def startSteamSlave(*args, **kwargs):
             break
     count_lock.release()
     if(sBot):
-        lobby_name = cargs[0]
-        pswrd = ''.join(random.choice(string.ascii_lowercase) for i in range(6))
-        slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, lobby_name, pswrd)).start()
+        slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, cargs)).start()
         return(sBot)
     print("Issue getting lobby bot")
     return(None)
@@ -98,7 +95,7 @@ while(running):
     if(kdc == None or not kdc.isAlive()):
         print("thread kdc is stopped... starting...")
         kdc = startDiscord(kdc)
-    if(drft == None or not drft.isAlive()):
+    if(False):##drft == None or not drft.isAlive()):
         pass
         print("thread drft is stopped... starting...")
         drft = startDraft(drft)

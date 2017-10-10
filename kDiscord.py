@@ -1,5 +1,5 @@
 import asyncio
-import random, time
+import random, time, string
 import edit_distance as ed
 import discord
 import queue
@@ -324,7 +324,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                     output += (" `" + f + "`,")
                 output = output[:-1]
             output = featureAppend(output, meme_feat, "meme")
-            output = featureAppend(output, macro_feat, "iamgemacro")
+            output = featureAppend(output, macro_feat, "imagemacro")
             output = featureAppend(output, dele_feat, "deletion")
             output = featureAppend(output, chat_feat, "chatresponse")
             output = featureAppend(output, flood_feat, "floodcontrol")
@@ -406,7 +406,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             msg = kwargs['msg']
             ##TODO: verify here
             ##TODO: get name
-            factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, ["test lobby"]))
+            await client.send_message(msg.channel, "Creating lobby...")
+            lobby_name = "test lobby"
+            lobby_password = ''.join(random.choice(string.ascii_lowercase) for i in range(0, 6))
+            factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [lobby_name, lobby_password, msg]))
 
     async def request_bot_list(*args, **kwargs):
         if('msg' in kwargs):
@@ -482,6 +485,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(msg.channel, " ", embed = champs)
                 await client.delete_message(msg)
 
+    async def lobby_create_message(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            msg = cmd.args[2]
+            await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
+
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -534,7 +543,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
-        classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs}
+        classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
+        classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
