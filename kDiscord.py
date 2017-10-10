@@ -578,7 +578,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(cfg.checkMessage("deletion", message) and (not message.author.id == '213099188584579072')):
             if(deleteFilter(message.content)):
                 return
-            if(message.server.id == '308515912653340682' and not message.author.id == '171840790803382272'):
+            if(message.server.id == '308515912653340682' and not (message.author.id == '171840790803382272' or message.content.id == "117446235715010569")):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
