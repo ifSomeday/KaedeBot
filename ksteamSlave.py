@@ -28,10 +28,14 @@ import header
 
 import keys, edit_distance
 
-def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
+def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     client = SteamClient()
     dota = Dota2Client(client)
     bot_SteamID = None
+
+    lobby_name = args[0]
+    lobby_pass = args[1]
+    lobby_msg = args[2]
 
     hosted = False
 
@@ -140,6 +144,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
     def hostLobby(tournament=False):
         if(dota.lobby):
             dota.leave_practice_lobby()
+        botLog("name: " + lobby_name)
+        botLog("pass: " + lobby_pass)
         d['game_name'] = lobby_name
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
@@ -155,12 +161,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
         if(tournament):
             #d['leagueid'] = 5432
             pass
-        botLog(lobby_password)
-        dota.create_practice_lobby(password=lobby_password, options=d)
+        dota.create_practice_lobby(password=lobby_pass, options=d)
         time.sleep(1)
         dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
         hosted = True
+        dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
 
     def naw(*args, **kwargs):
         pass
@@ -218,7 +224,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, lobby_name, lobby_password):
                 sendLobbyMessage("Please specify a lobby password", msg.channel_id)
                 return
             lobby_pass = str(cMsg[1]).strip()
-            d['pass_key'] = lobby_name
+            d['pass_key'] = lobby_pass
             dota.config_practice_lobby(d)
             sendLobbyMessage("Set lobby password to '" + lobby_pass + "'")
             reset_ready(msg=msg)
@@ -318,4 +324,4 @@ if(__name__ == "__main__"):
     kstQ = queue.Queue()
     dstQ = queue.Queue()
     factoryQ = queue.Queue()
-    client = steamSlave(sBot, kstQ, dstQ, factoryQ)
+    client = steamSlave(sBot, kstQ, dstQ, factoryQ, ["test", "test", None])

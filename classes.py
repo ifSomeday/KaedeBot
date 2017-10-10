@@ -409,6 +409,7 @@ class discordCommands(Enum):
     SEAL_EMBEDS = 33
     HONORARY_CHAMPS = 34
     OPENDOTA = 35
+    LOBBY_CREATE_MESSAGE = 36
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
