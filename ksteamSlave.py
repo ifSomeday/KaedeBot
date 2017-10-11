@@ -50,7 +50,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     lobby_command_translation = {"switchside" : classes.leagueLobbyCommands.SWITCH_SIDE, "fp" : classes.leagueLobbyCommands.FIRST_PICK,
                                 "firstpick" :  classes.leagueLobbyCommands.FIRST_PICK, "server": classes.leagueLobbyCommands.SERVER,
                                 "start" : classes.leagueLobbyCommands.START, "name" : classes.leagueLobbyCommands.GAME_NAME,
-                                "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS}
+                                "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS,
+                                "cancel" : ckasses.leagueLobbyCommands.CANCEL_START}
 
     def botLog(text):
         try:
@@ -152,8 +153,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
         d['allow_cheats'] = False
         d['visibility'] = dota2.enums.DOTALobbyVisibility.Public ##Public, Friends, Unlisted
-        d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120 ##Unlimited, Limited, Disabled
-        d['pause_setting'] = dota2.enums.LobbyDotaPauseSetting.Unlimited
+        d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120
+        d['pause_setting'] = dota2.enums.LobbyDotaPauseSetting.Unlimited ##Unlimited, Limited, Disabled
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS ##DOTA_CM_GOOD_GUYS, DOTA_CM_BAD_GUYS
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
@@ -273,10 +274,23 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             for side in sides_ready:
                 launch = side and launch
             if(launch):
-                sendLobbyMessage("Starting", msg.channel_id)
+                sendLobbyMessage("Starting lobby. Use !cancel to stop countdown", msg.channel_id)
+                for i in range(5, 0, -1):
+                    for side in sides_ready:
+                        launch = side and launch
+                    if(launch):
+                        sendLobbyMessage(str(i), msg.channel_id)
+                        time.sleep(1)
+                    else:
+                        sendLobbyMessage("Countdown canceled", msg.channel_id)
+                        return
                 dota.launch_practice_lobby()
             else:
                 sendLobbyMessage("One side readied up. Waiting for other team..", msg.channel_id)
+
+    def cancel(*args, **kwargs):
+        if('msg' in kwargs):
+            reset_ready()
 
     def reset_ready(*args, **kwargs):
         sides_ready[0] = False
@@ -305,7 +319,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     function_translation = {classes.leagueLobbyCommands.SWITCH_SIDE : swap_teams, classes.leagueLobbyCommands.FIRST_PICK : first_pick,
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
                             classes.leagueLobbyCommands.START : start_lobby, classes.leagueLobbyCommands.GAME_NAME : set_name,
-                            classes.leagueLobbyCommands.GAME_PASS : set_pass}
+                            classes.leagueLobbyCommands.GAME_PASS : set_pass, classes.leagueLobbyCommands.CANCEL_START : cancel}
 
     ##five minutes to get in a lobby
     toH = threading.Timer(300.0, timeoutHandler, [stop_event,])
