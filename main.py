@@ -87,6 +87,11 @@ def getFreeBots(*args, **kwargs):
     count_lock.release()
     dscQ.put(classes.command(classes.discordCommands.BOT_LIST_RET, [msg, l]))
 
+def shutdownBots(*args, **kwargs):
+    cmd = kwargs['cmd']
+    dscQ.put(classes.command(classes.discordCommands.SHUTDOWN_BOT, []))
+    kstQ.put(classes.command(classes.steamCommands.SHUTDOWN_BOT, []))
+
 while(running):
     if(kst == None or not kst.isAlive()):
         pass
@@ -108,7 +113,10 @@ while(running):
             freeBot(cmd = cmd)
         elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
             getFreeBots(cmd = cmd)
+        elif(cmd.command == classes.botFactoryCommands.SHUTDOWN_BOT):
+            shutdownBots(cmd = cmd)
+            running = False
 
 kst.join()
 kdc.join()
-drft.join()
+##drft.join()

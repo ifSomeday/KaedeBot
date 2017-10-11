@@ -491,6 +491,22 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             msg = cmd.args[2]
             await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
 
+    async def shutdown_bot(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(msg.author.id  == '133811493778096128'):
+                factoryQ.put(classes.command(classes.botFactoryCommands.SHUTDOWN_BOT, []))
+
+    async def clean_shutoff(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            botLog("Tables saved")
+            markovChaining.dumpAllTables()
+            botLog("closing connection")
+            client.logout()
+            raise KeyboardInterrupt
+            sys.exit()
+
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -544,7 +560,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
-        classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message}
+        classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
+        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

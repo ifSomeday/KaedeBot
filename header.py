@@ -28,7 +28,7 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "featurehelp" : classes.discordCommands.PERMISSION_HELP, "lobby" : classes.discordCommands.CREATE_LOBBY,
     "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST,
     "test" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
-    "champs" : classes.discordCommands.HONORARY_CHAMPS
+    "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN
 }
 
 valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft"]

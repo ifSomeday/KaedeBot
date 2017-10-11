@@ -363,6 +363,8 @@ class steamCommands(Enum):
     FREE_BOT = 15
     REQUEST_LOBBY_BOT = 16
     REQUEST_LOBBY_BOT_FLAME = 17
+    SHUTDOWN_BOT = 18
+    REQUEST_SHUTDOWN = 19 ##TODO: implement this
 
 ########  ####  ######   ######   #######  ########  ########      ######  ##     ## ########   ######
 ##     ##  ##  ##    ## ##    ## ##     ## ##     ## ##     ##    ##    ## ###   ### ##     ## ##    ##
@@ -410,6 +412,8 @@ class discordCommands(Enum):
     HONORARY_CHAMPS = 34
     OPENDOTA = 35
     LOBBY_CREATE_MESSAGE = 36
+    REQUEST_SHUTDOWN = 37
+    SHUTDOWN_BOT = 38
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
@@ -451,6 +455,7 @@ class botFactoryCommands(Enum):
     SPAWN_SLAVE = 0
     FREE_SLAVE = 1
     LIST_BOTS_D = 2
+    SHUTDOWN_BOT = 3
 
 ######## ########    ###    ##     ##  ######
    ##    ##         ## ##   ###   ### ##    ##

@@ -2,6 +2,7 @@
 
 ##library imports
 import gevent.monkey
+##gevent.monkey.patch_all()
 
 from steam import SteamClient
 from steam import SteamID
@@ -37,6 +38,8 @@ def dotaThread(kstQ, dscQ, factoryQ):
     ##set up client
     client = SteamClient()
     dota = Dota2Client(client)
+
+    stop_event = threading.Event()
 
     ##flags
     debug = False
@@ -430,6 +433,11 @@ def dotaThread(kstQ, dscQ, factoryQ):
             top.append(sorted_table[i])
         return(top)
 
+    def clean_shutoff(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            botLog("shutting down")
+            stop_event.set()
 
     def dumpTable(table):
         with open(TABLE_NAME,'wb') as f:
@@ -477,7 +485,8 @@ def dotaThread(kstQ, dscQ, factoryQ):
         classes.steamCommands.STOP_BOT : exit_dota, classes.steamCommands.INHOUSE : invalid_command,
         classes.steamCommands.STATUS_4D : get_status_discord, classes.steamCommands.LEADERBOARD_4D : get_leaderboard_discord,
         classes.steamCommands.LOBBY_CREATE : setup_lobby , classes.steamCommands.TOURNAMENT_LOBBY_CREATE : invalid_command,
-        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame}
+        classes.steamCommands.INVALID_COMMAND : invalid_command, classes.steamCommands.REQUEST_LOBBY_BOT_FLAME : spawn_bot_flame,
+        classes.steamCommands.SHUTDOWN_BOT : clean_shutoff}
 
     table = init_local_data()
 
@@ -488,7 +497,12 @@ def dotaThread(kstQ, dscQ, factoryQ):
 
     client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
     botLog("logged in")
-    client.run_forever()
+    while(not stop_event.isSet()):
+        client.sleep(5)
+    client.disconnect()
+    client.logout()
+    return
+    #client.run_forever()
 
 if(__name__ == "__main__"):
     kstQ = queue.Queue()
