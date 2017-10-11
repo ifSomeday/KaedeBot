@@ -51,7 +51,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                                 "firstpick" :  classes.leagueLobbyCommands.FIRST_PICK, "server": classes.leagueLobbyCommands.SERVER,
                                 "start" : classes.leagueLobbyCommands.START, "name" : classes.leagueLobbyCommands.GAME_NAME,
                                 "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS,
-                                "cancel" : ckasses.leagueLobbyCommands.CANCEL_START}
+                                "cancel" : classes.leagueLobbyCommands.CANCEL_START}
 
     def botLog(text):
         try:

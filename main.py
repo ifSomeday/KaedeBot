@@ -117,6 +117,7 @@ while(running):
             shutdownBots(cmd = cmd)
             running = False
 
-kst.join()
-kdc.join()
+time.sleep(30)
+#kst.join()
+#kdc.join()
 ##drft.join()

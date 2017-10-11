@@ -442,6 +442,7 @@ class leagueLobbyCommands(Enum):
     START = 3
     GAME_NAME = 4
     GAME_PASS = 5
+    CANCEL_START = 6
 
 ########   #######  ######## ########  ######  ########     ######  ##     ## ########   ######
 ##     ## ##     ##    ##    ##       ##    ##    ##       ##    ## ###   ### ##     ## ##    ##
