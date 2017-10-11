@@ -160,6 +160,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
         d['allow_cheats'] = False
+        ##d['penalty_level_radiant']
+        ##d['penalty_level_dire']
 
         if(tournament):
             #d['leagueid'] = 5432
@@ -170,12 +172,41 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         botLog("Lobby hosted")
         hosted = True
 
-
     def naw(*args, **kwargs):
         pass
 
     def sendLobbyMessage(message, channel_id):
         dota.send(dGCMsg.EMsgGCChatMessage, {"channel_id": channel_id, "text": message})
+
+    def set_penalty(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(len(cMsg) < 3):
+                sendLobbyMessage("Please specify a side and a penalty level (0 - 3)", msg.channel_id)
+                return
+            side = str(cMsg[1]).lower().strip()
+            if(edit_distance.distance(side, 'radiant') < 3):
+                d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
+                side = "radiant"
+            elif(edit_distance.distance(side, 'dire') < 3):
+                d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_BAD_GUYS
+                side = "dire"
+            else:
+                sendLobbyMessage("Invalid side (Radiant, Dire)", msg.channel_id)
+                return
+            level = cMsg[2].strip()
+            try:
+                level = int(level)
+            except:
+                level = 4
+            if(not level in range(0,4)):
+                sendLobbyMessage("Invalid penalty level (0 - 3)")
+                return
+            d['penalty_level_' + side] = level
+            ##TODO: second translation here
+            sendLobbyMessage("Set penalty level of " + side + " to " + str(level))
+
 
     def swap_teams(*args, **kwargs):
         if('msg' in kwargs):
@@ -240,10 +271,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                 sendLobbyMessage("Please specify a side (Radiant, Dire)", msg.channel_id)
                 return
             side = str(cMsg[1]).lower().strip()
-            if(edit_distance.distance(side, 'radiant') < 4):
+            if(edit_distance.distance(side, 'radiant') < 3):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
                 side = "Radiant"
-            elif(edit_distance.distance(side, 'dire') < 4):
+            elif(edit_distance.distance(side, 'dire') < 3):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_BAD_GUYS
                 side = "Dire"
             else:
