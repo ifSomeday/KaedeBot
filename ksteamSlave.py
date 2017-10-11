@@ -141,6 +141,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     def on_lobby_joined(msg):
         dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
         dota.join_practice_lobby_team(team=4)
+        dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
 
     def hostLobby(tournament=False):
         if(dota.lobby):
@@ -167,7 +168,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
         hosted = True
-        dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
+
 
     def naw(*args, **kwargs):
         pass
@@ -208,7 +209,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
-            if(len(cMSG) < 2):
+            if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a lobby name", msg.channel_id)
                 return
             lobby_name = str(cMsg[1]).strip()
@@ -221,7 +222,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
-            if(len(cMSG) < 2):
+            if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a lobby password", msg.channel_id)
                 return
             lobby_pass = str(cMsg[1]).strip()
