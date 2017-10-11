@@ -311,24 +311,17 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             server_channels = list(msg.server.channels)
             ##TODO: these are possible with clever use of for .. if .. in a single line
             glob_feat = []
-            glob_feat, meme_feat = featureListHelper(server, server_channels, glob_feat, [], "meme")
-            glob_feat, macro_feat = featureListHelper(server, server_channels, glob_feat, [], "imagemacro")
-            glob_feat, dele_feat = featureListHelper(server, server_channels, glob_feat, [], "deletion")
-            glob_feat, chat_feat = featureListHelper(server, server_channels, glob_feat, [], "chatresponse")
-            glob_feat, flood_feat = featureListHelper(server, server_channels, glob_feat, [], "floodcontrol")
-            glob_feat, draft_feat = featureListHelper(server, server_channels, glob_feat, [], "draft")
             output = ""
+            ch_output = ""
+            for feature in header.valid_permission_types:
+                glob_feat, feat = featureListHelper(server, server_channels, glob_feat, [], feature)
+                ch_output = featureAppend(ch_output, feat, feature)
             if(len(glob_feat) > 0):
                 output += "\t* Serverwide features enabled:"
                 for f in glob_feat:
                     output += (" `" + f + "`,")
                 output = output[:-1]
-            output = featureAppend(output, meme_feat, "meme")
-            output = featureAppend(output, macro_feat, "imagemacro")
-            output = featureAppend(output, dele_feat, "deletion")
-            output = featureAppend(output, chat_feat, "chatresponse")
-            output = featureAppend(output, flood_feat, "floodcontrol")
-            output = featureAppend(output, draft_feat, "draft")
+            output += ch_output
             if(len(output) > 0):
                 output = "Feature Status:\n" + output
             else:
