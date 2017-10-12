@@ -178,14 +178,21 @@ async def __match_details_backend(msg, player, client, params, req_specifier=Non
 
 
 async def __get_players_wardmap(msg, player, client, params, req_specifier=None):
-    wardmap = create_ward_heatmap(player['steam'].as_32, obs=True, params = params)
+    t = difflib.get_close_matches(str(req_specifier), ["obs", "observer", "sen", "sentry"])
+    ward_type = True
+    if(len(t) is 0):
+        if(not req_specifier == None):
+            await client.send_message(msg.channel, "Unable to determine requested ward type, defaulting to sentry")
+    else:
+        ward_type = True if ["obs", "observer", "sen", "sentry"].index(t[0]) < 3 else False
+    wardmap = create_ward_heatmap(player['steam'].as_32, obs=ward_type, params = params)
     if(wardmap is None):
         if(not 'hero_id' in params):
             await client.send_message(msg.channel, "Unable to get wardmap data for " + player["discord"].name)
         else:
             await client.send_message(msg.channel, "Unable to get hero specific wardmap data for " + player["discord"].name)
         return
-    await client.send_file(msg.channel, wardmap, filename="wardmap.png" , content = player["discord"].name + "'s wardmap:")
+    await client.send_file(msg.channel, wardmap, filename="wardmap.png" , content = player["discord"].name + "'s " + ("observer" if ward_type else "sentry") + " wardmap:")
 
 
 
@@ -201,7 +208,7 @@ async def __get_player_summary(msg, player, client, params, num = None):
         try:
             num = int(num)
         except Exception as e:
-            await client.send_message(msg.channel, "Uknown number of games, defaulting to 20")
+            await client.send_message(msg.channel, "Unknown number of games, defaulting to 20")
             num = None
         params['limit'] = num if not num is None else 20
         limit = str(params['limit']) + " games"
