@@ -363,7 +363,9 @@ def player_summary_embed(res, res2, player, params, limit = None):
     emb.add_field(name = "Denies", value = get_partial_totals_str(res["denies"]), inline = True)
     emb.add_field(name = "GPM", value = get_partial_totals_str(res["gold_per_min"]), inline = True)
     emb.add_field(name = "XPM", value = get_partial_totals_str(res["xp_per_min"]), inline = True)
-    emb.add_field(name = "Recent Games", value = quick_recent_matches(res2, params['limit']), inline = False)
+    rgames, winr = quick_recent_matches(res2, params['limit'])
+    emb.add_field(name = "Recent Games", value = rgames, inline = False)
+    emb.colour = get_wr_color(winr)
     return(emb)
 
 def match_summary_embed(res):
@@ -397,14 +399,18 @@ def match_summary_embed(res):
 def quick_recent_matches(res, limit):
     outstr = ""
     limit = min(limit, 10)
+    winr = 0
     for i in range(0, limit):
         match = res[i]
         outstr += "`" + str(match["match_id"]) + "`: "
-        outstr += "Won " if (match["radiant_win"] and match["player_slot"] in range(0, 5)) or (not match["radiant_win"] and match["player_slot"] in range(128, 133)) else "Lost "
+        won = (match["radiant_win"] and match["player_slot"] in range(0, 5)) or (not match["radiant_win"] and match["player_slot"] in range(128, 133))
+        outstr += "Won " if won else "Lost "
+        winr += 1 if won else 0
         outstr += "as **" + hero_dict2[match["hero_id"]]["localized_name"] + "** "
         outstr += " KDA: " + str(match["kills"]) + "/" + str(match["deaths"]) + "/" + str(match["assists"])
         outstr += "\n" if not i == limit - 1 else ""
-    return(outstr)
+    winr = winr / limit
+    return(outstr, winr)
 
 
 
