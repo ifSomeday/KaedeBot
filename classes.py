@@ -277,7 +277,7 @@ class discordConfigHelper:
         for permission in self.valid_permission_types:
             if(not permission + "Channel" in self.config_dict):
                 self.config_dict[permission + "Channel"] = []
-            if(not permission + "Serber" in self.config_dict):
+            if(not permission + "Server" in self.config_dict):
                 self.config_dict[permission + "Server"] = []
 
     def saveDict(self):
@@ -318,6 +318,16 @@ class discordConfigHelper:
     def check(self, key, channel, server):
         if(channel in self.config_dict[key + "Channel"] or server in self.config_dict[key + "Server"]):
             return(True)
+        return(False)
+
+    def checkAny(self, message):
+        for(permission in self.valid_permission_types.keys()):
+            if("Channel" in permission):
+                if(message.channel.id in config_dict[permission]):
+                    return(True)
+            if("Server" in permission):
+                if(message.server.id in config_dict[permission]):
+                    return(True)
         return(False)
 
     def checkMessage(self, key, message):
