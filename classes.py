@@ -255,14 +255,16 @@ class command:
 class discordConfigHelper:
 
     ##channel lists
-    config_dict = {"memeChannel" : [], "imagemacroChannel" : [], "deletionChannel" : [], "chatresponseChannel" : [], "floodcontrolChannel" : [], "draftChannel" : [],
-                    "memeServer" : [], "imagemacroServer" : [], "deletionServer" : [], "chatresponseServer" : [], "floodcontrolServer" : [], "draftServer" : []}
+    config_dict = {}
+
+    valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft", "opendota"]
 
     ##dict path
     dict_path = os.getcwd() + "/dataStores/discordConfig.pickle"
 
     def __init__(self):
         self.loadDict()
+        self.updateDict()
 
     def loadDict(self):
         if(os.path.exists(self.dict_path) and os.path.getsize(self.dict_path) > 0):
@@ -270,6 +272,13 @@ class discordConfigHelper:
                 self.config_dict = pickle.load(f)
         else:
             self.saveDict()
+
+    def updateDict(self):
+        for permission in self.valid_permission_types:
+            if(not permission + "Channel" in self.config_dict):
+                self.config_dict[permission + "Channel"] = []
+            if(not permission + "Serber" in self.config_dict):
+                self.config_dict[permission + "Server"] = []
 
     def saveDict(self):
         with open(self.dict_path, 'wb') as f:

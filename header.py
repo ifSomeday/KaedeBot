@@ -31,7 +31,7 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN
 }
 
-valid_permission_types = ["meme", "imagemacro", "deletion", "chatresponse", "floodcontrol", "draft"]
+
 
 ##TODO: fill with captains
 ##TODO: dump to file so captains can specify other trustworth people
