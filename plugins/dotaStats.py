@@ -564,12 +564,8 @@ async def open_dota_main(*args, **kwargs):
         client = kwargs['client']
         msg = kwargs['msg']
         cMsg  = args[0]
-        ##NOTE: TESTING DIFFERENCSE
-        if(os.name == 'nt'):
-            if(not msg.server.id == "213086692683415552" and not msg.channel.id == '303070764276645888'):
-                return
-        else:
-            if(msg.channel.id == '303070764276645888' or not msg.server.id == '133812880654073857'):
-                return
+        cfg = kwargs['cfg']
+        if(not cfg.checkMessage("opendota", msg)):
+            return
         await determine_request_type(msg, cMsg, client)
         return
