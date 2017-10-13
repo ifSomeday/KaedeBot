@@ -79,7 +79,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             await client.send_typing(message.channel)
-            await function_translation[command](cMsg, msg = message, command = command, client = client)
+            await function_translation[command](cMsg, msg = message, command = command, client = client, cfg = cfg)
         if((ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6) and cfg.checkMessage("chatresponse", message)):
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
@@ -244,7 +244,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             command = kwargs['command']
             if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
                 perm_type = cMsg[1].strip().lower()
-                if(perm_type in header.valid_permission_types):
+                if(perm_type in cfg.valid_permission_types):
                     ##TODO: better, but can be simplified
                     append_type = "Server"
                     obj_id = msg.server.id
@@ -313,7 +313,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             glob_feat = []
             output = ""
             ch_output = ""
-            for feature in header.valid_permission_types:
+            for feature in cfg.valid_permission_types:
                 glob_feat, feat = featureListHelper(server, server_channels, glob_feat, [], feature)
                 ch_output = featureAppend(ch_output, feat, feature)
             if(len(glob_feat) > 0):
@@ -534,7 +534,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, "invalid command")
+            if(cfg.checkAny(msg)):
+                await client.send_message(msg.channel, "invalid command")
 
     function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
         classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
