@@ -321,13 +321,13 @@ class discordConfigHelper:
         return(False)
 
     def checkAny(self, message):
-        for(permission in self.valid_permission_types.keys()):
+        for permission in self.config_dict.keys():
             if("Channel" in permission):
-                if(message.channel.id in config_dict[permission]):
+                if(message.channel.id in self.config_dict[permission]):
                     return(True)
-            if("Server" in permission):
-                if(message.server.id in config_dict[permission]):
-                    return(True)
+            ##if("Server" in permission):
+            ##    if(message.server.id in self.config_dict[permission]):
+            ##        return(True)
         return(False)
 
     def checkMessage(self, key, message):
