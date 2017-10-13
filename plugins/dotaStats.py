@@ -71,8 +71,11 @@ async def determine_request_type(msg, cMsg, client):
     if(cMsg[1] in ["add", "register"]):
         await associate_player(msg, cMsg, client)
         return
+    if(cMsg[1] in ["match"]):
+        ##catch commands that dont need a player specified
+        req_index = 1
     ##determine who is being talked about
-    if(cMsg[1] in ["me", "my"]):
+    elif(cMsg[1] in ["me", "my"]):
         req_index = 2
         player, resp = get_player_from_author(msg)
         if(player is None):
@@ -94,8 +97,10 @@ async def determine_request_type(msg, cMsg, client):
                     return
     ##get the request function
     request = None
+    botLog(req_index)
+    botLog(cMsg[req_index])
     if(req_index == -1):
-        await client.send_message(msg.channel, "Unable to deterine what command is being requested")
+        await client.send_message(msg.channel, "Unable to determine what command is being requested")
     if(not cMsg[req_index] in reqs.keys()):
         possible_matches = difflib.get_close_matches(cMsg[req_index], reqs.keys())
         if(len(possible_matches) == 0):
@@ -132,6 +137,50 @@ async def determine_request_type(msg, cMsg, client):
     else:
         await client.send_message(msg.channel, "Unknown error in command processing.")
 
+
+
+async def associate_player(msg, cMsg, client):
+    user = msg.author
+    if(len(cMsg) > 2):
+        player_id = None
+        acceptable_links = ["opendota.com/players", "dotabuff.com/players", "dotabuff.com/esports/players"]
+        if(any(x in cMsg[2] for x in acceptable_links)):
+            botLog("found in link form")
+            match = re.search(url_matcher, cMsg[2])
+            if(not match is None):
+                player_id = match.group(1)
+            else:
+                return(False)
+            botLog(player_id)
+        else:
+            try:
+                player_id = int(cMsg[2])
+            except:
+                player_id = None
+                botLog("bad id provided")
+                return(False)
+        if(not player_id is None):
+            acc = SteamID(player_id)
+            r = od.get_players(acc.as_32)
+            if('profile' in r):
+                __associate_player_backend(user, acc)
+                emb = steam_acc_embed_od(r)
+                await client.send_message(msg.channel, "Associated *" + user.name + "* with: ", embed = emb)
+                return(True)
+            else:
+                return(False)
+        else:
+            botLog("no info provided")
+            return(False)
+
+
+ ######  ########  ########  ######  #### ######## #### ######## ########   ######
+##    ## ##     ## ##       ##    ##  ##  ##        ##  ##       ##     ## ##    ##
+##       ##     ## ##       ##        ##  ##        ##  ##       ##     ## ##
+ ######  ########  ######   ##        ##  ######    ##  ######   ########   ######
+      ## ##        ##       ##        ##  ##        ##  ##       ##   ##         ##
+##    ## ##        ##       ##    ##  ##  ##        ##  ##       ##    ##  ##    ##
+ ######  ##        ########  ######  #### ##       #### ######## ##     ##  ######
 
 async def get_players_wordcloud(*args, **kwargs):
     await __get_players_wordcloud(kwargs['msg'], kwargs['player'], kwargs['client'], kwargs['params'])
@@ -222,8 +271,10 @@ async def __get_player_summary(msg, player, client, params, num = None):
                 limit = ''
             limit += str(params['date']) + " days"
     r = od.get_players_totals(player["steam"].as_32, params = params)
+    ##TODO: switch to matches to allow varaible length
+    r2 = od.get_players_recent_matches(player["steam"].as_32)#, params = params)
     r = rewrite_totals_object(r)
-    emb = player_summary_embed(r, player, limit)
+    emb = player_summary_embed(r, r2, player, params, limit=limit)
     await client.send_message(msg.channel, " ", embed = emb)
     pass
 
@@ -243,42 +294,6 @@ async def __display_player_profile(msg, player, client, params):
 
 async def player_on_hero_test(*args, **kwargs):
     await __get_hero_on_player_backend(kwargs['msg'], kwargs['client'], kwargs['mod'], kwargs['player'], params=kwargs['params'])
-
-
-
-async def associate_player(msg, cMsg, client):
-    user = msg.author
-    if(len(cMsg) > 2):
-        player_id = None
-        acceptable_links = ["opendota.com/players", "dotabuff.com/players", "dotabuff.com/esports/players"]
-        if(any(x in cMsg[2] for x in acceptable_links)):
-            botLog("found in link form")
-            match = re.search(url_matcher, cMsg[2])
-            if(not match is None):
-                player_id = match.group(1)
-            else:
-                return(False)
-            botLog(player_id)
-        else:
-            try:
-                player_id = int(cMsg[2])
-            except:
-                player_id = None
-                botLog("bad id provided")
-                return(False)
-        if(not player_id is None):
-            acc = SteamID(player_id)
-            r = od.get_players(acc.as_32)
-            if('profile' in r):
-                __associate_player_backend(user, acc)
-                emb = steam_acc_embed_od(r)
-                await client.send_message(msg.channel, "Associated *" + user.name + "* with: ", embed = emb)
-                return(True)
-            else:
-                return(False)
-        else:
-            botLog("no info provided")
-            return(False)
 
 
 
@@ -330,7 +345,7 @@ def steam_acc_embed_od(res):
     emb.colour = discord.Colour.blue()
     return(emb)
 
-def player_summary_embed(res, player, limit = None):
+def player_summary_embed(res, res2, player, params, limit = None):
     emb = discord.Embed()
     emb.title = player["discord"].name + "'s Summary"
     if(limit is None):
@@ -348,6 +363,7 @@ def player_summary_embed(res, player, limit = None):
     emb.add_field(name = "Denies", value = get_partial_totals_str(res["denies"]), inline = True)
     emb.add_field(name = "GPM", value = get_partial_totals_str(res["gold_per_min"]), inline = True)
     emb.add_field(name = "XPM", value = get_partial_totals_str(res["xp_per_min"]), inline = True)
+    emb.add_field(name = "Recent Games", value = quick_recent_matches(res2, params['limit']), inline = False)
     return(emb)
 
 def match_summary_embed(res):
@@ -378,6 +394,20 @@ def match_summary_embed(res):
 ##     ##  ##  ##    ## ##    ##
 ##     ## ####  ######   ######
 
+def quick_recent_matches(res, limit):
+    outstr = ""
+    limit = min(limit, 10)
+    for i in range(0, limit):
+        match = res[i]
+        outstr += "`" + str(match["match_id"]) + "`: "
+        outstr += "Won " if (match["radiant_win"] and match["player_slot"] in range(0, 5)) or (not match["radiant_win"] and match["player_slot"] in range(128, 133)) else "Lost "
+        outstr += "as **" + hero_dict2[match["hero_id"]]["localized_name"] + "** "
+        outstr += " KDA: " + str(match["kills"]) + "/" + str(match["deaths"]) + "/" + str(match["assists"])
+        outstr += "\n" if not i == limit - 1 else ""
+    return(outstr)
+
+
+
 def quick_game_details(res):
     length = "**Duration:** " + str(res["duration"] // 60) + ":" + str(res["duration"] % 60)
     rad_score = res["radiant_score"]
@@ -390,7 +420,6 @@ def quick_game_details(res):
     gold_str = "**Gold:** +" + str(abs(gold)) + (" Radiant" if gold >= 0 else " Dire")
     xp_str = "**Experience:** +" + str(abs(xp)) + (" Radiant" if xp >= 0 else " Dire")
     return(length + "\n" + score + "\n" + gold_str + "\n" + xp_str)
-
 
 
 def quick_player_info(player):
@@ -480,7 +509,13 @@ def init(chat_command_translation, function_translation):
     player_dict = load_player_dict()
     return(chat_command_translation, function_translation)
 
-################################
+##     ##  #######  ########  #### ######## #### ######## ########   ######
+###   ### ##     ## ##     ##  ##  ##        ##  ##       ##     ## ##    ##
+#### #### ##     ## ##     ##  ##  ##        ##  ##       ##     ## ##
+## ### ## ##     ## ##     ##  ##  ######    ##  ######   ########   ######
+##     ## ##     ## ##     ##  ##  ##        ##  ##       ##   ##         ##
+##     ## ##     ## ##     ##  ##  ##        ##  ##       ##    ##  ##    ##
+##     ##  #######  ########  #### ##       #### ######## ##     ##  ######
 
 def as_modifier(heroString):
     #TODO: functionize this
