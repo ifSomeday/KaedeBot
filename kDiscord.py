@@ -79,7 +79,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
             await client.send_typing(message.channel)
-            await function_translation[command](cMsg, msg = message, command = command, client = client)
+            await function_translation[command](cMsg, msg = message, command = command, client = client, cfg = cfg)
         if((ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6) and cfg.checkMessage("chatresponse", message)):
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
@@ -244,7 +244,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             command = kwargs['command']
             if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
                 perm_type = cMsg[1].strip().lower()
-                if(perm_type in header.valid_permission_types):
+                if(perm_type in cfg.valid_permission_types):
                     ##TODO: better, but can be simplified
                     append_type = "Server"
                     obj_id = msg.server.id
@@ -311,24 +311,17 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             server_channels = list(msg.server.channels)
             ##TODO: these are possible with clever use of for .. if .. in a single line
             glob_feat = []
-            glob_feat, meme_feat = featureListHelper(server, server_channels, glob_feat, [], "meme")
-            glob_feat, macro_feat = featureListHelper(server, server_channels, glob_feat, [], "imagemacro")
-            glob_feat, dele_feat = featureListHelper(server, server_channels, glob_feat, [], "deletion")
-            glob_feat, chat_feat = featureListHelper(server, server_channels, glob_feat, [], "chatresponse")
-            glob_feat, flood_feat = featureListHelper(server, server_channels, glob_feat, [], "floodcontrol")
-            glob_feat, draft_feat = featureListHelper(server, server_channels, glob_feat, [], "draft")
             output = ""
+            ch_output = ""
+            for feature in cfg.valid_permission_types:
+                glob_feat, feat = featureListHelper(server, server_channels, glob_feat, [], feature)
+                ch_output = featureAppend(ch_output, feat, feature)
             if(len(glob_feat) > 0):
                 output += "\t* Serverwide features enabled:"
                 for f in glob_feat:
                     output += (" `" + f + "`,")
                 output = output[:-1]
-            output = featureAppend(output, meme_feat, "meme")
-            output = featureAppend(output, macro_feat, "imagemacro")
-            output = featureAppend(output, dele_feat, "deletion")
-            output = featureAppend(output, chat_feat, "chatresponse")
-            output = featureAppend(output, flood_feat, "floodcontrol")
-            output = featureAppend(output, draft_feat, "draft")
+            output += ch_output
             if(len(output) > 0):
                 output = "Feature Status:\n" + output
             else:
@@ -494,11 +487,28 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             msg = cmd.args[2]
             await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
 
+
     async def bot_error_message(*args, **kwargs):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
             msg = cmd.args[0]
             await client.send_messge(msg.channel, "No bots are currently available")
+
+    async def shutdown_bot(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(msg.author.id  == '133811493778096128'):
+                factoryQ.put(classes.command(classes.botFactoryCommands.SHUTDOWN_BOT, []))
+
+    async def clean_shutoff(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            botLog("Tables saved")
+            markovChaining.dumpAllTables()
+            botLog("closing connection")
+            client.logout()
+            raise KeyboardInterrupt
+            sys.exit()
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
@@ -534,7 +544,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, "invalid command")
+            if(cfg.checkAny(msg)):
+                await client.send_message(msg.channel, "invalid command")
 
     function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
         classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
@@ -553,7 +564,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
-        classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message}
+        classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
+        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
