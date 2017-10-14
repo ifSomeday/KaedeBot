@@ -492,7 +492,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
             msg = cmd.args[0]
-            await client.send_messge(msg.channel, "No bots are currently available")
+            await client.send_message(msg.channel, "No bots are currently available")
 
     async def shutdown_bot(*args, **kwargs):
         if('msg' in kwargs):
@@ -565,7 +565,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
-        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff}
+        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
