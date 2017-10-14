@@ -116,7 +116,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         if(not hosted.is_set()):
             return
         else:
-            botlog("hosted lobby disappeared")
+            botLog("hosted lobby disappeared")
             botCleanup()
 
     @client.on(EMsg.ClientFriendMsgIncoming)
