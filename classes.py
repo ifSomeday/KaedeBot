@@ -410,6 +410,7 @@ class discordCommands(Enum):
     HONORARY_CHAMPS = 34
     OPENDOTA = 35
     LOBBY_CREATE_MESSAGE = 36
+    NO_BOTS_AVAILABLE = 37
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

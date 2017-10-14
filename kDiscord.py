@@ -421,7 +421,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             msg = cmd.args[0]
             l = cmd.args[1]
             s = ', '.join(l)
-            await client.send_message(msg.channel, ("Currently available bots are: " + s))
+            if(len(l) is 0):
+                await client.send_message(msg.channel, "No bots are currently available")
+            else:
+                await client.send_message(msg.channel, ("Currently available bots are: " + s))
 
     async def spam_check(*args, **kwargs):
         if('msg' in kwargs):
@@ -490,6 +493,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             cmd = kwargs['cmd']
             msg = cmd.args[2]
             await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
+
+    async def bot_error_message(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            msg = cmd.args[0]
+            await client.send_messge(msg.channel, "No bots are currently available")
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):

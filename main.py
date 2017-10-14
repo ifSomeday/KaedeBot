@@ -51,6 +51,7 @@ def startDraft(drft):
 def startSteamSlave(*args, **kwargs):
     ##Check trust level here, or when requested in discord
     cmd = kwargs['cmd']
+    ##lobby name, lobby pass, message
     cargs = cmd.args
     sBot = None
     count_lock.acquire()
@@ -64,6 +65,7 @@ def startSteamSlave(*args, **kwargs):
         slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, cargs)).start()
         return(sBot)
     print("Issue getting lobby bot")
+    dscQ.put(classes.command(classes.discordCommands.NO_BOTS_AVAILABLE, [cargs[2]]))
     return(None)
 
 def freeBot(*args, **kwargs):
