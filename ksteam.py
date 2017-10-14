@@ -16,6 +16,7 @@ from dota2.enums import ESOMsg as dEMsg
 from dota2.enums import ESOType as dEType
 from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
+from dota2.enums import GCConnectionStatus as dConStat
 
 
 ##general imports
@@ -86,25 +87,37 @@ def dotaThread(kstQ, dscQ, factoryQ):
     @client.on('logged_on')
     def start_dota():
         botLog("Logged into steam, starting dota")
-        dota.launch()
-        pass
+        time.sleep(1)
+        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
+            botLog("Already in logon queue...")
+            return
+        if(not dota.connection_status is dConStat.HAVE_SESSION):
+            dota.launch()
 
     ##At this point dota is ready
     @dota.on('ready')
     def ready0():
+        botLog("Connection status:")
+        botLog(dota.connection_status)
         botLog("Dota is ready")
 
     @dota.on('notready')
     def reload():
-        botLog("out of dota, restarting...")
-        dota.exit()
-        dota.launch()
-        pass
+        #botLog("out of dota, restarting...")
+        botLog("Connection status:")
+        botLog(dota.connection_status)
+        time.sleep(15)
+        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
+            botLog("Already in logon queue...")
+            return
+        if(not dota.connection_status is dConStat.HAVE_SESSION):
+            dota.exit()
+            dota.launch()
 
     @client.on('disconnected')
     def restart():
         botLog("disconnected from steam. Attempting to relog...")
-        client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
+        client.reconnect()
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')

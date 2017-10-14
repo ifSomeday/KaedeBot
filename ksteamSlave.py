@@ -16,6 +16,7 @@ from dota2.enums import ESOMsg as dEMsg
 from dota2.enums import ESOType as dEType
 from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
+from dota2.enums import GCConnectionStatus as dConStat
 
 from threading import Thread
 import threading
@@ -37,7 +38,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     lobby_pass = args[1]
     lobby_msg = args[2]
 
-    hosted = False
+    hosted = threading.Event()
 
     kyouko_toshino = SteamID(75419738)
 
@@ -64,29 +65,40 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     @client.on('logged_on')
     def start_dota():
         botLog("Logged into steam, starting dota")
-        dota.launch()
-        pass
+        time.sleep(1)
+        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
+            botLog("Already in logon queue...")
+            return
+        if(not dota.connection_status is dConStat.HAVE_SESSION):
+            dota.launch()
 
     ##At this point dota is ready
     @dota.on('ready')
     def ready0():
+        botLog("Connection status:")
+        botLog(dota.connection_status)
         botLog("Dota is ready")
-        if(hosted is False):
+        if(not hosted.is_set()):
             hostLobby(tournament=True)
 
     @dota.on('notready')
     def reload():
-        if(not stop_event.isSet()):
-            botLog("out of dota, restarting...")
+        #botLog("out of dota, restarting...")
+        botLog("Connection status:")
+        botLog(dota.connection_status)
+        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
+            botLog("Already in logon queue...")
+            return
+        if(not dota.connection_status is dConStat.HAVE_SESSION):
             dota.exit()
             dota.launch()
-        pass
 
     @client.on('disconnected')
     def restart():
-        if(not stop_event.isSet()):
-            botLog("disconnected from steam. Attempting to relog...")
-            client.cli_login(username=keys.STEAM_USERNAME, password=keys.STEAM_PASSWORD)
+        botLog("disconnected from steam. Attempting to relog...")
+        #botLog(client.logged_on)
+        #client.cli_login(username=sBot.username, password=sBot.password)
+        client.reconnect()
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
@@ -101,7 +113,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     #TODO: this shit is a fucking mess
     @dota.on('lobby_removed')
     def lobby_removed(msg):
-        if(not hosted):
+        if(not hosted.is_set()):
             return
         else:
             botlog("hosted lobby disappeared")
@@ -116,7 +128,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                 botLog("releasing")
                 botCleanup()
             if(msgT == "lobby" and SteamID(msg.body.steamid_from).as_32 in list(header.captain_steam_ids.keys())):
-                hosted = False
+                hosted.clear()
                 hostLobby(tournament=True)
 
     @dota.on(dGCMsg.EMsgGCChatMessage)
@@ -170,7 +182,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         time.sleep(1)
         dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
-        hosted = True
+        hosted.set()
 
     def naw(*args, **kwargs):
         pass
