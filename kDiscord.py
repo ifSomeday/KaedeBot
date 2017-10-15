@@ -70,6 +70,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         """
         processes all incoming messages, and determines what action, if any, should be taken
         """
+        if(client.user.mentioned_in(message)):
+            await client.add_reaction(message, "🖕")
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
