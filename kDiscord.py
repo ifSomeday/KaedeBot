@@ -10,6 +10,7 @@ import re
 import sys
 import operator
 from plugins import dotaStats
+from plugins import leagueResults
 #import draftThread as dt
 import markovChaining, keys, BSJ, os, header
 from steam import SteamID
@@ -576,7 +577,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             while(dscQ.qsize() > 0):
                 cmd = dscQ.get()
                 await function_translation[cmd.command](cmd = cmd)
-
             await asyncio.sleep(1)
 
     async def saveTables():
@@ -585,6 +585,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             markovChaining.dumpAllTables()
             botLog("saving")
             await asyncio.sleep(1800)
+
+    async def league_results():
+        await client.wait_until_ready()
+        while(not client.is_closed):
+            await leagueResults.match_results(client)
+            await asyncio.sleep(300)
 
     @client.event
     async def on_reaction_add(reaction, user):
@@ -625,6 +631,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
+    client.loop.create_task(league_results())
     client.run(keys.TOKEN)
 
 if(__name__ == "__main__"):
