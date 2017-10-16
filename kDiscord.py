@@ -72,7 +72,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         """
         if(client.user.mentioned_in(message)):
             if(message.server.id == header.HOME_SERVER or not message.mention_everyone):
-            await client.add_reaction(message, "🖕")
+                await client.add_reaction(message, "🖕")
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
