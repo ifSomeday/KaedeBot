@@ -34,6 +34,8 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
 HOME_SERVER = '133812880654073857'
 MY_DISC_ID = '213099188584579072'
 
+LEAGUE_IDS = ['5589', '5432']
+
 ##TODO: fill with captains
 ##TODO: dump to file so captains can specify other trustworth people
 captain_steam_ids = {
