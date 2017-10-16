@@ -12,7 +12,6 @@ import difflib
 import datetime
 import colorsys
 import io
-import os
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 MAP_IMAGE_NAME = os.getcwd() + "/dataStores/detailed_700.png"
