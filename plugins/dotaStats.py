@@ -71,7 +71,7 @@ async def determine_request_type(msg, cMsg, client):
     if(cMsg[1] in ["add", "register"]):
         await associate_player(msg, cMsg, client)
         return
-    if(cMsg[1] in ["match"]):
+    if(cMsg[1] in ["match", "update"]):
         ##catch commands that dont need a player specified
         req_index = 1
     ##determine who is being talked about
@@ -137,6 +137,16 @@ async def determine_request_type(msg, cMsg, client):
     else:
         await client.send_message(msg.channel, "Unknown error in command processing.")
 
+
+async def update_profile(*args, **kwargs):
+    msg = kwargs['msg']
+    client = kwargs['client']
+    if(not msg.author.name in player_dict):
+        await client.send_message(msg.channel, "You are not registered. Please register with ")
+        return
+    else:
+        player_dict[msg.author.name]["discord"] = msg.author
+        await client.send_message(msg.channel, "Profile updated for " + msg.author.mention)
 
 
 async def associate_player(msg, cMsg, client):
@@ -560,7 +570,8 @@ def days_modifier(days_limit):
 reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
         "add" : associate_player, "summary" : get_player_summary,
-        "profile" : display_player_profile, "match" : match_details}
+        "profile" : display_player_profile, "match" : match_details,
+        "update" : update_profile}
 modifiers = {"on" : on_modifier, "recent" : recent_modifier,
             "as" : as_modifier, "days" : days_modifier}
 
