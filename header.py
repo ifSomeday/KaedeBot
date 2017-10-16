@@ -31,7 +31,8 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN
 }
 
-
+HOME_SERVER = '133812880654073857'
+MY_DISC_ID = '213099188584579072'
 
 ##TODO: fill with captains
 ##TODO: dump to file so captains can specify other trustworth people

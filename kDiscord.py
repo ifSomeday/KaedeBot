@@ -51,7 +51,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(not re.search(keys.SECRET_REGEX_FILTER, string) == None or not re.search(keys.SECRET_REGEX_FILTER2, string) == None):
             return(True)
         if("🐼" in string or "卐" in string):
-            ##I fucking hate all of you making me put god damn emojis in here
+            #...
             return(True)
         if(string.lower().startswith(".")):
             return(True)
@@ -71,6 +71,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         processes all incoming messages, and determines what action, if any, should be taken
         """
         if(client.user.mentioned_in(message)):
+            if(message.server.id == header.HOME_SERVER or not message.mention_everyone):
             await client.add_reaction(message, "🖕")
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
@@ -427,7 +428,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             command = kwargs['command']
             callback = kwargs['cb']
             cMsg = args[0]
-            if(msg.author.id in media_messages and not msg.author.id == '213099188584579072'):
+            if(msg.author.id in media_messages and not msg.author.id == header.MY_DISC_ID):
                 if(time.time() - media_messages[msg.author.id] < 60):
                     await client.delete_message(msg)
                     await client.send_message(msg.channel, msg.author.mention + " please refrain from spamming !!")
@@ -608,7 +609,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        if(cfg.checkMessage("deletion", message) and (not message.author.id == '213099188584579072')):
+        if(cfg.checkMessage("deletion", message) and (not message.author.id == header.MY_DISC_ID)):
             if(deleteFilter(message.content)):
                 return
             if(message.server.id == '308515912653340682' and not (message.author.id == '171840790803382272' or message.content.id == "117446235715010569")):
