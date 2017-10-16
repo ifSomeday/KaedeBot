@@ -1,3 +1,6 @@
+import gevent.monkey
+gevent.monkey.patch_all()
+
 from plugins import opendota
 from plugins import dotaStats
 from steam import WebAPI
