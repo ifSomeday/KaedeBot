@@ -368,7 +368,7 @@ def player_summary_embed(res, res2, player, params, limit = None):
     emb.add_field(name = "Overall: ", value = "Total Games: " + str(tot) + "\nWinrate: " + str(round(winr * 100, 2)) + "%")
 
     general_str = "Kills: " + get_totals_str(res["kills"]) + "\nDeaths: " + get_totals_str(res["deaths"])
-    general_str += "\nAssists: " + get_totals_str(res["kills"]) + "\nKDA: "  + get_partial_totals_str(res["kills"])
+    general_str += "\nAssists: " + get_totals_str(res["assists"]) + "\nKDA: "  + get_partial_totals_str(res["kda"])
     emb.add_field(name = "General:", value = general_str)
 
     farming_str = "Last Hits: " + get_partial_totals_str(res["last_hits"]) + "\nDenies: " +  get_partial_totals_str(res["denies"])
