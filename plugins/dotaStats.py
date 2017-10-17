@@ -96,8 +96,6 @@ async def determine_request_type(msg, cMsg, client):
                     return
     ##get the request function
     request = None
-    botLog(req_index)
-    botLog(cMsg[req_index])
     if(req_index == -1):
         await client.send_message(msg.channel, "Unable to determine what command is being requested")
     if(not cMsg[req_index] in reqs.keys()):
@@ -268,8 +266,11 @@ async def __get_player_summary(msg, player, client, params, num = None):
         except Exception as e:
             await client.send_message(msg.channel, "Unknown number of games, defaulting to 20")
             num = None
-        params['limit'] = num if not num is None else 20
-        limit = str(params['limit']) + " games"
+        if(not num is None and num <= 0):
+            limit = "Alltime"
+        else:
+            params['limit'] = num if not num is None else 20
+            limit = str(params['limit']) + " games"
     else:
         if('limit' in params):
             limit = str(params['limit']) + " games"
@@ -281,7 +282,7 @@ async def __get_player_summary(msg, player, client, params, num = None):
             limit += str(params['date']) + " days"
     r = od.get_players_totals(player["steam"].as_32, params = params)
     ##TODO: switch to matches to allow varaible length
-    r2 = od.get_players_recent_matches(player["steam"].as_32)#, params = params)
+    r2 = od.get_players_matches(player["steam"].as_32, params = params)
     r = rewrite_totals_object(r)
     emb = player_summary_embed(r, r2, player, params, limit=limit)
     await client.send_message(msg.channel, " ", embed = emb)
@@ -357,22 +358,19 @@ def steam_acc_embed_od(res):
 def player_summary_embed(res, res2, player, params, limit = None):
     emb = discord.Embed()
     emb.title = player["discord"].name + "'s Summary"
-    if(limit is None):
-        emb.description = "All time"
-    else:
-        emb.description = "Recent " + limit
+    emb.description = ("Recent " if not limit is "Alltime" else "") + limit
     emb.type = "rich"
     emb.set_thumbnail(url = player["discord"].avatar_url)
-    emb.add_field(name = "Kills", value = get_totals_str(res["kills"]), inline = True)
-    emb.add_field(name = "Deaths", value = get_totals_str(res["deaths"]), inline = True)
-    emb.add_field(name = "Assists", value = get_totals_str(res["assists"]), inline = True)
-    emb.add_field(name = "KDA", value = get_partial_totals_str(res["kda"]), inline = True)
 
-    emb.add_field(name = "Last Hits", value = get_partial_totals_str(res["last_hits"]), inline = True)
-    emb.add_field(name = "Denies", value = get_partial_totals_str(res["denies"]), inline = True)
-    emb.add_field(name = "GPM", value = get_partial_totals_str(res["gold_per_min"]), inline = True)
-    emb.add_field(name = "XPM", value = get_partial_totals_str(res["xp_per_min"]), inline = True)
-    rgames, winr = quick_recent_matches(res2, params['limit'])
+    general_str = "Kills: " + get_totals_str(res["kills"]) + "\nDeaths: " + get_totals_str(res["deaths"])
+    general_str += "\nAssists: " + get_totals_str(res["kills"]) + "\nKDA: "  + get_partial_totals_str(res["kills"])
+    emb.add_field(name = "General:", value = general_str)
+
+    farming_str = "Last Hits: " + get_partial_totals_str(res["last_hits"]) + "\nDenies: " +  get_partial_totals_str(res["denies"])
+    farming_str += "\nGPM: " + get_partial_totals_str(res["gold_per_min"]) + "\nXPM: " + get_partial_totals_str(res["xp_per_min"])
+    emb.add_field(name = "Farming:", value = farming_str)
+
+    rgames, winr = quick_recent_matches(res2, params['limit'] if "limit" in params else 0)
     emb.add_field(name = "Recent Games", value = rgames, inline = False)
     emb.colour = get_wr_color(winr)
     return(emb)
@@ -405,8 +403,11 @@ def match_summary_embed(res):
 ##     ##  ##  ##    ## ##    ##
 ##     ## ####  ######   ######
 
+##TODO: process all, only add if in limit
 def quick_recent_matches(res, limit):
     outstr = ""
+    if(limit <= 0):
+        limit = 10
     limit = min(limit, 10)
     winr = 0
     for i in range(0, limit):
@@ -457,7 +458,7 @@ def get_partial_totals_str(field):
 def get_totals_str(field):
     n = float(field['n'])
     s = float(field['sum'])
-    return(str(round(s / n, 2)) + "(" + str(round(s, 2)) + ")")
+    return(str(round(s / n, 2)) + " (" + str(round(s, 2)) + ")")
 
 def get_player_from_author(msg):
     if(not msg.author.name in player_dict):
@@ -564,13 +565,28 @@ def days_modifier(days_limit):
         return((None, None))
     return("date", days_limit)
 
+def with_modifier(heroString):
+    possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
+    if(len(possible_matches) is 0):
+        return((None, None))
+    hero_id = hero_dict[possible_matches[0]]["id"]
+    return("with_hero_id", hero_id)
+
+def against_modifier(heroString):
+    possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
+    if(len(possible_matches) is 0):
+        return((None, None))
+    hero_id = hero_dict[possible_matches[0]]["id"]
+    return("against_hero_id", hero_id)
+
 reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
         "add" : associate_player, "summary" : get_player_summary,
         "profile" : display_player_profile, "match" : match_details,
         "update" : update_profile}
 modifiers = {"on" : on_modifier, "recent" : recent_modifier,
-            "as" : as_modifier, "days" : days_modifier}
+            "as" : as_modifier, "days" : days_modifier,
+            "with" : with_modifier, "against" : against_modifier}
 
 
 async def open_dota_main(*args, **kwargs):
