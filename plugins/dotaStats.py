@@ -445,7 +445,11 @@ def quick_game_details(res):
 def quick_player_info(player):
     hero_string = "*" + hero_dict2[player["hero_id"]]["localized_name"] + "* (" + str(player["level"]) + ")"
     kda = str(player["kills"]) + "/" + str(player["deaths"]) + "/" + str(player["assists"])
-    name = player["personaname"] ##player["name"]
+    name = "*Unknown*"
+    if("name" in player and not player["name"] is None):
+        name = player["name"]
+    elif("personaname" in player):
+        name = player["personaname"]
     cs = str(player["last_hits"]) + "/" + str(player["denies"])
     networth = str(player["gold_t"][-1]) + " (" + str(player['gold_per_min']) + "/min)"
     return("**" + name + "**\n" + hero_string + "\nKDA: " + kda + "\nCS: " + cs + "\nGold: " + networth)
