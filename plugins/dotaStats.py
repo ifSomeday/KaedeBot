@@ -356,11 +356,16 @@ def steam_acc_embed_od(res):
     return(emb)
 
 def player_summary_embed(res, res2, player, params, limit = None):
+    rgames, winr, tot = quick_recent_matches(res2, params['limit'] if "limit" in params else 0)
+
     emb = discord.Embed()
     emb.title = player["discord"].name + "'s Summary"
+    ##TODO: fix this so that it uses tot if games
     emb.description = ("Recent " if not limit is "Alltime" else "") + limit
     emb.type = "rich"
     emb.set_thumbnail(url = player["discord"].avatar_url)
+
+    emb.add_field(name = "Overall: ", value = "Total Games: " + str(tot) + "\nWinrate: " + str(round(winr * 100, 2)) + "%")
 
     general_str = "Kills: " + get_totals_str(res["kills"]) + "\nDeaths: " + get_totals_str(res["deaths"])
     general_str += "\nAssists: " + get_totals_str(res["kills"]) + "\nKDA: "  + get_partial_totals_str(res["kills"])
@@ -370,7 +375,6 @@ def player_summary_embed(res, res2, player, params, limit = None):
     farming_str += "\nGPM: " + get_partial_totals_str(res["gold_per_min"]) + "\nXPM: " + get_partial_totals_str(res["xp_per_min"])
     emb.add_field(name = "Farming:", value = farming_str)
 
-    rgames, winr = quick_recent_matches(res2, params['limit'] if "limit" in params else 0)
     emb.add_field(name = "Recent Games", value = rgames, inline = False)
     emb.colour = get_wr_color(winr)
     return(emb)
@@ -409,18 +413,20 @@ def quick_recent_matches(res, limit):
     if(limit <= 0):
         limit = 10
     limit = min(limit, 10)
+    tot = len(res)
     winr = 0
-    for i in range(0, limit):
+    for i in range(0, len(res)):
         match = res[i]
-        outstr += "`" + str(match["match_id"]) + "`: "
         won = (match["radiant_win"] and match["player_slot"] in range(0, 5)) or (not match["radiant_win"] and match["player_slot"] in range(128, 133))
-        outstr += "Won " if won else "Lost "
         winr += 1 if won else 0
-        outstr += "as **" + hero_dict2[match["hero_id"]]["localized_name"] + "** "
-        outstr += " KDA: " + str(match["kills"]) + "/" + str(match["deaths"]) + "/" + str(match["assists"])
-        outstr += "\n" if not i == limit - 1 else ""
-    winr = winr / limit
-    return(outstr, winr)
+        if(i in range(0, limit)):
+            outstr += "`" + str(match["match_id"]) + "`: "
+            outstr += "Won " if won else "Lost "
+            outstr += "as **" + hero_dict2[match["hero_id"]]["localized_name"] + "** "
+            outstr += " KDA: " + str(match["kills"]) + "/" + str(match["deaths"]) + "/" + str(match["assists"])
+            outstr += "\n" if not i == limit - 1 else ""
+    winr = winr / tot
+    return(outstr, winr, tot)
 
 
 
