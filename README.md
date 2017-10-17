@@ -23,3 +23,4 @@ The more permissions you give her the better. Without them, some commands (like 
 * `chatresponse`: Enables the Bot's cheeky chat responses
 * `floodcontrol`: Bot limits users to 1 image sent per minute. Bot needs *Message Deletion* Discord Permission
 * `draft`: Only able to be used by SEAL Admins
+* `opendota`: Enables the `!od` series of commands
