@@ -1,5 +1,7 @@
 import gevent.monkey
-gevent.monkey.patch_all()
+import sys
+if(sys.platform.startswith('linux')):
+    gevent.monkey.patch_all()
 
 from plugins import opendota
 from plugins import dotaStats
