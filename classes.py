@@ -434,6 +434,7 @@ class discordCommands(Enum):
     NO_BOTS_AVAILABLE = 37
     REQUEST_SHUTDOWN = 38
     SHUTDOWN_BOT = 39
+    EGIFT = 40
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
