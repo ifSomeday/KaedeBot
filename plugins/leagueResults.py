@@ -41,7 +41,8 @@ async def match_results(client):
                 lastMatches[i] = match['match_id']
                 botLog("parsing: " + str(match['match_id']))
                 success, emb = process_match(match)
-                await client.send_message(client.get_channel('325108273751523328'), " ", embed = emb)
+                if(sys.platform.startswith('linux')):
+                    await client.send_message(client.get_channel('325108273751523328'), " ", embed = emb)
     save_last_match(lastMatches)
 
 def process_match(match):
