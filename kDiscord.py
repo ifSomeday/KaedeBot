@@ -511,37 +511,59 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             markovChaining.dumpAllTables()
             botLog("closing connection")
             client.logout()
-            raise KeyboardInterrupt
-            sys.exit()
+
+    async def egift_pp(*args, **kwargs):
+        if('msg'in kwargs):
+            msg = kwargs['msg']
+            await client.send_message(msg.channel, "Please consider donating to Planned Parenthood:\nhttps://www.plannedparenthood.org/")
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             if(not msg.author.id == '133811493778096128'):
                 return
-            count_dict = {}
-            word_dict = {}
-            total_dict = {}
+            message_count = {}
+            word_count = {}
+            word_length = {}
             quick_ref = {}
             count = 0
-            async for message in client.logs_from(msg.channel, limit=sys.maxsize):
-                count += 1
-                if(not message.author.id in count_dict):
-                    count_dict[message.author.id] = 0
-                    word_dict[message.author.id] = 0
-                    quick_ref[message.author.id] = message.author.name
-                count_dict[message.author.id] += 1
-                word_dict[message.author.id] += len(message.content.split())
-                if(count % 10000 == 0):
-                    botLog(count)
+            for channel in client.get_server('308515912653340682').channels:
+                botLog(channel)
+                try:
+                    async for message in client.logs_from(channel, limit=sys.maxsize):
+                        count += 1
+                        if(not message.author.id in message_count):
+                            message_count[message.author.id] = 0
+                            word_count[message.author.id] = 0
+                            word_length[message.author.id] = 0
+                            quick_ref[message.author.id] = message.author.name
+                        message_count[message.author.id] += 1
+                        word_count[message.author.id] += len(message.content.split())
+                        for word in message.content.split():
+                            word_length[message.author.id] += len(word)
+                        if(count % 10000 == 0):
+                            botLog(count)
+                except:
+                    botLog("Unable to get channel info")
             botLog("sorting")
-            for user in count_dict.keys():
-                total_dict[user] = float(word_dict[user]) / float(count_dict[user])
-            sorted_tot = sorted(total_dict.items(), key=operator.itemgetter(1), reverse=True)
+            sorted_message_count = sorted(message_count.items(), key=operator.itemgetter(1), reverse=True)
+            sorted_word_length = sorted(word_length.items(), key=operator.itemgetter(1), reverse=True)
+            sorted_word_count = sorted(word_count.items(), key=operator.itemgetter(1), reverse=True)
             botLog("Writing")
-            with open("avg_word_count.txt", "w", encoding='utf-8') as f:
-                for item in sorted_tot:
-                    f.write(item[0] + "\t\t\t" + quick_ref[item[0]] + "\t\t\t" + str(item[1]) + "\t\t\t" + str(count_dict[item[0]]) + "\n")
+            with open("sorted_message_count.txt", "w", encoding='utf-8') as f:
+                f.write("id, name, message_count, word_count, word_length")
+                for item in sorted_message_count:
+                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
+            with open("sorted_word_count.txt", "w", encoding='utf-8') as f:
+                f.write("id, name, message_count, word_count, word_length")
+                for item in sorted_word_count:
+                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
+            with open("sorted_word_length.txt", "w", encoding='utf-8') as f:
+                f.write("id, name, message_count, word_count, word_length")
+                for item in sorted_word_length:
+                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
+
             botLog("done")
 
 
@@ -569,7 +591,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
-        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message}
+        classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
+        classes.discordCommands.EGIFT : egift_pp}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
