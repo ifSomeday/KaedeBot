@@ -54,7 +54,7 @@ async def match_results(client):
                     await client.send_message(client.get_channel('213086692683415552'), " ", embed = emb)
     for i in range(0, len(lastMatches)):
         lastMatches[i] = max(lastMatches[i], curr_last_matches[i])
-    save_last_match(curr_last_matches)
+    save_last_match(lastMatches)
 
 def process_match(match):
     emb = discord.Embed()
