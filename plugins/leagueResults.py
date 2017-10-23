@@ -49,9 +49,9 @@ async def match_results(client):
                     od.request_parse(match['match_id'])
                     return
                 if(sys.platform.startswith('linux')):
-                    await client.send_message(client.get_channel('325108273751523328'), " ", embed = emb)
+                    await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
                 else:
-                    await client.send_message(client.get_channel('213086692683415552'), " ", embed = emb)
+                    await client.send_message(client.get_channel('213086692683415552'), "**===============**", embed = emb)
     for i in range(0, len(lastMatches)):
         lastMatches[i] = max(lastMatches[i], curr_last_matches[i])
     save_last_match(lastMatches)
