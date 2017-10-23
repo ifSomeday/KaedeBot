@@ -205,3 +205,21 @@ class openDotaPlugin:
         r = requests.get(self.BASE_URL + "heroes")
         js = r.json()
         return(js)
+
+##########################
+##########################
+##########################
+
+    def request_parse(self, matchid):
+        r = requests.post(self.BASE_URL + "request/" + str(matchid))
+        js = r.json()
+        return(js)
+
+##########################
+##########################
+##########################
+
+    def get_parse_status(self, jobid):
+        r = requests.get(self.BASE_URL + "request/" + str(jobid))
+        js = r.json()
+        return(js)

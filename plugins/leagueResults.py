@@ -31,6 +31,7 @@ def botLog(text):
 
 async def match_results(client):
     lastMatches = load_last_match()
+    curr_last_matches = [0 for i in range(len(lastMatches))]
     for i in range(0, len(header.LEAGUE_IDS)):
         if(i >= len(lastMatches)):
             lastMatches.append(0)
@@ -38,12 +39,22 @@ async def match_results(client):
         for match in matches['matches']:
             if(match['match_id'] > lastMatches[i]):
                 ##TODO: verify processing, then move lastMatch update after success
-                lastMatches[i] = match['match_id']
+                curr_last_matches[i] = max(match['match_id'], curr_last_matches[i])
                 botLog("parsing: " + str(match['match_id']))
-                success, emb = process_match(match)
+                try:
+                    emb = process_match(match)
+                except Exception as e:
+                    botLog(e)
+                    botLog("requesting parse for failed match " + str(match['match_id']))
+                    od.request_parse(match['match_id'])
+                    return
                 if(sys.platform.startswith('linux')):
                     await client.send_message(client.get_channel('325108273751523328'), " ", embed = emb)
-    save_last_match(lastMatches)
+                else:
+                    await client.send_message(client.get_channel('213086692683415552'), " ", embed = emb)
+    for i in range(0, len(lastMatches)):
+        lastMatches[i] = max(lastMatches[i], curr_last_matches[i])
+    save_last_match(curr_last_matches)
 
 def process_match(match):
     emb = discord.Embed()
@@ -84,7 +95,7 @@ def process_match(match):
     col.value = 73 << 16 | 122 << 8 | 129 ##seal logo light
     emb.colour = col
 
-    return(True, emb)
+    return(emb)
 
 def get_team_logo(ugc):
     return(api.ISteamRemoteStorage.GetUGCFileDetails(appid=570, ugcid=ugc))
