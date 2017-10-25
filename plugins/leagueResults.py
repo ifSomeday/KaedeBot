@@ -48,13 +48,15 @@ async def match_results(client):
                     botLog("requesting parse for failed match " + str(match['match_id']))
                     od.request_parse(match['match_id'])
                     return
-                if(sys.platform.startswith('linux')):
-                    ##DMDT:
-                    ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
-                    ##SEAL:
-                    await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
-                else:
-                    await client.send_message(client.get_channel('213086692683415552'), "**===============**", embed = emb)
+                if(not emb is None):
+                    if(sys.platform.startswith('linux')):
+                        ##DMDT:
+                        ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
+                        ##SEAL:
+                        await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
+                    else:
+                        botLog("would be sending match")
+                        #await client.send_message(client.get_channel('213086692683415552'), "**===============**", embed = emb)
     for i in range(0, len(lastMatches)):
         lastMatches[i] = max(lastMatches[i], curr_last_matches[i])
     save_last_match(lastMatches)
@@ -70,13 +72,6 @@ def process_match(match):
     dire_name = match_det['dire_name'] if ("dire_name" in match_det) else "Dire"
     emb.title = radiant_name.strip() + " vs " + dire_name.strip()
 
-    winning_url = None
-    ##field_name = 'radiant_logo' if match_det['radiant_win'] else 'dire_logo'
-    ##if(field_name in match_det):
-        ##winning_url = get_team_logo(match_det[field_name])
-        ##if(not 'status' in winning_url):
-            ##emb.set_thumbnail(url = winning_url['data']['url'])
-            ##pass
     ##TODO: https://www.opendota.com/matches/3070176477
     emb.set_thumbnail(url="https://seal.gg/assets/seal.png")
     emb.description = "**" + (radiant_name if match_det['radiant_win'] else dire_name) + "** Victory!\nMatch ID: " +  str(match['match_id'])
@@ -84,12 +79,20 @@ def process_match(match):
 
     rad_str = ""
     dire_str = ""
+    leavers = 0
     for player in od_match["players"]:
         tmp = dotaStats.quick_player_info(player) + "\t\n\n"
         if(player["player_slot"] in range(0, 5)):
+            leavers += player["leaver_status"]
             rad_str += tmp
         elif(player["player_slot"] in range(128, 133)):
             dire_str += tmp
+            leavers += player["leaver_status"]
+
+    if(leavers > 8):
+        botLog("Greater than 8 leavers detected, ignoring match")
+        botLog(match['match_id'])
+        return(None)
 
     emb.add_field(name=radiant_name, value=rad_str, inline=True)
     emb.add_field(name=dire_name, value=dire_str, inline=True)
