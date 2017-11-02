@@ -32,6 +32,7 @@ def botLog(text):
 async def match_results(client):
     lastMatches = load_last_match()
     curr_last_matches = [0 for i in range(len(lastMatches))]
+
     for i in range(0, len(header.LEAGUE_IDS)):
         if(i >= len(lastMatches)):
             lastMatches.append(0)
@@ -94,8 +95,8 @@ def process_match(match):
         botLog(match['match_id'])
         return(None)
 
-    emb.add_field(name=radiant_name, value=rad_str, inline=True)
-    emb.add_field(name=dire_name, value=dire_str, inline=True)
+    emb.add_field(name="{:30s}".format(radiant_name), value=rad_str, inline=True)
+    emb.add_field(name="{:30s}".format(dire_name), value=dire_str, inline=True)
 
     col = discord.Colour.default()
     col.value = 73 << 16 | 122 << 8 | 129 ##seal logo light
