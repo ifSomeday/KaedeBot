@@ -1,4 +1,5 @@
 from plugins import opendota
+from plugins import helpCommands
 from steam import SteamID
 from wordcloud import WordCloud
 from PIL import Image
@@ -15,15 +16,23 @@ import io
 
 PLAYER_DICT_NAME = os.getcwd() + "/dataStores/ddDict.pickle"
 MAP_IMAGE_NAME = os.getcwd() + "/dataStores/detailed_700.png"
+SPECIAL_COMMANDS = ["match", "update", "help"]
 player_dict = {}
 client = None
 url_matcher = r"\w+?.com\/(?:esports\/)?players\/(\d+)"
 od = opendota.openDotaPlugin()
 hero_dict = {}
 hero_dict2 = {}
+alias_dict = {}
 for j in od.get_heroes():
     hero_dict[j["localized_name"].lower()] = j
     hero_dict2[j["id"]] = j
+with open("dataStores/hero names.txt", "r") as f:
+    for line in f:
+        hero, aliases = line.split(":")
+        if(len(aliases.strip()) > 0):
+            for alias in aliases.split(","):
+                alias_dict[alias.strip()] = hero.strip()
 
 ##dict entry format: name : discord object, steamId object
 ##TODO: use difflib
@@ -70,7 +79,7 @@ async def determine_request_type(msg, cMsg, client):
     if(cMsg[1] in ["add", "register"]):
         await associate_player(msg, cMsg, client)
         return
-    if(cMsg[1] in ["match", "update"]):
+    if(cMsg[1] in SPECIAL_COMMANDS):
         ##catch commands that dont need a player specified
         req_index = 1
     ##determine who is being talked about
@@ -115,14 +124,15 @@ async def determine_request_type(msg, cMsg, client):
             modifier_loc.append(i)
     #determine modifiers
     params = {}
-    for i in range(0, len(modifier_loc)):
-        start_index = modifier_loc[i] + 1
-        end_index = modifier_loc[i + 1] if not i == len(modifier_loc) - 1 else len(cMsg)
-        r = modifiers[cMsg[modifier_loc[i]]](' '.join(cMsg[start_index : end_index]))
-        if(not r[0] is None):
-            params[r[0]] = r[1]
-        else:
-            await client.send_message(msg.channel, "Invalid parameter for modifier `" + cMsg[modifier_loc[i]] +"`, skipping...")
+    if(not cMsg[1] in SPECIAL_COMMANDS):
+        for i in range(0, len(modifier_loc)):
+            start_index = modifier_loc[i] + 1
+            end_index = modifier_loc[i + 1] if not i == len(modifier_loc) - 1 else len(cMsg)
+            r = modifiers[cMsg[modifier_loc[i]]](' '.join(cMsg[start_index : end_index]))
+            if(not r[0] is None):
+                params[r[0]] = r[1]
+            else:
+                await client.send_message(msg.channel, "Invalid parameter for modifier `" + cMsg[modifier_loc[i]] +"`, skipping...")
     botLog(params)
     req_specifier = None
     if(len(modifier_loc) == 0 and not req_index + 1 == len(cMsg)):
@@ -165,6 +175,7 @@ async def associate_player(msg, cMsg, client):
             except:
                 player_id = None
                 botLog("bad id provided")
+                await client.send_message(msg.channel, "Parameter provided is not a steam ID, OpenDota link, or DotaBuff link.\nSee `!od help add` for more details")
                 return(False)
         if(not player_id is None):
             acc = SteamID(player_id)
@@ -175,10 +186,14 @@ async def associate_player(msg, cMsg, client):
                 await client.send_message(msg.channel, "Associated *" + user.name + "* with: ", embed = emb)
                 return(True)
             else:
+                await client.send_message("Either account is not public, or the wrong link/ID was provided.\nSee `!od help add` for more details")
                 return(False)
         else:
+            await client.send_message("Either account is not public, or the wrong link/ID was provided.\nSee `!od help add` for more details")
             botLog("no info provided")
             return(False)
+    else:
+        await client.send_message(msg.channel, "Please provide a steam ID, OpenDota link, or DotaBuff link to register.\nSee `!od help add` for more details")
 
 
  ######  ########  ########  ######  #### ######## #### ######## ########   ######
@@ -228,6 +243,11 @@ async def __match_details_backend(msg, player, client, params, req_specifier=Non
         await client.send_message(msg.channel, "Invalid match ID specified")
         return
     r = od.get_match(req_specifier, params = params)
+    ##seems to be a good indicator
+    if(r['players'][0]["gold_t"] is None):
+        od.request_parse(req_specifier)
+        await client.send_message(msg.channel, "Match has not yet been parsed by OpenDota.\nI have requested a parsefor you, please try again in a couple minutes.")
+        return
     emb =  match_summary_embed(r)
     await client.send_message(msg.channel, " ", embed = emb)
 
@@ -302,17 +322,18 @@ async def __display_player_profile(msg, player, client, params):
 
 
 
-async def player_on_hero_test(*args, **kwargs):
+async def player_on_hero(*args, **kwargs):
     await __get_hero_on_player_backend(kwargs['msg'], kwargs['client'], kwargs['mod'], kwargs['player'], params=kwargs['params'])
 
 
 
 async def __get_hero_on_player_backend(msg, client, heroString, player, params=None):
-    possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
-    if(len(possible_matches) is 0):
-        await client.send_message(msg.channel, "Please spell hero name correctly")
+    if(heroString is None):
+        await client.send_message(msg.channel, "Invalid format for request `as`\nFor help, use `!od help as`")
         return
-    hero = hero_dict[possible_matches[0]]
+    status, hero = hero_id_from_string(heroString)
+    if(not status):
+        await client.send_message(msg.channel, hero)
     if(params is None):
         params = {}
     params["hero_id"] = hero["id"]
@@ -320,6 +341,33 @@ async def __get_hero_on_player_backend(msg, client, heroString, player, params=N
     hero_stats = r[0]
     emb = hero_card_embed(hero_stats, player, hero)
     await client.send_message(msg.channel, "", embed = emb)
+
+
+async def opendota_plugin_help(*args, **kwargs):
+    await __opendota_plugin_help(kwargs['msg'], kwargs['client'], kwargs['mod'])
+
+async def __opendota_plugin_help(msg, client, arg):
+    cMsg = msg.content.lower().strip().split()
+    args = cMsg[2:]
+    if(len(args) == 0):
+        await client.send_message(msg.channel, "**Opendota Commands follow this format:**\n`!od <me/my/discord name> <specifier> [optional specifier option] [modifer 1] [modifer option 1] [modifer 2] ...`")
+        await client.send_message(msg.channel, "**List of specifiers:**\n`" + ("`, `".join(key for key in reqs.keys())) + "`")
+        await client.send_message(msg.channel, "**List of modifiers:**\n`" + ("`, `".join(key for key in modifiers.keys())) + "`")
+        await client.send_message(msg.channel, "Some commands (`add`, `match`, `update`, `help`) do not require `<me/my/discord name>`\nIndividual help commands coming soon(tm)")
+    else:
+        await client.send_message(msg.channel, helpCommands.od_help_parser(args))
+
+async def last_match(*args, **kwargs):
+    await __last_match(kwargs['msg'], kwargs['client'], kwargs['player'], kwargs['params'])
+
+async def __last_match(msg, client, player, params = None):
+    res = od.get_players_matches(player['steam'].as_32, params = params)
+    if(len(res) > 0):
+        match = res[0]
+        match_id = match["match_id"]
+        await __match_details_backend(msg, player, client, params, req_specifier=match_id)
+    else:
+        await client.send_message(msg.channel, "No match within specified parameters found")
 
 
 ######## ##     ## ########  ######## ########   ######
@@ -520,6 +568,21 @@ def get_wr_color(winrate):
     col.value = int(r) << 16 | int(g) << 8 | int(b)
     return(col)
 
+def hero_id_from_string(heroString):
+    if(heroString in hero_dict.keys()):
+        return(True, hero_dict[heroString])
+    if(heroString.lower() in alias_dict.keys()):
+        return(True, hero_dict[alias_dict[heroString].lower()])
+    combo = list(hero_dict.keys()) + list(alias_dict.keys())
+    print(combo)
+    possible_matches = difflib.get_close_matches(heroString, combo)
+    if(len(possible_matches) is 0):
+        return(False, "Please spell hero name correctly")
+    if(possible_matches[0] in hero_dict):
+        return(True, hero_dict[possible_matches[0]])
+    else:
+        return(True, hero_dict[alias_dict[possible_matches[0]].lower()])
+
 def __associate_player_backend(user, steam_id):
     acc = SteamID(int(steam_id))
     global player_dict
@@ -543,10 +606,10 @@ def init(chat_command_translation, function_translation):
 
 def as_modifier(heroString):
     #TODO: functionize this
-    possible_matches = difflib.get_close_matches(heroString, hero_dict.keys())
-    if(len(possible_matches) is 0):
+    status, hero = hero_id_from_string(heroString)
+    if(not status):
         return((None, None))
-    hero_id = hero_dict[possible_matches[0]]["id"]
+    hero_id = hero["id"]
     return("hero_id", hero_id)
 
 def on_modifier(sideString):
@@ -589,11 +652,13 @@ def against_modifier(heroString):
     hero_id = hero_dict[possible_matches[0]]["id"]
     return("against_hero_id", hero_id)
 
-reqs = {"as" : player_on_hero_test, "wardmap" : get_players_wardmap,
+reqs = {"as" : player_on_hero, "wardmap" : get_players_wardmap,
         "wordcloud" : get_players_wordcloud, "setnick" : None,
         "add" : associate_player, "summary" : get_player_summary,
         "profile" : display_player_profile, "match" : match_details,
-        "update" : update_profile}
+        "update" : update_profile, "help" : opendota_plugin_help,
+        "last" : last_match}
+
 modifiers = {"on" : on_modifier, "recent" : recent_modifier,
             "as" : as_modifier, "days" : days_modifier,
             "with" : with_modifier, "against" : against_modifier}

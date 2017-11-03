@@ -1,0 +1,115 @@
+Anti-mage: magina
+Axe:
+Bane:
+Bloodseeker: bs
+Crystal Maiden: cm
+Drow Ranger: drow
+EarthShaker: shaker
+Juggernaut: jugg
+Mirana: potm, priestess of the moon, potm of the moon
+Shadow Fiend: sf, shadow friend, nevermore
+Morphling: morph
+Phantom Lancer: pl
+Puck:
+Pudge:
+Razor:
+Sand King: sk
+Storm Spirit: storm, blitz
+Sven:
+Tiny: tony
+Vengeful Spirit: venge, vs
+Windranger: windrunner, wr
+Zeus:
+Kunkka:
+Lina:
+Lich:
+Lion:
+Shadow Shaman: shaman
+Slardar: slar, retarded fish man
+Tidehunter: Tide, leviathan
+Witch Doctor: wd
+Riki:
+Enigma:
+Tinker:
+Sniper:
+Necrolyte: necrophos, necro
+warlock:
+Beastmaster: bm
+Queen of Pain: qop, qop of pain
+Venomencer: bananamancer, veno
+Faceless Void: fv, void
+Wraith King: wk, skeleton king
+Death Prophet: dp
+Phantom Assassin: pa
+Pugna:
+Templar Assassin: ta
+Viper:
+Luna:
+Dragon Knight: dk
+Dazzle:
+Clockwerk: rattletrap
+Leshrac: lesh
+Nature's Prophet: np, furion
+lifestealer: ls, naix
+Dark Seer: ds
+Clinkz:
+Omniknight: omni
+Enchantress: ench
+Huskar:
+Night Stalker: ns
+Broodmother: brood
+Bounty Hunter: bh
+Weaver:
+Jakiro: jak
+batrider: bat
+Chen:
+Spectre: spec
+Doom:
+Ancient Apparition: aa
+Ursa:
+Spirit Breaker: sb, breaker
+Gyrocopter: gyro
+Alchemist: alch
+Invoker: invo
+Silencer:
+Outworld Devourer: od
+Lycan: lycanthrope
+Brewmaster: brew
+Shadow Demon: sd
+Lone Druid: druid
+Chaos Knight: ck
+Meepo:
+Treant Protector: tree, nazi admin
+Ogre Magi: ogre
+Undying:
+Rubick:
+Disruptor:
+Nyx Assassin: nyx
+Naga Siren: naga, aura
+Keeper of the Light: kotl, kotl of the light
+Io: wisp
+Visage:
+Slark:
+Medusa: dusa
+Troll Warlord: troll
+Centaur Warrunner: centaur, centaur warlord
+Magnus: mag
+Timbersaw: timber
+Bristleback: bb, bristle
+Tusk: tuskar
+Skywrath Mage: sky
+Abaddon: abba
+Elder Titan: et
+Legion Commander: legion
+Ember Spirit: ember
+Earth Spirit:
+Terrorblade: tb
+Phoenix:
+Oracle:
+Techies:
+Winter Wyvern: wyvern
+Arc Warden: arc
+Underlord:
+Monkey King: mk
+Pangolier: armadillo
+Dark Willow: willow, slyph
