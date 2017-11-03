@@ -363,7 +363,9 @@ async def __opendota_plugin_help(msg, client, arg):
         await client.send_message(msg.channel, "**List of modifiers:**\n`" + ("`, `".join(key for key in modifiers.keys())) + "`")
         await client.send_message(msg.channel, "Some commands (`add`, `match`, `update`, `help`) do not require `<me/my/discord name>`\nIndividual help commands coming soon(tm)")
     else:
-        await client.send_message(msg.channel, helpCommands.od_help_parser(args))
+        help_messages = helpCommands.od_help_parser(args)
+        for message in help_messages:
+            await client.send_message(msg.channel, message)
 
 async def last_match(*args, **kwargs):
     await __last_match(kwargs['msg'], kwargs['client'], kwargs['player'], kwargs['params'])
