@@ -20,6 +20,7 @@ SPECIAL_COMMANDS = ["match", "update", "help"]
 player_dict = {}
 client = None
 url_matcher = r"\w+?.com\/(?:esports\/)?players\/(\d+)"
+url_matcher_match = r"\w+?.com\/?matches\/(\d+)"
 od = opendota.openDotaPlugin()
 hero_dict = {}
 hero_dict2 = {}
@@ -238,7 +239,14 @@ async def __match_details_backend(msg, player, client, params, req_specifier=Non
     try:
         req_specifier = int(req_specifier)
     except:
-        req_specifier = None
+        if(any(x in req_specifier for x in ["opendota", "dotabuff"])):
+            match = re.search(url_matcher_match, req_specifier)
+            if(not match is None):
+                req_specifier = int(match.group(1))
+            else:
+                req_specifier = None
+        else:
+            req_specifier = None
     if(req_specifier is None):
         await client.send_message(msg.channel, "Invalid match ID specified")
         return
