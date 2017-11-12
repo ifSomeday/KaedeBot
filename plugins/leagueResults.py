@@ -49,6 +49,9 @@ async def match_results(client):
                         emb = process_match(match)
                         lastMatches[i] = max(lastMatches[i], match['match_id'])
                         save_last_match(lastMatches)
+                        await client.send_message(client.get_channel('379173810189893632'), "**=======================**")
+                        await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
+                        botLog(test_league.output_results())
                     except Exception as e:
                         botLog(e)
                         botLog("requesting parse for failed match " + str(match['match_id']))
@@ -65,7 +68,7 @@ async def match_results(client):
     if(test_league.get_week_done()):
         pass
 
-    await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
+    ##await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
     save_last_match(lastMatches)
 
 async def force_match_process(*args, **kwargs):
