@@ -17,6 +17,7 @@ import os
 
 api = WebAPI(keys.STEAM_WEBAPI)
 od = opendota.openDotaPlugin()
+test_league = classes.league(header.LEAGUE_IDS, 19)
 PICKLE_LOCATION = os.getcwd() + "/dataStores/lastLeagueMatch.pickle"
 
 def botLog(text):
@@ -28,39 +29,51 @@ def botLog(text):
     except:
         print("MatchResult: Logging error. Probably some retard name", flush = True)
 
-
 async def match_results(client):
     lastMatches = load_last_match()
-    curr_last_matches = [0 for i in range(len(lastMatches))]
-
+    ##curr_last_matches = [0 for i in range(len(lastMatches))]
     for i in range(0, len(header.LEAGUE_IDS)):
         if(i >= len(lastMatches)):
             lastMatches.append(0)
         matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
-        for match in matches['matches']:
-            if(match['match_id'] > lastMatches[i]):
-                ##TODO: verify processing, then move lastMatch update after success
-                curr_last_matches[i] = max(match['match_id'], curr_last_matches[i])
-                botLog("parsing: " + str(match['match_id']))
-                try:
-                    emb = process_match(match)
-                except Exception as e:
-                    botLog(e)
-                    botLog("requesting parse for failed match " + str(match['match_id']))
-                    od.request_parse(match['match_id'])
-                    return
-                if(not emb is None):
-                    if(sys.platform.startswith('linux')):
-                        ##DMDT:
-                        ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
-                        ##SEAL:
-                        await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
-                    else:
-                        botLog("would be sending match")
-                        #await client.send_message(client.get_channel('213086692683415552'), "**===============**", embed = emb)
-    for i in range(0, len(lastMatches)):
-        lastMatches[i] = max(lastMatches[i], curr_last_matches[i])
+        match_list = matches['matches']
+        curr_last_match = lastMatches[i]
+        if(match_list is None):
+            pass
+        else:
+            match_list.reverse()
+            for match in match_list:
+                if(match['match_id'] > curr_last_match):
+                    botLog("parsing: " + str(match['match_id']))
+                    try:
+                        emb = process_match(match)
+                        lastMatches[i] = max(lastMatches[i], match['match_id'])
+                        save_last_match(lastMatches)
+                    except Exception as e:
+                        botLog(e)
+                        botLog("requesting parse for failed match " + str(match['match_id']))
+                        od.request_parse(match['match_id'])
+                        return
+                    if(not emb is None):
+                        if(sys.platform.startswith('linux')):
+                            ##DMDT:
+                            ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
+                            ##SEAL:
+                            await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
+                        else:
+                            botLog("would be sending match " + str(match['match_id']))
+    if(test_league.get_week_done()):
+        pass
+
+    await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
     save_last_match(lastMatches)
+
+async def force_match_process(*args, **kwargs):
+    client = kwargs['client']
+    cMsg = kwargs['cMsg']
+    msg = kwargs['msg']
+    cfg = kwargs['cfg']
+
 
 def process_match(match):
     emb = discord.Embed()
@@ -102,6 +115,10 @@ def process_match(match):
     col.value = 73 << 16 | 122 << 8 | 129 ##seal logo light
     emb.colour = col
 
+    radiant_team_id = match_det['radiant_team_id'] if ('radiant_team_id' in match_det) else 1
+    dire_team_id = match_det['dire_team_id'] if ('dire_team_id' in match_det) else 2
+    test_league.add_result([radiant_team_id, dire_team_id], [radiant_name, dire_name], 0 if match_det['radiant_win'] else 1)
+
     return(emb)
 
 def get_team_logo(ugc):
@@ -121,6 +138,6 @@ def load_last_match():
         with open(PICKLE_LOCATION, 'rb') as f:
             return(pickle.load(f))
     else:
-        tmp = [3504724775, 3504724775]##[0 for x in range(0, len(header.LEAGUE_IDS))]
+        tmp = [3530880885, 3530880885]##[0 for x in range(0, len(header.LEAGUE_IDS))]
         save_last_match(tmp)
         return(tmp)

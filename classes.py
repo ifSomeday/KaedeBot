@@ -1,5 +1,5 @@
 from enum import Enum
-import operator, os, pickle
+import operator, os, pickle, datetime
 
 ##     ## ######## ########   #######     ##    ##    ###    ##     ## ########
 ##     ## ##       ##     ## ##     ##    ###   ##   ## ##   ###   ### ##
@@ -354,6 +354,99 @@ class steamBotInfo:
         self.in_use = False
         self.requester = requester
         self.teams = teams
+
+
+
+class league:
+
+    league_ids = []
+    num_teams = 0
+    est_results = 0
+    curr_num_results = 0
+    results = []
+
+    def __init__(self, ids, num_teams):
+        self.league_ids = ids
+        self.num_teams = num_teams
+        if(num_teams % 2 == 0):
+            self.est_results = self.num_teams
+        else:
+            self.est_results = (self.num_teams - 1)
+
+    ##here winner refers to the index of the winner in the ids array
+    ##names array must be same order as the names array
+    def add_result(self, ids, names, winner):
+        found_match = False
+        for result in self.results:
+            if(result.get_right_series(ids[0], ids[1])):
+                found_match = True
+                result.add_match(ids[0], ids[1], 1 + winner)
+                break
+        if(not found_match):
+            self.results.append(league_series(ids[0], names[0], ids[1], names[1], winner = (1 + winner)))
+        self.curr_num_results += 1
+
+    def get_week_done(self):
+        print(self.curr_num_results)
+        print(self.est_results)
+        if(self.curr_num_results >= self.est_results):
+            print("done")
+            return(True)
+        print("not done")
+        return(False)
+
+    def output_results(self):
+        out_str = ""
+        for result in self.results:
+            out_str += result.get_series_results() + "\n"
+        #self.curr_num_results = 0
+        #self.results = []
+        return(out_str)
+
+
+
+class league_series:
+
+    team1_id = 0
+    team1_name = ''
+    team2_id = 0
+    team2_name = ''
+    score = None
+    done = False
+
+    def __init__(self, team1_id, team1_name, team2_id, team2_name, winner = -1):
+        self.team1_id = team1_id
+        self.team1_name = team1_name
+        self.team2_id = team2_id
+        self.team2_name = team2_name
+        self.score = [0, 0]
+        if(not winner == -1 and winner in range(1, 3)):
+            self.score[winner - 1] += 1
+
+    def add_match(self, team1_id, team2_id, winner):
+        if(not winner in range(1, 3)):
+            print("Unable to record series results due to invalid winner", flush=True)
+            return
+        if(self.team1_id == team1_id and self.team2_id == team2_id):
+            self.score[winner - 1] += 1
+        elif(self.team1_id == team2_id and self.team2_id == team1_id):
+            self.score[winner % 2] += 1
+        else:
+            print("Unable to record series results due to invalid team ids", flush=True)
+
+        total_games = sum(self.score)
+        if(total_games > 2):
+            self.done = True
+
+    def get_right_series(self, team1id, team2id):
+        if((team1id == self.team1_id and team2id == self.team2_id) or (team2id == self.team1_id and team1id == self.team2_id)):
+            print("Found a matching series: " + str(self.team1_id) + " " + str(self.team2_id))
+            return(True)
+        return(False)
+
+    def get_series_results(self):
+        return("*{}*  **{} - {}**  *{}*".format(self.team1_name, self.score[0], self.score[1], self.team2_name))
+
 
  ######  ######## ########    ###    ##     ##     ######  ##     ## ########   ######
 ##    ##    ##    ##         ## ##   ###   ###    ##    ## ###   ### ##     ## ##    ##
