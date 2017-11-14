@@ -360,18 +360,21 @@ class steamBotInfo:
 class league:
 
     league_ids = []
+    last_matches = []
     num_teams = 0
     est_results = 0
     curr_num_results = 0
     results = []
 
-    def __init__(self, ids, num_teams):
+    def __init__(self, ids, num_teams, last_match = 0):
         self.league_ids = ids
         self.num_teams = num_teams
         if(num_teams % 2 == 0):
             self.est_results = self.num_teams
         else:
             self.est_results = (self.num_teams - 1)
+        for league_id in self.league_ids:
+            self.last_matches.append(last_match)
 
     ##here winner refers to the index of the winner in the ids array
     ##names array must be same order as the names array
