@@ -149,7 +149,7 @@ def load_last_match():
             with open(PICKLE_LOCATION, 'rb') as f:
                 tmp = pickle.load(f)
         else:
-            tmp = [classes.league(header.LEAGUE_IDS, 19, last_match=3559230080)]
+            tmp = [classes.league(header.LEAGUE_IDS, 19, last_match=3559240080)]
             ##tmp = [3559240080, 3559240080]##[0 for x in range(0, len(header.LEAGUE_IDS))]
             ##save_last_match(tmp)
     finally:
