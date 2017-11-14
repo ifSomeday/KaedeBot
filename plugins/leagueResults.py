@@ -135,16 +135,26 @@ def team_info(team_id):
     return(api.IDOTA2Match_570.GetTeamInfoByTeamID(start_at_team_id=team_id, teams_requested=1)['result']['teams'][0])
 
 
-def save_last_match(matches):
-    with open(PICKLE_LOCATION, "wb")as f:
-        botLog(matches)
-        pickle.dump(matches, f)
+def save_last_match(leagues):
+    fileLock.acquire()
+    try:
+        with open(PICKLE_LOCATION, "wb")as f:
+            pickle.dump(leagues, f)
+    finally:
+        fileLock.release()
 
 def load_last_match():
-    if(os.path.isfile(PICKLE_LOCATION)):
-        with open(PICKLE_LOCATION, 'rb') as f:
-            return(pickle.load(f))
-    else:
-        tmp = [3530880885, 3530880885]##[0 for x in range(0, len(header.LEAGUE_IDS))]
-        save_last_match(tmp)
-        return(tmp)
+    fileLock.acquire()
+    tmp = None
+    try:
+        if(os.path.isfile(PICKLE_LOCATION)):
+            with open(PICKLE_LOCATION, 'rb') as f:
+                tmp = pickle.load(f)
+        else:
+            tmp = [classes.league(header.LEAGUE_IDS, 19, last_match=3559230080)]
+            ##tmp = [3559240080, 3559240080]##[0 for x in range(0, len(header.LEAGUE_IDS))]
+            ##save_last_match(tmp)
+    finally:
+        botLog("releasing")
+        fileLock.release()
+    return(tmp)
