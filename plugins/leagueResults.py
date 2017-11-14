@@ -35,8 +35,12 @@ async def match_results(client):
     for i in range(0, len(header.LEAGUE_IDS)):
         if(i >= len(lastMatches)):
             lastMatches.append(0)
-        matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
-        match_list = matches['matches']
+        try:
+            matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
+            match_list = matches['matches']
+        except:
+            botLog("Steam API error, trying again later")
+            return
         curr_last_match = lastMatches[i]
         if(match_list is None):
             pass

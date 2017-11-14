@@ -613,7 +613,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         await client.wait_until_ready()
         while(not client.is_closed):
             await leagueResults.match_results(client)
-            await asyncio.sleep(300)
+            await asyncio.sleep(150)
 
     @client.event
     async def on_reaction_add(reaction, user):
