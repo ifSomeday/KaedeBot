@@ -651,6 +651,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     ##TODO: switch to entirely plugins approach
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
+    header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
