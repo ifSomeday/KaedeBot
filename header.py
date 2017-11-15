@@ -39,6 +39,7 @@ LEAGUE_IDS = ['5589', '5432']
 
 ##TODO: fill with captains
 ##TODO: dump to file so captains can specify other trustworth people
+
 captain_steam_ids = {
     63813048 : "Tyrannosaurus X", 69243302 : "h!", 64908677 : "Danny", 96421460 : "Panda",
 

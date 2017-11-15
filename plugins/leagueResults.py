@@ -31,7 +31,7 @@ def botLog(text):
         print("MatchResult: Logging error. Probably some retard name", flush = True)
 
 async def match_results(client):
-    leagues = load_last_match()
+    leagues = load_leagues()
     ##curr_last_matches = [0 for i in range(len(lastMatches))]
     for league in leagues:
         for i in range(0, len(league.league_ids)):
@@ -52,10 +52,7 @@ async def match_results(client):
                         try:
                             emb = process_match(match, league)
                             league.last_matches[i] = max(league.last_matches[i], match['match_id'])
-                            save_last_match(leagues)
-                            ##await client.send_message(client.get_channel('379173810189893632'), "**=======================**")
-                            ##await client.send_message(client.get_channel('379173810189893632'), league.output_results())
-                            botLog(league.output_results())
+                            save_leagues(leagues)
                         except Exception as e:
                             botLog(e)
                             botLog("requesting parse for failed match " + str(match['match_id']))
@@ -70,14 +67,41 @@ async def match_results(client):
                             else:
                                 botLog("would be sending match " + str(match['match_id']))
         if(league.get_week_done()):
-            await client.send_message(client.get_channel('379173810189893632'), league.output_results())
-    save_last_match(leagues)
+            pass
+            ##await client.send_message(client.get_channel('379173810189893632'), league.output_results())
+    save_leagues(leagues)
 
 async def force_match_process(*args, **kwargs):
     client = kwargs['client']
-    cMsg = kwargs['cMsg']
+    cMsg = args[0]
     msg = kwargs['msg']
     cfg = kwargs['cfg']
+    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+        leagues = load_leagues()
+        ##TODO: print specific leagues. for now we do all
+        for league in leagues:
+            output = league.output_results()
+            if(not output == ""):
+                await client.send_message(msg.channel, output)
+            else:
+                await client.send_message(msg.channel, "no results to output")
+    else:
+        client.add_reaction(msg, '❓')
+
+async def new_week(*args, **kwargs):
+    client = kwargs['client']
+    cMsg = args[0]
+    msg = kwargs['msg']
+    cfg = kwargs['cfg']
+    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+        leagues = load_leagues()
+        ##TODO: reset specific leagues. for now we do all
+        for league in leagues:
+            league.new_week()
+        save_leagues(leagues)
+        await client.send_message(msg.channel, "League results reset for current week")
+    else:
+        client.add_reaction(msg, '❓')
 
 
 def process_match(match, league):
@@ -133,7 +157,7 @@ def team_info(team_id):
     return(api.IDOTA2Match_570.GetTeamInfoByTeamID(start_at_team_id=team_id, teams_requested=1)['result']['teams'][0])
 
 
-def save_last_match(leagues):
+def save_leagues(leagues):
     fileLock.acquire()
     try:
         with open(PICKLE_LOCATION, "wb")as f:
@@ -141,18 +165,22 @@ def save_last_match(leagues):
     finally:
         fileLock.release()
 
-def load_last_match():
+def load_leagues():
     fileLock.acquire()
-    tmp = None
+    leagueArray = None
     try:
         if(os.path.isfile(PICKLE_LOCATION)):
             with open(PICKLE_LOCATION, 'rb') as f:
-                tmp = pickle.load(f)
+                leagueArray = pickle.load(f)
         else:
-            tmp = [classes.league(header.LEAGUE_IDS, 19, last_match=3559240080)]
-            ##tmp = [3559240080, 3559240080]##[0 for x in range(0, len(header.LEAGUE_IDS))]
-            ##save_last_match(tmp)
+            leagueArray = [classes.league(header.LEAGUE_IDS, 19, league_name="SEAL", last_match=3559230080)]
     finally:
-        botLog("releasing")
         fileLock.release()
-    return(tmp)
+    return(leagueArray)
+
+def init(chat_command_translation, function_translation):
+    function_translation[classes.discordCommands.OUTPUT_LEAGUE_RESULTS] = force_match_process
+    chat_command_translation["leagueresults"] = classes.discordCommands.OUTPUT_LEAGUE_RESULTS
+    function_translation[classes.discordCommands.LEAGUE_NEW_WEEK] = new_week
+    chat_command_translation["leaguenewweek"] = classes.discordCommands.LEAGUE_NEW_WEEK
+    return(chat_command_translation, function_translation)
