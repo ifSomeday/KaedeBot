@@ -12,13 +12,14 @@ import keys
 import pickle
 import discord
 import asyncio
+import threading
 import classes
 import os
 
 api = WebAPI(keys.STEAM_WEBAPI)
 od = opendota.openDotaPlugin()
-test_league = classes.league(header.LEAGUE_IDS, 19)
 PICKLE_LOCATION = os.getcwd() + "/dataStores/lastLeagueMatch.pickle"
+fileLock = threading.Lock()
 
 def botLog(text):
     """
@@ -30,55 +31,80 @@ def botLog(text):
         print("MatchResult: Logging error. Probably some retard name", flush = True)
 
 async def match_results(client):
-    lastMatches = load_last_match()
+    leagues = load_leagues()
     ##curr_last_matches = [0 for i in range(len(lastMatches))]
-    for i in range(0, len(header.LEAGUE_IDS)):
-        if(i >= len(lastMatches)):
-            lastMatches.append(0)
-        matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
-        match_list = matches['matches']
-        curr_last_match = lastMatches[i]
-        if(match_list is None):
+    for league in leagues:
+        for i in range(0, len(league.league_ids)):
+            try:
+                matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
+                match_list = matches['matches']
+            except:
+                botLog("Steam API error, trying again later")
+                return
+            curr_last_match = league.last_matches[i]
+            if(match_list is None):
+                pass
+            else:
+                match_list.reverse()
+                for match in match_list:
+                    if(match['match_id'] > curr_last_match):
+                        botLog("parsing: " + str(match['match_id']))
+                        try:
+                            emb = process_match(match, league)
+                            league.last_matches[i] = max(league.last_matches[i], match['match_id'])
+                            save_leagues(leagues)
+                        except Exception as e:
+                            botLog(e)
+                            botLog("requesting parse for failed match " + str(match['match_id']))
+                            od.request_parse(match['match_id'])
+                            return
+                        if(not emb is None):
+                            if(sys.platform.startswith('linux')):
+                                ##DMDT:
+                                ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
+                                ##SEAL:
+                                await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
+                            else:
+                                botLog("would be sending match " + str(match['match_id']))
+        if(league.get_week_done()):
             pass
-        else:
-            match_list.reverse()
-            for match in match_list:
-                if(match['match_id'] > curr_last_match):
-                    botLog("parsing: " + str(match['match_id']))
-                    try:
-                        emb = process_match(match)
-                        lastMatches[i] = max(lastMatches[i], match['match_id'])
-                        save_last_match(lastMatches)
-                        await client.send_message(client.get_channel('379173810189893632'), "**=======================**")
-                        await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
-                        botLog(test_league.output_results())
-                    except Exception as e:
-                        botLog(e)
-                        botLog("requesting parse for failed match " + str(match['match_id']))
-                        od.request_parse(match['match_id'])
-                        return
-                    if(not emb is None):
-                        if(sys.platform.startswith('linux')):
-                            ##DMDT:
-                            ##await client.send_message(client.get_channel('325108273751523328'), "**===============**", embed = emb)
-                            ##SEAL:
-                            await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = emb)
-                        else:
-                            botLog("would be sending match " + str(match['match_id']))
-    if(test_league.get_week_done()):
-        pass
-
-    ##await client.send_message(client.get_channel('379173810189893632'), test_league.output_results())
-    save_last_match(lastMatches)
+            ##await client.send_message(client.get_channel('379173810189893632'), league.output_results())
+    save_leagues(leagues)
 
 async def force_match_process(*args, **kwargs):
     client = kwargs['client']
-    cMsg = kwargs['cMsg']
+    cMsg = args[0]
     msg = kwargs['msg']
     cfg = kwargs['cfg']
+    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+        leagues = load_leagues()
+        ##TODO: print specific leagues. for now we do all
+        for league in leagues:
+            output = league.output_results()
+            if(not output == ""):
+                await client.send_message(msg.channel, output)
+            else:
+                await client.send_message(msg.channel, "no results to output")
+    else:
+        client.add_reaction(msg, '❓')
+
+async def new_week(*args, **kwargs):
+    client = kwargs['client']
+    cMsg = args[0]
+    msg = kwargs['msg']
+    cfg = kwargs['cfg']
+    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+        leagues = load_leagues()
+        ##TODO: reset specific leagues. for now we do all
+        for league in leagues:
+            league.new_week()
+        save_leagues(leagues)
+        await client.send_message(msg.channel, "League results reset for current week")
+    else:
+        client.add_reaction(msg, '❓')
 
 
-def process_match(match):
+def process_match(match, league):
     emb = discord.Embed()
     emb.type = "rich"
 
@@ -120,7 +146,7 @@ def process_match(match):
 
     radiant_team_id = match_det['radiant_team_id'] if ('radiant_team_id' in match_det) else 1
     dire_team_id = match_det['dire_team_id'] if ('dire_team_id' in match_det) else 2
-    test_league.add_result([radiant_team_id, dire_team_id], [radiant_name, dire_name], 0 if match_det['radiant_win'] else 1)
+    league.add_result([radiant_team_id, dire_team_id], [radiant_name, dire_name], 0 if match_det['radiant_win'] else 1)
 
     return(emb)
 
@@ -131,16 +157,30 @@ def team_info(team_id):
     return(api.IDOTA2Match_570.GetTeamInfoByTeamID(start_at_team_id=team_id, teams_requested=1)['result']['teams'][0])
 
 
-def save_last_match(matches):
-    with open(PICKLE_LOCATION, "wb")as f:
-        botLog(matches)
-        pickle.dump(matches, f)
+def save_leagues(leagues):
+    fileLock.acquire()
+    try:
+        with open(PICKLE_LOCATION, "wb")as f:
+            pickle.dump(leagues, f)
+    finally:
+        fileLock.release()
 
-def load_last_match():
-    if(os.path.isfile(PICKLE_LOCATION)):
-        with open(PICKLE_LOCATION, 'rb') as f:
-            return(pickle.load(f))
-    else:
-        tmp = [3530880885, 3530880885]##[0 for x in range(0, len(header.LEAGUE_IDS))]
-        save_last_match(tmp)
-        return(tmp)
+def load_leagues():
+    fileLock.acquire()
+    leagueArray = None
+    try:
+        if(os.path.isfile(PICKLE_LOCATION)):
+            with open(PICKLE_LOCATION, 'rb') as f:
+                leagueArray = pickle.load(f)
+        else:
+            leagueArray = [classes.league(header.LEAGUE_IDS, 19, league_name="SEAL", last_match=3559230080)]
+    finally:
+        fileLock.release()
+    return(leagueArray)
+
+def init(chat_command_translation, function_translation):
+    function_translation[classes.discordCommands.OUTPUT_LEAGUE_RESULTS] = force_match_process
+    chat_command_translation["leagueresults"] = classes.discordCommands.OUTPUT_LEAGUE_RESULTS
+    function_translation[classes.discordCommands.LEAGUE_NEW_WEEK] = new_week
+    chat_command_translation["leaguenewweek"] = classes.discordCommands.LEAGUE_NEW_WEEK
+    return(chat_command_translation, function_translation)

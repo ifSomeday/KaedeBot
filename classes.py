@@ -359,19 +359,19 @@ class steamBotInfo:
 
 class league:
 
-    league_ids = []
-    num_teams = 0
-    est_results = 0
-    curr_num_results = 0
-    results = []
-
-    def __init__(self, ids, num_teams):
+    def __init__(self, ids, num_teams, league_name="", broadcast_channel_ids=[], last_match = 0):
         self.league_ids = ids
         self.num_teams = num_teams
+        self.curr_num_results = 0
+        self.league_name = league_name
+        self.broadcast_channel_ids = broadcast_channel_ids
+        self.results = []
         if(num_teams % 2 == 0):
             self.est_results = self.num_teams
         else:
             self.est_results = (self.num_teams - 1)
+        for league_id in self.league_ids:
+            self.last_matches = [last_match for x in self.league_ids]
 
     ##here winner refers to the index of the winner in the ids array
     ##names array must be same order as the names array
@@ -399,20 +399,13 @@ class league:
         out_str = ""
         for result in self.results:
             out_str += result.get_series_results() + "\n"
-        #self.curr_num_results = 0
-        #self.results = []
         return(out_str)
 
-
+    def new_week(self):
+        self.curr_num_results = 0
+        self.results = []
 
 class league_series:
-
-    team1_id = 0
-    team1_name = ''
-    team2_id = 0
-    team2_name = ''
-    score = None
-    done = False
 
     def __init__(self, team1_id, team1_name, team2_id, team2_name, winner = -1):
         self.team1_id = team1_id
@@ -420,6 +413,7 @@ class league_series:
         self.team2_id = team2_id
         self.team2_name = team2_name
         self.score = [0, 0]
+        self.done = False
         if(not winner == -1 and winner in range(1, 3)):
             self.score[winner - 1] += 1
 
@@ -528,6 +522,8 @@ class discordCommands(Enum):
     REQUEST_SHUTDOWN = 38
     SHUTDOWN_BOT = 39
     EGIFT = 40
+    OUTPUT_LEAGUE_RESULTS = 41
+    LEAGUE_NEW_WEEK = 42
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
