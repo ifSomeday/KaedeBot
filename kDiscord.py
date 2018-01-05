@@ -456,18 +456,21 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def seal_embeds(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
-            if(msg.author.id == "133811493778096128" or msg.author.id == "96665903051046912"):
+            ##tree, me
+            if(msg.author.id == "127651622628229120" or msg.author.id == "133811493778096128"):
                 ##Logo Links
-                mc_logo = "https://cdn.discordapp.com/attachments/303070764276645888/358816837506564097/zuQ393jcDV.png"
-                bbb_logo = "https://cdn.discordapp.com/attachments/133812880654073857/358755695346057216/bbbbbbbb.png"
-                united_logo = "https://cdn.discordapp.com/attachments/133812880654073857/358755607131455488/United.png"
-                nelson_logo = "https://cdn.discordapp.com/attachments/303070764276645888/358816766303928320/10KD5sFDALK.png"
+                first_logo = "https://media.discordapp.net/attachments/398661145138954270/398661258284498944/IMG_20171112_095633.jpg"
+                ##STILL NEED
+                second_logo = "https://cdn.discordapp.com/attachments/359471207902609409/363507646919213056/unknown.png"
+                ##STILL NEED
+                third_logo_1 = "https://cdn.discordapp.com/attachments/308662797837795328/398666974806278144/134PnAWJaQ4.png"
+                third_logo_2 = "https://i.imgur.com/x8K3Mfq.png"
 
                 ##Create embeds
-                first = create_seal_embed("Mein Covfefe", "First place", mc_logo, "CRAP" ,["Bloodninja", "RiF", "DoosherMcfailNrage", "TanK.鐔孝鵬", "Commander Snuggles"], colour = discord.Colour.gold())
-                second = create_seal_embed("Bristlebrokebackburg Bristlebrokebackblarg Bristlebrokebackblam", "Second place", bbb_logo, "Kodos" ,["Potato Farmer", "h!", "Zoompa", "Kabobrocks", "love dodecagon"], colour = discord.Colour.dark_grey())
-                third = create_seal_embed("United", "Tied third/fourth place", united_logo, "Panda" , ["Atran", "Aeosynth", "PULLBACKTHEBOLT", "Rabbi-", "SupermaN!"], colour = discord.Colour.dark_gold())
-                fourth = create_seal_embed("In Nelsons We Trust", "Tied third/fourth place", nelson_logo, "Dream" , ["Linkdx", "aku", "Negative-i-am-a-meat-popsicle", "Blakkout", "Dude Broman, Esq."], colour = discord.Colour.dark_gold())
+                first = create_seal_embed("Sausage Cuddlers", "First place", first_logo, "GSKW" ,["Mr. Matieu", "Aug!", "Chetco", "Negative-i-am-a-meat-popsicle", "love_Dodecagon"], colour = discord.Colour.gold())
+                second = create_seal_embed("Prequel Memes and Broken Dreams", "Second place", second_logo, "UltraGunner" ,["Tree", "Richie", "The Goob", "D0c Hammer", "cr0n!"], colour = discord.Colour.dark_grey())
+                third = create_seal_embed("SKILLS & MAYHEM", "Tied third/fourth place", third_logo_1, "tiGGer" , ["t^Swift-", "DoosherMcfailNrage", "Nz(4)-iwnl-", "Imxtrabored", "Stahet"], colour = discord.Colour.dark_gold())
+                fourth = create_seal_embed("The Crimson Guardians", "Tied third/fourth place", third_logo_2, "racc9" , ["Melliflox", "NightWhisper", "Shadow M3RC", "Zoompa", "Kabobrocks"], colour = discord.Colour.dark_gold())
 
                 ##send embeds
                 await client.send_message(msg.channel, " ", embed = first)
@@ -588,7 +591,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.ADD_SERVER_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_SERVER_PERMISISON : addRemovePermission,
         classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
         classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
-        classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
+        classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : seal_embeds,
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
