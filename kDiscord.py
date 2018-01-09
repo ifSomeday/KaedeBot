@@ -631,11 +631,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 botLog("already reacted")
 
     @client.event
-    async def on_typing(channel, user, when):
-        if(user.id == "225768977115250688" and not channel.server.id == '308515912653340682'):
-            await client.send_typing(channel)
-
-    @client.event
     async def on_ready():
         botLog("discord bot Online")
         await client.change_presence(game=discord.Game(name='Yuru Yuri San Hai !!'))
