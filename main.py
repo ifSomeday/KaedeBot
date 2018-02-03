@@ -102,7 +102,7 @@ while(running):
     if(kdc == None or not kdc.isAlive()):
         print("thread kdc is stopped... starting...")
         kdc = startDiscord(kdc)
-    if(False):##drft == None or not drft.isAlive()):
+    if(drft == None or not drft.isAlive()):
         pass
         print("thread drft is stopped... starting...")
         drft = startDraft(drft)
