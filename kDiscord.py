@@ -237,7 +237,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 command = kwargs['command']
                 await client.send_file(msg.channel, os.getcwd() + "/dataStores/" + header.chat_macro_translation[command])
 
-
     async def addRemovePermission(*args, **kwargs):
         """
         Adds or removes a permission to a server or channel
@@ -566,7 +565,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
-        classes.discordCommands.EGIFT : egift_pp}
+        classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

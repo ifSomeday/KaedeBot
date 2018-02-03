@@ -524,6 +524,7 @@ class discordCommands(Enum):
     EGIFT = 40
     OUTPUT_LEAGUE_RESULTS = 41
     LEAGUE_NEW_WEEK = 42
+    OMEGA_W = 43
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

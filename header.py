@@ -12,7 +12,8 @@ anime_enough = ['133811493778096128', '146490789520867328', '127651622628229120'
 
 chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.gif", classes.discordCommands.AIRGUITAR : "Kyouko_air_guitar.gif",
     classes.discordCommands.CHEERLEADER : "Kyouko_Cheerleader.gif", classes.discordCommands.CHOCOLATE : "Kyouko_chocolate.gif",
-    classes.discordCommands.TOMATO : "Kyouko_tomato.gif", classes.discordCommands.TRANSFORM : "Kyouko_transform.gif"}
+    classes.discordCommands.TOMATO : "Kyouko_tomato.gif", classes.discordCommands.TRANSFORM : "Kyouko_transform.gif",
+    classes.discordCommands.OMEGA_W : "abbaOmega.png"}
 
 chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme" : classes.discordCommands.NEW_MEME,
     "purgememes" : classes.discordCommands.PURGE_MEMES, "help" : classes.discordCommands.HELP,
@@ -29,7 +30,7 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST,
     "test" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN,
-    "egift" : classes.discordCommands.EGIFT
+    "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W
 }
 
 HOME_SERVER = '133812880654073857'
