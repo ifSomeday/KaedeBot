@@ -8,6 +8,7 @@ import threading
 import classes
 import re
 import sys
+import pickle
 import operator
 from plugins import dotaStats
 from plugins import leagueResults
@@ -343,6 +344,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def broadcast_draft_pick(*args, **kwargs):
         if('cmd' in kwargs):
+            botLog("here")
             cmd = kwargs['cmd']
             #bChannel = client.get_channel('320033818083983361')
             resr = await build_draft_message(row = cmd.args[0])
@@ -379,7 +381,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def toggle_draft(*args, **kwargs):
         if('msg' in kwargs):
-            return
             msg = kwargs['msg']
             acceptable_ids= ["133811493778096128", "85148771226234880", "166390891920097280", "96665903051046912", "127651622628229120"]
             if(msg.author.id in acceptable_ids):
@@ -523,51 +524,20 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
-            return
             msg = kwargs['msg']
             if(not msg.author.id == '133811493778096128'):
                 return
-            message_count = {}
-            word_count = {}
-            word_length = {}
-            quick_ref = {}
+            mess = []
             count = 0
             for channel in client.get_server('308515912653340682').channels:
                 botLog(channel)
                 try:
                     async for message in client.logs_from(channel, limit=sys.maxsize):
-                        count += 1
-                        if(not message.author.id in message_count):
-                            message_count[message.author.id] = 0
-                            word_count[message.author.id] = 0
-                            word_length[message.author.id] = 0
-                            quick_ref[message.author.id] = message.author.name
-                        message_count[message.author.id] += 1
-                        word_count[message.author.id] += len(message.content.split())
-                        for word in message.content.split():
-                            word_length[message.author.id] += len(word)
-                        if(count % 10000 == 0):
-                            botLog(count)
+                        mess.append(message)
                 except:
                     botLog("Unable to get channel info")
-            botLog("sorting")
-            sorted_message_count = sorted(message_count.items(), key=operator.itemgetter(1), reverse=True)
-            sorted_word_length = sorted(word_length.items(), key=operator.itemgetter(1), reverse=True)
-            sorted_word_count = sorted(word_count.items(), key=operator.itemgetter(1), reverse=True)
-            botLog("Writing")
-            with open("sorted_message_count.txt", "w", encoding='utf-8') as f:
-                f.write("id, name, message_count, word_count, word_length")
-                for item in sorted_message_count:
-                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
-            with open("sorted_word_count.txt", "w", encoding='utf-8') as f:
-                f.write("id, name, message_count, word_count, word_length")
-                for item in sorted_word_count:
-                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
-            with open("sorted_word_length.txt", "w", encoding='utf-8') as f:
-                f.write("id, name, message_count, word_count, word_length")
-                for item in sorted_word_length:
-                    f.write(item[0] + ", " + quick_ref[item[0]] + ", " + str(message_count[item[0]]) + ", " + str(word_count[item[0]]) + ", " + str(word_length[item[0]]) + "\n")
-
+            with open("newpickle", "wb") as f:
+                pickle.dump(mess, f)
             botLog("done")
 
 
