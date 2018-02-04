@@ -617,6 +617,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def on_message(message):
         await processMessage(client, message)
 
+    @client.event
+    async def on_member_join(member):
+        if(member.id == "133811493778096128"):
+            for role in member.server.roles:
+                print(role.name + " " +role.id)
+                if(role.id == "203917322010886144"):
+                    await client.add_roles(member, role)
+
     ##TODO: switch to entirely plugins approach
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
