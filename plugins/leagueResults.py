@@ -67,8 +67,8 @@ async def match_results(client):
                             else:
                                 botLog("would be sending match " + str(match['match_id']))
         if(league.get_week_done()):
-            pass
-            ##await client.send_message(client.get_channel('379173810189893632'), league.output_results())
+            await client.send_message(client.get_channel('321900902497779713'), league.output_results())
+            await new_week(None, client=None, msg=None, cfg=None, internal=True)
     save_leagues(leagues)
 
 async def force_match_process(*args, **kwargs):
@@ -93,13 +93,18 @@ async def new_week(*args, **kwargs):
     cMsg = args[0]
     msg = kwargs['msg']
     cfg = kwargs['cfg']
-    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+    ##TODO: bug with internal
+    botLog('internal' in kwargs)
+    if('internal' in kwargs or msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
         leagues = load_leagues()
         ##TODO: reset specific leagues. for now we do all
         for league in leagues:
             league.new_week()
         save_leagues(leagues)
-        await client.send_message(msg.channel, "League results reset for current week")
+        if(not 'internal' in kwargs):
+            await client.send_message(msg.channel, "League results reset for current week")
+        else:
+            botLog("reset week")
     else:
         client.add_reaction(msg, '❓')
 
@@ -173,7 +178,7 @@ def load_leagues():
             with open(PICKLE_LOCATION, 'rb') as f:
                 leagueArray = pickle.load(f)
         else:
-            leagueArray = [classes.league(header.LEAGUE_IDS, 19, league_name="SEAL", last_match=3559230080)]
+            leagueArray = [classes.league(header.LEAGUE_IDS, 16, league_name="SEAL", last_match=3705569606)]
     finally:
         fileLock.release()
     return(leagueArray)
