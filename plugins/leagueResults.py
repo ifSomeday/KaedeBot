@@ -57,7 +57,7 @@ async def match_results(client):
                             botLog(e)
                             botLog("requesting parse for failed match " + str(match['match_id']))
                             od.request_parse(match['match_id'])
-                            return
+                            break ##should allow the rest of the tickets to process
                         if(not emb is None):
                             if(sys.platform.startswith('linux')):
                                 ##DMDT:
