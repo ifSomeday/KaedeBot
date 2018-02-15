@@ -519,7 +519,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def egift_pp(*args, **kwargs):
         if('msg'in kwargs):
             msg = kwargs['msg']
-            await client.send_message(msg.channel, "Please consider donating to Planned Parenthood:\nhttps://www.plannedparenthood.org/")
+            if (cfg.checkMessage("chatresponse", msg)):
+                await client.send_message(msg.channel, "Please consider donating to Planned Parenthood:\nhttps://www.plannedparenthood.org/")
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
