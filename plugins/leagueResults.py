@@ -67,7 +67,9 @@ async def match_results(client):
                             else:
                                 botLog("would be sending match " + str(match['match_id']))
         if(league.get_week_done()):
-            await client.send_message(client.get_channel('369398485113372675'), league.output_results())
+            if(sys.platform.startswith('linux')):
+                ##await client.send_message(client.get_channel('369398485113372675'), league.output_results())
+                pass
             await new_week(None, client=None, msg=None, cfg=None, internal=True)
     save_leagues(leagues)
 

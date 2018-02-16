@@ -387,8 +387,6 @@ class league:
         self.curr_num_results += 1
 
     def get_week_done(self):
-        print(self.curr_num_results)
-        print(self.est_results)
         if(self.curr_num_results >= self.est_results):
             print("done")
             return(True)
@@ -525,6 +523,7 @@ class discordCommands(Enum):
     OUTPUT_LEAGUE_RESULTS = 41
     LEAGUE_NEW_WEEK = 42
     OMEGA_W = 43
+    DECODE = 44
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
