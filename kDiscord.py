@@ -550,6 +550,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             messageList = re.findall(r"<:(\w+):\d+>", target_msg.content)
             resp = "\n".join(messageList)
             resp = " ".join(re.sub(r'([a-z])([A-Z])', r'\1 \2', resp).split())
+            await client.delete_message(msg)
             await client.send_message(msg.author, resp)
 
 
