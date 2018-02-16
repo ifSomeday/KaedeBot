@@ -387,8 +387,6 @@ class league:
         self.curr_num_results += 1
 
     def get_week_done(self):
-        print(self.curr_num_results)
-        print(self.est_results)
         if(self.curr_num_results >= self.est_results):
             print("done")
             return(True)
