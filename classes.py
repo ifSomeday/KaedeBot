@@ -525,6 +525,7 @@ class discordCommands(Enum):
     OUTPUT_LEAGUE_RESULTS = 41
     LEAGUE_NEW_WEEK = 42
     OMEGA_W = 43
+    DECODE = 44
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

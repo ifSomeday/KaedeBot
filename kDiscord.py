@@ -539,6 +539,20 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 pickle.dump(mess, f)
             botLog("done")
 
+    async def decode(*args, **kwargs):
+        if("msg" in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            try:
+                target_msg = await client.get_message(msg.channel, cMsg[1])
+            except:
+                botLog("cant get")
+            messageList = re.findall(r"<:(\w+):\d+>", target_msg.content)
+            resp = "\n".join(messageList)
+            resp = " ".join(re.sub(r'([a-z])([A-Z])', r'\1 \2', resp).split())
+            await client.send_message(msg.author, resp)
+
+
 
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
@@ -565,7 +579,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
-        classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro}
+        classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

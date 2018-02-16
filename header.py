@@ -30,7 +30,8 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST,
     "test" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN,
-    "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W
+    "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W,
+    "decode" : classes.discordCommands.DECODE
 }
 
 HOME_SERVER = '133812880654073857'
