@@ -621,6 +621,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
+        ##TEMP joke on aura
+        if(message.server.id == "133812880654073857" and messsage.author.id == "195348139216076800"):
+            await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
+            return
         if(cfg.checkMessage("deletion", message) and (not message.author.id == header.MY_DISC_ID)):
             if(deleteFilter(message.content)):
                 return
