@@ -43,9 +43,9 @@ def botLog(text):
     logs a string. Adds bot name, and forces a flush
     """
     try:
-        print("dotaStats: " +  str(text), flush = True)
+        print("DotaStatsPlugin: " +  str(text), flush = True)
     except:
-        print("dotaStats: Logging error. Probably some retard name", flush = True)
+        print("DotaStatsPlugin: Logging error. Probably some retard name", flush = True)
 
 ########  ####  ######  ########    ########  #######   #######  ##        ######
 ##     ##  ##  ##    ##    ##          ##    ##     ## ##     ## ##       ##    ##

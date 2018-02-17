@@ -26,9 +26,9 @@ def botLog(text):
     logs a string. Adds bot name, and forces a flush
     """
     try:
-        print("MatchResult: " +  str(text), flush = True)
+        print("MatchResultPlugin: " +  str(text), flush = True)
     except:
-        print("MatchResult: Logging error. Probably some retard name", flush = True)
+        print("MatchResultPlugin: Logging error. Probably some retard name", flush = True)
 
 async def match_results(client):
     leagues = load_leagues()
