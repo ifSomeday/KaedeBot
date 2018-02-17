@@ -15,14 +15,12 @@ chat_macro_translation = { classes.discordCommands.THUMBSUP : "Kyouko_Thumbs_up.
     classes.discordCommands.TOMATO : "Kyouko_tomato.gif", classes.discordCommands.TRANSFORM : "Kyouko_transform.gif",
     classes.discordCommands.OMEGA_W : "abbaOmega.png"}
 
-chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme" : classes.discordCommands.NEW_MEME,
-    "purgememes" : classes.discordCommands.PURGE_MEMES, "help" : classes.discordCommands.HELP,
-    "bsjme" : classes.discordCommands.BSJ_MEME, "bsjname" : classes.discordCommands.BSJ_NAME,
+chat_command_translation = {
     "twitter" : classes.discordCommands.TWITTER, "status" : classes.discordCommands.GET_STEAM_STATUS,
     "leaderboard" : classes.discordCommands.GET_STEAM_LEADERBOARD, "thumbsup" :  classes.discordCommands.THUMBSUP,
     "airguitar" :  classes.discordCommands.AIRGUITAR, "cheerleader" :  classes.discordCommands.CHEERLEADER,
     "chocolate" : classes.discordCommands.CHOCOLATE, "tomato" : classes.discordCommands.TOMATO,
-    "transform" : classes.discordCommands.TRANSFORM, "oldmeme" : classes.discordCommands.SEND_OLD_MEME,
+    "transform" : classes.discordCommands.TRANSFORM, "help" : classes.discordCommands.HELP,
     "toggledraft" : classes.discordCommands.TOGGLE_DRAFT_MODE, "addchannel" : classes.discordCommands.ADD_CHANNEL_PERMISSION,
     "removechannel" : classes.discordCommands.REMOVE_CHANNEL_PERMISSION, "addserver" : classes.discordCommands.ADD_SERVER_PERMISSION,
     "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featurestatus" : classes.discordCommands.PERMISSION_STATUS,

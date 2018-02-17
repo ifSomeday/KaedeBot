@@ -3,7 +3,6 @@ import random, time, string
 import edit_distance as ed
 import discord
 import queue
-import praw
 import threading
 import classes
 import re
@@ -12,8 +11,9 @@ import pickle
 import operator
 from plugins import dotaStats
 from plugins import leagueResults
+from plugins import memeing
 #import draftThread as dt
-import markovChaining, keys, BSJ, os, header
+import keys, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 
@@ -23,10 +23,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     asyncio.set_event_loop(loop)
 
     client = discord.Client()
-    markovChaining.init()
-    ##Save Thread
 
-    BsjFacts = BSJ.BSJText()
 
     draft_messages = []
     media_messages = {}
@@ -113,51 +110,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 pm_content += (word + " ")
             await client.send_message(client.get_channel(pm_channel), pm_content)
 
-    async def send_meme(*args, **kwargs):
-        """
-        builds, validates, and sends a meme message
-        """
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
-                table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
-                i = 0
-                meme_base = msg.content.split()
-                st = time.time()
-                meme = markovChaining.generateText3(table, builder = meme_base[1:])
-                while((meme.strip().startswith("!") or len(meme.strip()) == 0) and i < 10):
-                    i += 1
-                    meme = markovChaining.generateText3(table, builder = [])
-                    botLog("Invalid meme, rebuilding")
-                if(meme.strip().startswith("!") or len(meme.strip()) == 0):
-                    return
-                et1 = time.time()
-                meme = re.sub(r"@everyone", r"everyone", meme)
-                for s in re.finditer(r"<@(\d+)>", meme):
-                    meme = meme.replace(s.group(0), (await client.get_user_info(s.group(1))).name)
-                et2 = time.time()
-                botLog("build meme: " + str(et1 - st) + "\treplace: " + str(et2 - et1))
-                await client.send_message(msg.channel, meme)
-
-    async def add_meme(*args, **kwargs):
-        """
-        adds a new meme
-        """
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(cfg.checkMessage("meme", msg)):
-                markovChaining.addSingle3(msg.content[len("!newmeme"):], markovChaining.nd)
-                await client.send_message(msg.channel, "new meme added, thanks!")
-
-    async def purge_memes(*args, **kwargs):
-        """
-        purges the meme database. Command is currently disabled
-        """
-        if('msg' in kwargs):
-                if(cfg.checkMessage("meme", msg)):
-                        msg = kwargs['msg']
-                        await client.send_message(msg.channel, "That command is currently disabled.")
-
     async def help_command(*args, **kwargs):
         """
         Displays an (outdated) help command
@@ -165,24 +117,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "Use !meme to get a spicy meme\nUse !newmeme to add your own dank memes\nUse !MsjMe to get BSJ memes\nUse !BsjName to get your BSJ Name\nUse !twitter to see my twitter counterpart")
-
-    async def bsj_meme(*args, **kwargs):
-        """
-        builds and sends a BSJ meme
-        """
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(cfg.checkMessage("meme", msg)):
-                await client.send_message(msg.channel, BsjFacts.getFact())
-
-    async def bsj_name(*args, **kwargs):
-        """
-        Answers the biggest question in life... what does BSJ actually stand for?
-        """
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(cfg.checkMessage("meme", msg)):
-                await client.send_message(msg.channel, BsjFacts.bsjName())
 
     async def twitter(*args, **kwargs):
         """
@@ -512,7 +446,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
             botLog("Tables saved")
-            markovChaining.dumpAllTables()
+            ##TODO: fix the fucking shutoff
+            ##markovChaining.dumpAllTables()
             botLog("closing connection")
             client.logout()
 
@@ -561,15 +496,13 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if(cfg.checkAny(msg)):
                 await client.send_message(msg.channel, "invalid command")
 
-    function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
-        classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
-        classes.discordCommands.BSJ_MEME : bsj_meme, classes.discordCommands.BSJ_NAME : bsj_name ,
+    function_translation = {
         classes.discordCommands.TWITTER : twitter, classes.discordCommands.GET_STEAM_STATUS : steam_status,
         classes.discordCommands.GET_STEAM_LEADERBOARD : steam_leaderboard, classes.discordCommands.THUMBSUP : image_macro_wrapper,
         classes.discordCommands.AIRGUITAR : image_macro_wrapper, classes.discordCommands.CHEERLEADER : image_macro_wrapper,
         classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro_wrapper,
         classes.discordCommands.TOMATO : image_macro_wrapper, classes.discordCommands.TRANSFORM : image_macro_wrapper,
-        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
+        classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.HELP : help_command,
         classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft,
         classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message, classes.discordCommands.BROADCAST_MATCH_RESULT : broadcast_match_res,
         classes.discordCommands.ADD_CHANNEL_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_CHANNEL_PERMISSION : addRemovePermission,
@@ -590,11 +523,11 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await function_translation[cmd.command](cmd = cmd)
             await asyncio.sleep(1)
 
+    ##TODO: better way to register this
     async def saveTables():
         await client.wait_until_ready()
         while(not client.is_closed):
-            markovChaining.dumpAllTables()
-            botLog("saving")
+            memeing.save()
             await asyncio.sleep(1800)
 
     async def league_results():
@@ -608,7 +541,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.content.startswith("!")):
             if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
                 await client.add_reaction(reaction.message, '🤖')
-                markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
+                memeing.update_dict(reaction.message.content)
                 if(cfg.checkMessage("meme", reaction.message)):
                     await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
             else:
@@ -643,6 +576,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     ##TODO: switch to entirely plugins approach
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
+    header.chat_commands_translation, function_translation = memeing.init(header.chat_command_translation, function_translation)
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
