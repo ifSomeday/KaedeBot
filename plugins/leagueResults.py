@@ -36,6 +36,8 @@ async def match_results(client):
     for league in leagues:
         for i in range(0, len(league.league_ids)):
             try:
+                api = WebAPI(keys.STEAM_WEBAPI)
+                matches = []
                 matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
                 match_list = matches['matches']
             except:
