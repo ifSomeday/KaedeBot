@@ -84,7 +84,10 @@ async def force_match_process(*args, **kwargs):
         for league in leagues:
             output = league.output_results()
             if(not output == ""):
-                await client.send_message(msg.channel, output)
+                if(len(cMsg) == 1):
+                    await client.send_message(msg.channel, output)
+                else
+                    await client.send_message(client.get_channel(cMsg[1]), output)
             else:
                 await client.send_message(msg.channel, "no results to output")
     else:
