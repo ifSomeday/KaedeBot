@@ -86,7 +86,7 @@ async def force_match_process(*args, **kwargs):
             if(not output == ""):
                 if(len(cMsg) == 1):
                     await client.send_message(msg.channel, output)
-                else
+                else:
                     await client.send_message(client.get_channel(cMsg[1]), output)
             else:
                 await client.send_message(msg.channel, "no results to output")
