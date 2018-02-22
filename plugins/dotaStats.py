@@ -490,11 +490,15 @@ def quick_recent_matches(res, limit):
 
 def quick_game_details(res):
     length = "**Duration:** " + str(res["duration"] // 60) + ":" + str(res["duration"] % 60)
+    botLog("Got length")
     rad_score = res["radiant_score"]
     dire_score = res["dire_score"]
+    botLog("got scores")
     score = "**Score:** " + str(rad_score) + " - " + str(dire_score)
     gold = res["radiant_gold_adv"][-1] ##Get last enty
+    botLog("got gold")
     xp = res["radiant_xp_adv"][-1] ##Get last entry
+    botLog("got xp")
     gold_str = "**Gold:** +" + str(abs(gold)) + (" Radiant" if gold >= 0 else " Dire")
     xp_str = "**Experience:** +" + str(abs(xp)) + (" Radiant" if xp >= 0 else " Dire")
     return(length + "\n" + score + "\n" + gold_str + "\n" + xp_str)

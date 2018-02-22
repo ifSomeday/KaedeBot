@@ -36,6 +36,7 @@ async def match_results(client):
     for league in leagues:
         for i in range(0, len(league.league_ids)):
             try:
+                matches = []
                 matches = api.IDOTA2Match_570.GetMatchHistory(league_id=header.LEAGUE_IDS[i])["result"]
                 match_list = matches['matches']
             except:
@@ -123,17 +124,13 @@ def process_match(match, league):
     od_match = od.get_match(match['match_id'])
 
     radiant_name = match_det['radiant_name'] if ("radiant_name" in match_det) else "Radiant"
-    botLog("got radiant_name")
     dire_name = match_det['dire_name'] if ("dire_name" in match_det) else "Dire"
-    botLog("got dire_name")
     emb.title = radiant_name.strip() + " vs " + dire_name.strip()
 
     ##TODO: https://www.opendota.com/matches/3070176477
     emb.set_thumbnail(url="https://seal.gg/assets/seal.png")
     emb.description = "**" + (radiant_name if match_det['radiant_win'] else dire_name) + "** Victory!\nMatch ID: " +  str(match['match_id'])
-    botLog("got description")
     emb.add_field(name="Match Details", value=dotaStats.quick_game_details(od_match), inline=False)
-    botLog("got quick match details")
 
     rad_str = ""
     dire_str = ""
@@ -146,7 +143,6 @@ def process_match(match, league):
         elif(player["player_slot"] in range(128, 133)):
             dire_str += tmp
             leavers += player["leaver_status"]
-    botLog("got player details")
 
     if(leavers > 8):
         botLog("Greater than 8 leavers detected, ignoring match")
