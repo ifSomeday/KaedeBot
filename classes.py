@@ -366,6 +366,8 @@ class league:
         self.league_name = league_name
         self.broadcast_channel_ids = broadcast_channel_ids
         self.results = []
+        self.awaiting_processing = []
+        self.awaiting_opendota = []
         if(num_teams % 2 == 0):
             self.est_results = self.num_teams
         else:
@@ -388,9 +390,7 @@ class league:
 
     def get_week_done(self):
         if(self.curr_num_results >= self.est_results):
-            print("done")
             return(True)
-        print("not done")
         return(False)
 
     def output_results(self):
@@ -402,6 +402,8 @@ class league:
     def new_week(self):
         self.curr_num_results = 0
         self.results = []
+        self.awaiting_processing = []
+        self.awaiting_opendota = []
 
 class league_series:
 
