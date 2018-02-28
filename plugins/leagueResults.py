@@ -40,8 +40,6 @@ async def new_match_results(client):
 
     ##get lists of matches to process
     for league in leagues:
-        botLog("awaiting_processing" + str(league.awaiting_processing))
-        botLog("awaiting_opendota" + str(league.awaiting_opendota))
         res = await process_webapi_initial(league)
         if(not res):
             botLog("Stopping all WebAPI processing for this iteration.")
@@ -51,12 +49,14 @@ async def new_match_results(client):
     if(res):
         for league in leagues:
             res = await process_webapi_secondary(client, league)
+            league.awaiting_processing[:] = [m for m in league.awaiting_processing if not m is None]
             if(not res):
                 botLog("Stopping secondary WebAPI processing for this iteration.")
                 break
 
     for league in leagues:
         res = await process_opendota_match(client, league)
+        league.awaiting_opendota[:] = [m for m in league.awaiting_opendota if not m is None]
         if(not res):
             botLog("Stopping OpenDota processing for this iteration.")
             break
@@ -115,7 +115,8 @@ async def process_webapi_secondary(client, league):
             dire_team_id = match_det['dire_team_id'] if ('dire_team_id' in match_det) else 2
 
             league.add_result([radiant_team_id, dire_team_id], [match_det['radiant_name'] if ("radiant_name" in match_det) else "Radiant", match_det['dire_name'] if ("dire_name" in match_det) else "Dire"], 0 if match_det['radiant_win'] else 1)
-            league.awaiting_processing[:] = [m for m in league.awaiting_processing if not m["match_id"] == match["match_id"]]
+            match = None
+
         except Exception as e:
             botLog("Error sending/adding primary match info: " + str(e))
     return(True)
@@ -137,7 +138,8 @@ async def process_opendota_match(client, league):
             else:
                 message = await client.edit_message(match_obj['message'], "**===============**", embed = embed) ##TODO: replace with live channel iff linux
                 await asyncio.sleep(0.3)
-        league.awaiting_opendota[:] = [m_obj for m_obj in league.awaiting_opendota if not m_obj["match_det"]["match_id"] == match_obj["match_det"]["match_id"]]
+        match_obj = None
+        
     return(True)
 
 def create_min_embed(match):
