@@ -64,8 +64,7 @@ async def new_match_results(client):
     for league in leagues:
         if(league.get_week_done()):
             if(sys.platform.startswith('linux')):
-                ##await client.send_message(client.get_channel('369398485113372675'), league.output_results())
-                pass
+                await client.send_message(client.get_channel('369398485113372675'), league.output_results())
             else:
                 await client.send_message(client.get_channel('321900902497779713'), league.output_results())
             league.new_week()
@@ -107,7 +106,11 @@ async def process_webapi_secondary(client, league):
         if(embed is None):
             return(False)
         try:
-            message = await client.send_message(client.get_channel('321900902497779713'), "**===============**", embed = embed) ##TODO: replace with live channel iff linux
+            if(sys.platform.startswith('linux')):
+                message = await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = embed)
+            else:
+                message = await client.send_message(client.get_channel('321900902497779713'), "**===============**", embed = embed)
+
             league.awaiting_opendota.append({"match" : match, "match_det" : match_det, "message" : message, "embed" : embed})
             botLog("Added match " + str(match_det["match_id"]))
 
@@ -136,10 +139,10 @@ async def process_opendota_match(client, league):
             if(match_obj["message"] == None):
                 botLog("FATAL: Match " + str(match_obj["match_det"]["match_id"]) + " has no valid mesage object\nRemoving from list")
             else:
-                message = await client.edit_message(match_obj['message'], "**===============**", embed = embed) ##TODO: replace with live channel iff linux
+                message = await client.edit_message(match_obj['message'], "**===============**", embed = embed)
                 await asyncio.sleep(0.3)
         match_obj = None
-        
+
     return(True)
 
 def create_min_embed(match):
@@ -276,7 +279,7 @@ def __load_leagues_internal():
         with open(PICKLE_LOCATION, 'rb') as f:
             leagueArray = pickle.load(f)
     else:
-        leagueArray = [classes.league(header.LEAGUE_IDS, 16, league_name="SEAL", last_match=3744817588)]
+        leagueArray = [classes.league(header.LEAGUE_IDS, 16, league_name="SEAL", last_match=3753343743)]
 
     return(leagueArray)
 
