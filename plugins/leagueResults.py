@@ -49,14 +49,12 @@ async def new_match_results(client):
     if(res):
         for league in leagues:
             res = await process_webapi_secondary(client, league)
-            league.awaiting_processing[:] = [m for m in league.awaiting_processing if not m is None]
             if(not res):
                 botLog("Stopping secondary WebAPI processing for this iteration.")
                 break
 
     for league in leagues:
         res = await process_opendota_match(client, league)
-        league.awaiting_opendota[:] = [m for m in league.awaiting_opendota if not m is None]
         if(not res):
             botLog("Stopping OpenDota processing for this iteration.")
             break
@@ -102,7 +100,8 @@ async def process_webapi_initial(league):
 ##This function retreives a set of initial results and posts them
 ##It then stores the message so the opendota processing can update them
 async def process_webapi_secondary(client, league):
-    for match in league.awaiting_processing:
+    for i in range(len(league.awaiting_processing)):
+        match = league.awaiting_processing[i]
         embed, match_det = create_min_embed(match)
         message = None
         await asyncio.sleep(0.3)
@@ -123,14 +122,18 @@ async def process_webapi_secondary(client, league):
             dire_team_id = match_det['dire_team_id'] if ('dire_team_id' in match_det) else 2
 
             league.add_result([radiant_team_id, dire_team_id], [match_det['radiant_name'] if ("radiant_name" in match_det) else "Radiant", match_det['dire_name'] if ("dire_name" in match_det) else "Dire"], 0 if match_det['radiant_win'] else 1)
-            match = None
+            league.awaiting_processing[i] = None
 
         except Exception as e:
             botLog("Error sending/adding primary match info: " + str(e))
+
+    league.awaiting_processing[:] = [m for m in league.awaiting_processing if not m is None]
+
     return(True)
 
 async def process_opendota_match(client, league):
-    for match_obj in league.awaiting_opendota:
+    for i in range(len(league.awaiting_opendota)):
+        match_obj = league.awaiting_opendota[i]
         try:
             embed = process_match(match_obj["match_det"], match_obj["embed"])
         except Exception as e:
@@ -147,7 +150,9 @@ async def process_opendota_match(client, league):
                 botLog("Editing message")
                 ##message = await client.edit_message(match_obj['message'], "**===============**", embed = embed)
                 await asyncio.sleep(0.3)
-        match_obj = None
+        league.awaiting_opendota[i] = None
+
+    league.awaiting_opendota[:] = [m for m in league.awaiting_opendota if not m is None]
 
     return(True)
 
