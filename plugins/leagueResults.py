@@ -63,7 +63,7 @@ async def new_match_results(client):
         if(league.get_week_done()):
             if(sys.platform.startswith('linux')):
                 botLog("Sending last message")
-                await client.send_message(client.get_channel('321900902497779713'), league.output_results())
+                await client.send_message(client.get_channel('369398485113372675'), league.output_results())
                 pass
             else:
                 await client.send_message(client.get_channel('321900902497779713'), league.output_results())
@@ -111,7 +111,7 @@ async def process_webapi_secondary(client, league):
         try:
             if(sys.platform.startswith('linux')):
                 botLog("Sending message")
-                message = await client.send_message(client.get_channel('321900902497779713'), "**===============**", embed = embed)
+                message = await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = embed)
                 pass
             else:
                 message = await client.send_message(client.get_channel('321900902497779713'), "**===============**", embed = embed)
