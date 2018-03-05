@@ -104,6 +104,7 @@ async def process_webapi_initial(league):
 async def process_webapi_secondary(client, league):
     for match in league.awaiting_processing:
         embed, match_det = create_min_embed(match)
+        message = None
         await asyncio.sleep(0.3)
         if(embed is None):
             return(False)
