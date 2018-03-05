@@ -106,6 +106,7 @@ async def process_webapi_secondary(client, league):
         message = None
         await asyncio.sleep(0.3)
         if(embed is None):
+            league.awaiting_processing[:] = [m for m in league.awaiting_processing if not m is None]
             return(False)
         try:
             if(sys.platform.startswith('linux')):
