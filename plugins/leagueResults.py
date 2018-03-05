@@ -64,7 +64,8 @@ async def new_match_results(client):
     for league in leagues:
         if(league.get_week_done()):
             if(sys.platform.startswith('linux')):
-                await client.send_message(client.get_channel('369398485113372675'), league.output_results())
+                ##await client.send_message(client.get_channel('369398485113372675'), league.output_results())
+                pass
             else:
                 await client.send_message(client.get_channel('321900902497779713'), league.output_results())
             league.new_week()
@@ -107,7 +108,8 @@ async def process_webapi_secondary(client, league):
             return(False)
         try:
             if(sys.platform.startswith('linux')):
-                message = await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = embed)
+                ##message = await client.send_message(client.get_channel('369398485113372675'), "**===============**", embed = embed)
+                pass
             else:
                 message = await client.send_message(client.get_channel('321900902497779713'), "**===============**", embed = embed)
 
@@ -139,7 +141,7 @@ async def process_opendota_match(client, league):
             if(match_obj["message"] == None):
                 botLog("FATAL: Match " + str(match_obj["match_det"]["match_id"]) + " has no valid mesage object\nRemoving from list")
             else:
-                message = await client.edit_message(match_obj['message'], "**===============**", embed = embed)
+                ##message = await client.edit_message(match_obj['message'], "**===============**", embed = embed)
                 await asyncio.sleep(0.3)
         match_obj = None
 
