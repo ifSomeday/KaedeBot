@@ -176,7 +176,7 @@ def create_min_embed(match):
 
     emb.title = radiant_name.strip() + " vs " + dire_name.strip()
     emb.set_thumbnail(url="https://seal.gg/assets/seal.png")
-    emb.description = "**" + (radiant_name if match_det['radiant_win'] else dire_name) + "** Victory!\nMatch ID: " +  str(match['match_id'])
+    emb.description = "**" + (radiant_name if match_det['radiant_win'] else dire_name) + "** Victory!\nMatch ID: " +  str(match['match_id']) + "\nhttps://www.dotabuff.com/matches/" + str(match['match_id']) + "\nhttps://www.opendota.com/matches/" +str(match['match_id'])
 
     emb.add_field(name="Details", value="Further stats will be added as they become available") ##This is index 0
 
