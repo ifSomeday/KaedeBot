@@ -75,6 +75,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(client.user.mentioned_in(message)):
             if(message.server.id == header.HOME_SERVER or not message.mention_everyone):
                 await client.add_reaction(message, "🖕")
+        if(message.author.id == "305094311928922114" and (message.content.lower().contains("facebook") or message.content.lower().contains("fb"))):
+            client.delete_message(message)
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             await spam_check("", msg=message, cb=None, command=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
@@ -629,6 +631,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if(deleteFilter(message.content)):
                 return
             if(message.server.id == '308515912653340682' and not message.author.id == "117446235715010569"):
+                return
+            if(message.author.id == "305094311928922114" and (message.content.lower().contains("facebook") or message.content.lower().contains("fb"))):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
