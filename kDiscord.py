@@ -61,7 +61,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def cmdSendMsg(*args, **kwargs):
         """
-        Sends a discord message. For use by external threads, utilizting the Discord command queue
+        Sends a discord message. For use by external threads, utilizing the Discord command queue
         """
         if('cmd' in kwargs):
             cmd = kwargs['cmd']
@@ -441,7 +441,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await callback(cMsg, msg=msg, command=command)
 
     def create_seal_embed(team, place, logo_url, captain, player_list, colour = None):
-        return
         emb = discord.Embed()
         emb.title = team
         emb.type = "rich"
@@ -462,24 +461,24 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             ##tree, me
             if(msg.author.id == "127651622628229120" or msg.author.id == "133811493778096128"):
                 ##Logo Links
-                first_logo = "https://media.discordapp.net/attachments/398661145138954270/398661258284498944/IMG_20171112_095633.jpg"
+                first_logo = "https://riki.dotabuff.com/t/l/17jEbIlSzl8.png"
                 ##STILL NEED
-                second_logo = "https://cdn.discordapp.com/attachments/359471207902609409/363507646919213056/unknown.png"
+                second_logo = "https://riki.dotabuff.com/t/l/16Tt2pSKWYU.png"
                 ##STILL NEED
-                third_logo_1 = "https://cdn.discordapp.com/attachments/308662797837795328/398666974806278144/134PnAWJaQ4.png"
-                third_logo_2 = "https://i.imgur.com/x8K3Mfq.png"
+                third_logo_1 = "https://riki.dotabuff.com/t/l/17ObokfO12z.png"
+                third_logo_2 = "https://riki.dotabuff.com/t/l/16EPjSj8HFF.png"
 
                 ##Create embeds
-                first = create_seal_embed("Sausage Cuddlers", "First place", first_logo, "GSKW" ,["Mr. Matieu", "Aug!", "Chetco", "Negative-i-am-a-meat-popsicle", "love_Dodecagon"], colour = discord.Colour.gold())
-                second = create_seal_embed("Prequel Memes and Broken Dreams", "Second place", second_logo, "UltraGunner" ,["Tree", "Richie", "The Goob", "D0c Hammer", "cr0n!"], colour = discord.Colour.dark_grey())
-                third = create_seal_embed("SKILLS & MAYHEM", "Tied third/fourth place", third_logo_1, "tiGGer" , ["t^Swift-", "DoosherMcfailNrage", "Nz(4)-iwnl-", "Imxtrabored", "Stahet"], colour = discord.Colour.dark_gold())
-                fourth = create_seal_embed("The Crimson Guardians", "Tied third/fourth place", third_logo_2, "racc9" , ["Melliflox", "NightWhisper", "Shadow M3RC", "Zoompa", "Kabobrocks"], colour = discord.Colour.dark_gold())
+                first = create_seal_embed("Sweet Jazz Esports", "First place", first_logo, "Clare" ,["FierySnake", "Mediocre", "Flying Monkey", "Fulcrum", "Ferris Euler"], colour = discord.Colour.gold())
+                second = create_seal_embed("Knights of Lil B", "Second place", second_logo, "Satan" ,["Natnap", "Truckwaffle", "659", "MichaelJJackson", "Big Fella", "Polo"], colour = discord.Colour.dark_grey())
+                third = create_seal_embed("Stud Squad", "Tied third/fourth place", third_logo_1, "UltraGunner" , ["Amane", "BigAug", "Zoompa", "Poiuys", "Blakkout"], colour = discord.Colour.dark_gold())
+                fourth = create_seal_embed("Let Me See That Krussy", "Tied third/fourth place", third_logo_2, "Danny" , ["Anbokr", "dnm-", "Aku", "Rock", "Deadprez"], colour = discord.Colour.dark_gold())
 
                 ##send embeds
-                await client.send_message(msg.channel, " ", embed = first)
-                await client.send_message(msg.channel, " ", embed = second)
-                await client.send_message(msg.channel, " ", embed = third)
-                await client.send_message(msg.channel, " ", embed = fourth)
+                await client.send_message(msg.channel, "", embed = first)
+                await client.send_message(msg.channel, "", embed = second)
+                await client.send_message(msg.channel, "", embed = third)
+                await client.send_message(msg.channel, "", embed = fourth)
 
     async def honorary_champs(*args, **kwargs):
         if('msg' in kwargs):
