@@ -296,7 +296,7 @@ def __load_leagues_internal():
         with open(PICKLE_LOCATION, 'rb') as f:
             leagueArray = pickle.load(f)
     else:
-        leagueArray = [classes.league(header.LEAGUE_IDS, 16, league_name="SEAL", last_match=3753343743)]
+        leagueArray = [classes.league(header.LEAGUE_IDS, 16, league_name="SEAL", last_match=3835268000)]
 
     return(leagueArray)
 
