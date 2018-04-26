@@ -164,6 +164,8 @@ def dotaThread(kstQ, dscQ, factoryQ):
         ##state 3 is postgame
         ##game_state
         if(msg.game_state == dGState.DOTA_GAMERULES_STATE_POST_GAME):
+            with open(os.os.getcwd() + "/" + str(msg.match_id) + ".txt", "w") as f:
+                f.write(msg) 
             winner = msg.match_outcome
             if(winner == dOutcome.RadVictory):
                 botLog("radiant wins!")

@@ -2,8 +2,16 @@ from gevent import monkey
 monkey.patch_ssl()
 monkey.patch_socket()
 
+from threading import Thread
+import threading
+import queue
+import classes
+import time
+import os
+import pickle
+import header
+
 from steam import SteamClient
-from steam import WebAPI
 from steam import SteamID
 from dota2 import Dota2Client
 import dota2
@@ -18,14 +26,7 @@ from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
 from dota2.enums import GCConnectionStatus as dConStat
 
-from threading import Thread
-import threading
-import queue
-import classes
-import time
-import os
-import pickle
-import header
+
 
 import keys, edit_distance
 
@@ -65,7 +66,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     @client.on('logged_on')
     def start_dota():
         botLog("Logged into steam, starting dota")
-        time.sleep(1)
+        dota.sleep(1)
         if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
             botLog("Already in logon queue...")
             return
@@ -78,6 +79,16 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         botLog("Connection status:")
         botLog(dota.connection_status)
         botLog("Dota is ready")
+        retries = 0
+        match_job = dota.request_match_details(3851113270)
+        matchRes = dota.wait_msg(match_job, timeout=10)
+        botLog(matchRes)
+        if(matchRes.result == 1):
+            with open(os.getcwd() + "/" + str(3851113270) + ".txt", "w") as f:
+                f.write(str(matchRes.match))
+        else:
+            botLog("ERROR: UNABLE TO GET DATA FOR " + str(3851113270))
+
         if(not hosted.is_set()):
             hostLobby(tournament=True)
 
@@ -104,20 +115,30 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     @dota.on('lobby_changed')
     def lobby_change_handler(msg):
         return
-        lobby_stat = dota.lobby
-        if(not lobby_stat == None):
-            if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
-                botLog("Lobby is dead, leaving")
-                leave_lobby()
+        ##lobby_stat = dota.lobby
+        ##if(not lobby_stat == None):
+        ##    if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
+        ##        botLog("Lobby is dead, leaving")
+        ##        leave_lobby()
 
     #TODO: this shit is a fucking mess
+    #Triggers on launch if previous lobby existed.
     @dota.on('lobby_removed')
     def lobby_removed(msg):
-        if(not hosted.is_set()):
-            return
+        matchId = msg.match_id
+        retries = 0
+        match_job = dota.request_match_details(int(matchId))
+        matchRes = dota.wait_msg(match_job, timeout=10)
+        while(not matchRes.result == 1 and retries < 10):
+            botLog("Unable to get match result... retrying " + str(retries))
+            retries += 1
+            match_job = dota.request_match_details(int(matchId))
+            matchRes = dota.wait_msg(match_job, timeout=10)
+        if(matchRes.result == 1):
+            with open(os.getcwd() + "/" + str(matchId) + ".txt", "w") as f:
+                f.write(str(matchRes.match))
         else:
-            botLog("hosted lobby disappeared")
-            botCleanup()
+            botLog("ERROR: UNABLE TO GET DATA FOR " + str(matchId))
 
     @client.on(EMsg.ClientFriendMsgIncoming)
     def steam_message_handler(msg):
@@ -156,22 +177,35 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         dota.join_practice_lobby_team(team=4)
         dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
 
+
+    ##party invite event handler
+    @dota.on('party_invite')
+    def party_invite(msg):
+        leave_lobby()
+        dota.leave_party()
+        if(dota.party == None):
+            botLog(msg)
+            dota.respond_to_party_invite(msg.group_id, accept=True)
+
     def hostLobby(tournament=False):
+        return
         if(dota.lobby):
-            dota.leave_practice_lobby()
+            test = dota.leave_practice_lobby()
+            while(dota.lobby):
+                print(dota.lobby)
+                dota.sleep(1)
         botLog("name: " + lobby_name)
         botLog("pass: " + lobby_pass)
         d['game_name'] = lobby_name
-        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
+        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_AP ##DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
-        d['allow_cheats'] = False
+        d['allow_cheats'] = True ##FALSE
         d['visibility'] = dota2.enums.DOTALobbyVisibility.Public ##Public, Friends, Unlisted
         d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120
         d['pause_setting'] = dota2.enums.LobbyDotaPauseSetting.Unlimited ##Unlimited, Limited, Disabled
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS ##DOTA_CM_GOOD_GUYS, DOTA_CM_BAD_GUYS
         d['allow_spectating'] = True
-        d['fill_with_bots'] = False
-        d['allow_cheats'] = False
+        d['fill_with_bots'] = True ##FALSE
         ##d['penalty_level_radiant']
         ##d['penalty_level_dire']
 
@@ -179,7 +213,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             #d['leagueid'] = 5432
             pass
         dota.create_practice_lobby(password=lobby_pass, options=d)
-        time.sleep(1)
+        dota.sleep(1)
         dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
         hosted.set()
@@ -213,11 +247,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             except:
                 level = 4
             if(not level in range(0,4)):
-                sendLobbyMessage("Invalid penalty level (0 - 3)")
+                sendLobbyMessage("Invalid penalty level (0 - 3)", msg.channel_id)
                 return
             d['penalty_level_' + side] = level
             ##TODO: second translation here
-            sendLobbyMessage("Set penalty level of " + side + " to " + str(level))
+            sendLobbyMessage("Set penalty level of " + side + " to " + str(level), msg.channel_id)
 
 
     def swap_teams(*args, **kwargs):
@@ -259,7 +293,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             lobby_name = str(cMsg[1]).strip()
             d['game_name'] = lobby_name
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby name to '" + lobby_name + "'")
+            sendLobbyMessage("Set lobby name to '" + lobby_name + "'", msg.channel_id)
             reset_ready(msg=msg)
 
     def set_pass(*args, **kwargs):
@@ -272,7 +306,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             lobby_pass = str(cMsg[1]).strip()
             d['pass_key'] = lobby_pass
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'")
+            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'", msg.channel_id)
             reset_ready(msg=msg)
 
     def first_pick(*args, **kwargs):
@@ -324,13 +358,21 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                         launch = side and launch
                     if(launch):
                         sendLobbyMessage(str(i), msg.channel_id)
-                        time.sleep(1)
+                        dota.sleep(1)
                     else:
                         sendLobbyMessage("Countdown canceled", msg.channel_id)
                         return
                 dota.launch_practice_lobby()
             else:
                 sendLobbyMessage("One side readied up. Waiting for other team..", msg.channel_id)
+
+
+    def leave_lobby(*args, **kwargs):
+        ##check if in lobby
+        dota.leave_practice_lobby()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving lobby")
 
     def cancel(*args, **kwargs):
         if('msg' in kwargs):
@@ -351,6 +393,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
 
     def timeoutHandler(*args, **kwargs):
         evnt = args[0]
+        return
         if(dota.lobby == None):
             botLog("lobby not found")
             botCleanup()
@@ -383,4 +426,4 @@ if(__name__ == "__main__"):
     kstQ = queue.Queue()
     dstQ = queue.Queue()
     factoryQ = queue.Queue()
-    client = steamSlave(sBot, kstQ, dstQ, factoryQ, ["test", "test", None])
+    steamSlave(sBot, kstQ, dstQ, factoryQ, ["test", "test", None])

@@ -2,6 +2,7 @@ import asyncio
 import random, time, string
 import edit_distance as ed
 import discord
+import aiohttp
 import queue
 import praw
 import threading
@@ -156,9 +157,10 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         purges the meme database. Command is currently disabled
         """
         if('msg' in kwargs):
-                if(cfg.checkMessage("meme", msg)):
-                        msg = kwargs['msg']
-                        await client.send_message(msg.channel, "That command is currently disabled.")
+            msg = kwargs['msg']
+            if(cfg.checkMessage("meme", msg)):
+                    msg = kwargs['msg']
+                    await client.send_message(msg.channel, "That command is currently disabled.")
 
     async def help_command(*args, **kwargs):
         """
@@ -308,6 +310,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs and (kwargs['msg'].author.server_permissions.manage_server or kwargs['msg'].author.id == '133811493778096128')):
             msg = kwargs['msg']
             server = msg.server
+            cMsg = args[0]
             if(len(args[0]) > 1):
                 try:
                     server = client.get_server(cMsg[1])
@@ -604,6 +607,20 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await leagueResults.new_match_results(client)
             await asyncio.sleep(120)
 
+    async def logIp():
+        await client.wait_until_ready()
+        while(not client.is_closed):
+            async with aiohttp.get("https://api.ipify.org") as r:
+                ip = await r.text()
+                ip_channel = client.get_channel("439161581209649155")
+                last = client.logs_from(ip_channel, limit=1)
+                async for msg in last:
+                    if(not msg.content == ip):
+                        kyouko = await client.get_user_info("133811493778096128")
+                        await client.send_message(ip_channel, kyouko.mention)
+                        await client.send_message(ip_channel, ip)
+            await asyncio.sleep(240)
+
     @client.event
     async def on_reaction_add(reaction, user):
         if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.content.startswith("!")):
@@ -654,6 +671,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
     client.loop.create_task(league_results())
+    client.loop.create_task(logIp())
     client.run(keys.TOKEN)
 
 if(__name__ == "__main__"):
