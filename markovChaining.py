@@ -19,21 +19,21 @@ SUBREDDIT = "copypasta"
 def addTable(aList, table):
     word1 = NONWORD
     word2 = NONWORD
-    meme_array.append(string)
+    meme_array.append(aList.join(" "))
     for aString in aList:
         if "http" in aString:
             continue
         for word in aString.split():
-            table.setdefault((word1, word2),[]).append(word)
+            table.setdefault((word1, word2), []).append(word)
             word1, word2 = word2, word
-        table.setdefault((word1, word2),[]).append(NONWORD)
-    table.setdefault((word1,word2),[]).append(NONWORD)
+        table.setdefault((word1, word2), []).append(NONWORD)
+    table.setdefault((word1, word2), []).append(NONWORD)
 
 def addTable3(aList, table):
     word1 = NONWORD
     word2 = NONWORD
     word3 = NONWORD
-    meme_array.append(string)
+    meme_array.append(aList.join(" "))
     for aString in aList:
         if "http" in aString:
             continue
