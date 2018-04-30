@@ -39,7 +39,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     lobby_pass = args[1]
     lobby_msg = args[2]
 
+
     hosted = threading.Event()
+    joined = threading.Event()
 
     kyouko_toshino = SteamID(75419738)
 
@@ -145,12 +147,21 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         ##TODO: check you have permission to release
         msgT = msg.body.message.decode("utf-8").rstrip('\x00')
         if(len(msgT) > 0):
-            if(msgT == "release" and msg.body.steamid_from == kyouko_toshino.as_64):
+            cMsg = msgT.lower().split()
+            if((msgT == "release" or msgT == "!release")and msg.body.steamid_from == kyouko_toshino.as_64):
                 botLog("releasing")
                 botCleanup()
-            if(msgT == "lobby" and SteamID(msg.body.steamid_from).as_32 in list(header.captain_steam_ids.keys())):
+            elif(msgT == "lobby" and SteamID(msg.body.steamid_from).as_32 in list(header.captain_steam_ids.keys())):
                 hosted.clear()
                 hostLobby(tournament=True)
+            elif(cMsg[0].startswith("!")):
+                cMsg[0] = cMsg[0][1:]
+            command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.steamCommands.INVALID_COMMAND
+            function_translation[command](cMsg, msg = msg)
+        else:
+            ##just someone typing
+            pass
+
 
     @dota.on(dGCMsg.EMsgGCChatMessage)
     def lobby_message_handler(msg):
@@ -173,10 +184,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
 
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
-        dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
-        ##dota.join_practice_lobby_broadcast_channel(5)
-        dota.join_practice_lobby_team(4)
-        dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
+        if(not hosted.isSet()):
+            hosted.set()
+            dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
+            ##dota.join_practice_lobby_broadcast_channel(5)
+            dota.join_practice_lobby_team(4)
+            tmpArgs = args[:]
+            tmpArgs.append(sBot)
+            dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, tmpArgs))
 
     ##party invite event handler
     @dota.on('party_invite')
@@ -193,8 +208,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             while(dota.lobby):
                 print(dota.lobby)
                 dota.sleep(1)
-        botLog("name: " + lobby_name)
-        botLog("pass: " + lobby_pass)
         d['game_name'] = lobby_name
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
@@ -421,7 +434,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                             classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status}
 
     ##five minutes to get in a lobby
-    toH = threading.Timer(300.0, timeoutHandler, [stop_event,])
+    toH = threading.Timer(600.0, timeoutHandler, [stop_event,])
     toH.start()
 
     client.cli_login(username=sBot.username, password=sBot.password)

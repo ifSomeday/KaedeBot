@@ -405,15 +405,31 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def create_lobby(*args, **kwargs):
         if('msg' in kwargs):
+            cMsg = args[0]
             msg = kwargs['msg']
             if(msg.channel.id == '321900902497779713' and sys.platform.startswith("linux")):
                 return
-            ##TODO: verify here
-            ##TODO: get name
+            lobbyArgs = re.findall(r'"(.*?)"', " ".join(cMsg))
             await client.send_message(msg.channel, "Creating lobby...")
+            
             lobby_name =  msg.author.name + " lobby"
+            if(len(lobbyArgs) > 0):
+                lobby_name = lobbyArgs[0]
+
             lobby_password = ''.join(random.choice(string.ascii_lowercase) for i in range(0, 6))
+            if(len(lobbyArgs) > 1):
+                lobby_password = lobbyArgs[1]
+                
             factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [lobby_name, lobby_password, msg]))
+
+
+    async def lobby_create_message(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            msg = cmd.args[2]
+            botLog(str(cmd.args[:]))
+            await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + " by " + cmd.args[3].name + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
+
 
     async def request_bot_list(*args, **kwargs):
         if('msg' in kwargs):
@@ -494,13 +510,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 champs = create_seal_embed("Seal Clubbers", "Honorary champions", logo, "Truckwaffle", ["waves", "Richie", "MANGO GIRL", "Krenn", "Will"], colour = discord.Colour.gold())
                 await client.send_message(msg.channel, " ", embed = champs)
                 await client.delete_message(msg)
-
-    async def lobby_create_message(*args, **kwargs):
-        if('cmd' in kwargs):
-            cmd = kwargs['cmd']
-            msg = cmd.args[2]
-            await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
-
 
     async def bot_error_message(*args, **kwargs):
         if('cmd' in kwargs):

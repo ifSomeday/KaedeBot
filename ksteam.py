@@ -125,7 +125,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
         lobby_stat, party_stat = get_status()
         if(not lobby_stat == None):
             if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
-                botLog("Lobby is dead, leaving",flush = True)
+                botLog("Lobby is dead, leaving")
                 leave_lobby()
         pass
 
@@ -144,7 +144,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
         lobby_stat, party_stat = get_status()
         if(not party_stat == None):
             if(len(party_stat.members) <= 1):
-                botLog("lobby is dead, leaving",flush = True)
+                botLog("lobby is dead, leaving")
                 leave_party()
         pass
     #   leave_team_lobby()
@@ -186,7 +186,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
                 botLog(member.team)
                 botLog(member.id)
                 if not member.id in table:
-                    table[member.id] = steamBot.classes.leaguePlayer()
+                    table[member.id] = classes.steamBot.leaguePlayer()
                     table[member.id].account_id = member.id
                 if(member.team == 0):
                     radiantCount +=1
@@ -481,6 +481,7 @@ def dotaThread(kstQ, dscQ, factoryQ):
         dscQ = args[1]
 
         cmd = kstQ.get()
+        broadcast_counter = 0
         if(cmd):
             botLog("found steam command")
             function_translation[cmd.command](cmd = cmd)
