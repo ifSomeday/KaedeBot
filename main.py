@@ -5,7 +5,7 @@ monkey.patch_socket()
 import ksteam as sb
 import kDiscord as db
 import ksteamSlave
-import draftThread as dt
+##import draftThread as dt
 import threading
 import keys, classes
 from threading import Event
@@ -102,10 +102,10 @@ while(running):
     if(kdc == None or not kdc.isAlive()):
         print("thread kdc is stopped... starting...")
         kdc = startDiscord(kdc)
-    if(drft == None or not drft.isAlive()):
-        pass
-        print("thread drft is stopped... starting...")
-        drft = startDraft(drft)
+    ##if(drft == None or not drft.isAlive()):
+    ##    pass
+    ##    print("thread drft is stopped... starting...")
+    ##    drft = startDraft(drft)
     time.sleep(1)
     while(factoryQ.qsize() > 0):
         cmd = factoryQ.get()

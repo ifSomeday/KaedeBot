@@ -405,6 +405,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def create_lobby(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             ##TODO: verify here
             ##TODO: get name
