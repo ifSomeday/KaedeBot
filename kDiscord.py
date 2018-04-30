@@ -405,12 +405,11 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def create_lobby(*args, **kwargs):
         if('msg' in kwargs):
-            return
             msg = kwargs['msg']
             ##TODO: verify here
             ##TODO: get name
             await client.send_message(msg.channel, "Creating lobby...")
-            lobby_name = "WRICE lobby DEADBEEFDEADBEEF"
+            lobby_name =  msg.author.name + " lobby"
             lobby_password = ''.join(random.choice(string.ascii_lowercase) for i in range(0, 6))
             factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [lobby_name, lobby_password, msg]))
 
