@@ -25,7 +25,7 @@ from dota2.enums import ESOType as dEType
 from dota2.enums import DOTA_GameState as dGState
 from dota2.enums import EMatchOutcome as dOutcome
 from dota2.enums import GCConnectionStatus as dConStat
-
+from dota2.enums import EGCBaseClientMsg as dGCbase
 
 
 import keys, edit_distance
@@ -55,6 +55,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
                                 "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS,
                                 "cancel" : classes.leagueLobbyCommands.CANCEL_START}
 
+    chat_command_translation = {"linvite" : classes.steamCommands.LOBBY_INVITE, "lleave" : classes.steamCommands.LEAVE_LOBBY,
+        "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
+        "status" : classes.steamCommands.STATUS}
+
     def botLog(text):
         try:
             print(sBot.name + ": " +  str(text), flush=True)
@@ -79,17 +83,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         botLog("Connection status:")
         botLog(dota.connection_status)
         botLog("Dota is ready")
-        retries = 0
-        match_job = dota.request_match_details(3851113270)
-        matchRes = dota.wait_msg(match_job, timeout=10)
-        botLog(matchRes)
-        if(matchRes.result == 1):
-            with open(os.getcwd() + "/" + str(3851113270) + ".txt", "w") as f:
-                f.write(str(matchRes.match))
-        else:
-            botLog("ERROR: UNABLE TO GET DATA FOR " + str(3851113270))
-
-        if(not hosted.is_set()):
+        if(not hosted.isSet()):
             hostLobby(tournament=True)
 
     @dota.on('notready')
@@ -104,6 +98,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             dota.exit()
             dota.launch()
 
+
+    @dota.on(dGCbase.EMsgGCPingRequest)
+    def reply():
+        dota.send(dGCbase.EMsgGCPingResponseResponse, {})
+
     @client.on('disconnected')
     def restart():
         botLog("disconnected from steam. Attempting to relog...")
@@ -111,31 +110,32 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         #client.cli_login(username=sBot.username, password=sBot.password)
         client.reconnect()
 
+
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
     def lobby_change_handler(msg):
         return
-        ##lobby_stat = dota.lobby
-        ##if(not lobby_stat == None):
-        ##    if(len(lobby_stat.members) <= 1 and not lobby_stat.leader_id == bot_SteamID.as_64):
-        ##        botLog("Lobby is dead, leaving")
-        ##        leave_lobby()
 
     #TODO: this shit is a fucking mess
     #Triggers on launch if previous lobby existed.
     @dota.on('lobby_removed')
     def lobby_removed(msg):
+        if(not hosted.isSet()):
+            return
         matchId = msg.match_id
+        with open(os.getcwd() + "/matchResults/" + str(matchId) + "_basic.txt", "w") as f:
+            f.write(str(msg))
         retries = 0
         match_job = dota.request_match_details(int(matchId))
         matchRes = dota.wait_msg(match_job, timeout=10)
-        while(not matchRes.result == 1 and retries < 10):
+        while(not matchRes.result == 1 and retries < 5):
+            dota.sleep(5)
             botLog("Unable to get match result... retrying " + str(retries))
             retries += 1
             match_job = dota.request_match_details(int(matchId))
             matchRes = dota.wait_msg(match_job, timeout=10)
         if(matchRes.result == 1):
-            with open(os.getcwd() + "/" + str(matchId) + ".txt", "w") as f:
+            with open(os.getcwd() + "/matchResults/" + str(matchId) + "_detailed.txt", "w") as f:
                 f.write(str(matchRes.match))
         else:
             botLog("ERROR: UNABLE TO GET DATA FOR " + str(matchId))
@@ -174,9 +174,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
         dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
-        dota.join_practice_lobby_team(team=4)
+        ##dota.join_practice_lobby_broadcast_channel(5)
+        dota.join_practice_lobby_team(4)
         dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
-
 
     ##party invite event handler
     @dota.on('party_invite')
@@ -188,7 +188,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             dota.respond_to_party_invite(msg.group_id, accept=True)
 
     def hostLobby(tournament=False):
-        return
         if(dota.lobby):
             test = dota.leave_practice_lobby()
             while(dota.lobby):
@@ -197,24 +196,20 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         botLog("name: " + lobby_name)
         botLog("pass: " + lobby_pass)
         d['game_name'] = lobby_name
-        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_AP ##DOTA_GAMEMODE_CM
+        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
-        d['allow_cheats'] = True ##FALSE
+        d['allow_cheats'] = False
         d['visibility'] = dota2.enums.DOTALobbyVisibility.Public ##Public, Friends, Unlisted
         d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120
         d['pause_setting'] = dota2.enums.LobbyDotaPauseSetting.Unlimited ##Unlimited, Limited, Disabled
-        d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS ##DOTA_CM_GOOD_GUYS, DOTA_CM_BAD_GUYS
+        d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
         d['allow_spectating'] = True
-        d['fill_with_bots'] = True ##FALSE
-        ##d['penalty_level_radiant']
-        ##d['penalty_level_dire']
+        d['fill_with_bots'] = False
 
         if(tournament):
-            #d['leagueid'] = 5432
             pass
         dota.create_practice_lobby(password=lobby_pass, options=d)
         dota.sleep(1)
-        dota.join_practice_lobby_team(team=4)
         botLog("Lobby hosted")
         hosted.set()
 
@@ -374,6 +369,22 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
             msg = kwargs['msg']
             client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving lobby")
 
+    def leave_party(*args, **kwargs):
+        ##check if in party
+        dota.leave_party()
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            client.get_user(SteamID(msg.body.steamid_from)).send_message("leaving party")
+
+    def send_status(*args, **kwargs):
+        msg = kwargs['msg']
+        id = msg.body.steamid_from
+        requester = client.get_user(SteamID(id))
+        requester.send_message("Party: " + str("None" if dota.party == None else "Active"))
+            ##TODO parse and send party info
+        requester.send_message("Lobby: " + str("None" if dota.lobby == None else "Active"))
+            ##TODO parse and send lobby info
+
     def cancel(*args, **kwargs):
         if('msg' in kwargs):
             reset_ready()
@@ -393,7 +404,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
 
     def timeoutHandler(*args, **kwargs):
         evnt = args[0]
-        return
         if(dota.lobby == None):
             botLog("lobby not found")
             botCleanup()
@@ -406,7 +416,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
     function_translation = {classes.leagueLobbyCommands.SWITCH_SIDE : swap_teams, classes.leagueLobbyCommands.FIRST_PICK : first_pick,
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
                             classes.leagueLobbyCommands.START : start_lobby, classes.leagueLobbyCommands.GAME_NAME : set_name,
-                            classes.leagueLobbyCommands.GAME_PASS : set_pass, classes.leagueLobbyCommands.CANCEL_START : cancel}
+                            classes.leagueLobbyCommands.GAME_PASS : set_pass, classes.leagueLobbyCommands.CANCEL_START : cancel,
+                            classes.steamCommands.LEAVE_LOBBY : leave_lobby,
+                            classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status}
 
     ##five minutes to get in a lobby
     toH = threading.Timer(300.0, timeoutHandler, [stop_event,])
