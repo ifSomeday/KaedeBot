@@ -420,6 +420,15 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 
             factoryQ.put(classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [lobby_name, lobby_password, msg]))
 
+
+    async def lobby_create_message(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            msg = cmd.args[2]
+            botLog(str(cmd.args[:]))
+            await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + " by " + cmd.args[3].name + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
+
+
     async def request_bot_list(*args, **kwargs):
         if('msg' in kwargs):
             factoryQ.put(classes.command(classes.botFactoryCommands.LIST_BOTS_D, [kwargs['msg']]))
@@ -499,13 +508,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 champs = create_seal_embed("Seal Clubbers", "Honorary champions", logo, "Truckwaffle", ["waves", "Richie", "MANGO GIRL", "Krenn", "Will"], colour = discord.Colour.gold())
                 await client.send_message(msg.channel, " ", embed = champs)
                 await client.delete_message(msg)
-
-    async def lobby_create_message(*args, **kwargs):
-        if('cmd' in kwargs):
-            cmd = kwargs['cmd']
-            msg = cmd.args[2]
-            await client.send_message(msg.channel, "Lobby created for " + msg.author.mention + "\nName: `" + cmd.args[0] + "`\nPassword: `" + cmd.args[1] + "`")
-
 
     async def bot_error_message(*args, **kwargs):
         if('cmd' in kwargs):

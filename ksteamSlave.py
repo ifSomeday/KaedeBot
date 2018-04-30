@@ -177,6 +177,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, args):
         ##dota.join_practice_lobby_broadcast_channel(5)
         dota.join_practice_lobby_team(4)
         dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
+        if(not hosted.isSet()):
+            hosted.set()
+            dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
+            ##dota.join_practice_lobby_broadcast_channel(5)
+            dota.join_practice_lobby_team(4)
+            tmpArgs = args[:]
+            tmpArgs.append(sBot)
+            dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, tmpArgs))
 
     ##party invite event handler
     @dota.on('party_invite')
