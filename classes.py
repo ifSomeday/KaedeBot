@@ -569,6 +569,7 @@ class botFactoryCommands(Enum):
     FREE_SLAVE = 1
     LIST_BOTS_D = 2
     SHUTDOWN_BOT = 3
+    PROCESS_BASIC = 4
 
 ######## ########    ###    ##     ##  ######
    ##    ##         ## ##   ###   ### ##    ##
@@ -656,3 +657,51 @@ def Captain_name_to_enum(string):
 
     else:
         print("cant translate " + string)
+
+
+################################################################
+################################################################
+################################################################
+################################################################
+################################################################
+
+class requester(Enum):
+    DISCORD = 0
+    WEB = 1
+    UNKNOWN = 2
+
+class gameInfo():
+
+    source = requester.UNKNOWN
+
+    lobbyName = ""
+    lobbyPassword = ""
+    tournament = 0
+
+    ##one of these will always remain none, based on request type
+    discordMessage = None
+    jobQueue = None
+
+    ##64 bit steam IDs of players to invite (includes captains)
+    players = []
+
+    ##64 bit steam IDs of captains in lobby
+    captains = []
+
+    ##url to POST final match data to
+    hook = ""
+
+    ##ident
+    ident = ""
+
+    ##addition lobby config options
+    config = {}
+
+    ##the most recent CSOLobby
+    lobby = None
+
+    ##when the lobby times out, in seconds since epoch
+    timeout = 0
+
+    def __init__(self):
+        pass
