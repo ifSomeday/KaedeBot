@@ -407,6 +407,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs):
             cMsg = args[0]
             msg = kwargs['msg']
+            if(msg.channel.id == '321900902497779713' and sys.platform.startswith("linux")):
+                return
             lobbyArgs = re.findall(r'"(.*?)"', " ".join(cMsg))
             await client.send_message(msg.channel, "Creating lobby...")
 
