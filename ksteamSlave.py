@@ -454,6 +454,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 botLog("but im alone")
                 botCleanup()
 
+    def checkInvites():
+        if(gameInfo.inviteQueue.qsize() > 0 and not dota.lobby == None):
+            invite = gameInfo.inviteQueue.get()
+            dota.invite_to_lobby(int(invite))
+
+
     function_translation = {classes.leagueLobbyCommands.SWITCH_SIDE : swap_teams, classes.leagueLobbyCommands.FIRST_PICK : first_pick,
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
                             classes.leagueLobbyCommands.START : start_lobby, classes.leagueLobbyCommands.GAME_NAME : set_name,
@@ -469,7 +475,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     client.cli_login(username=sBot.username, password=sBot.password)
     bot_SteamID = client.steam_id
     while(not stop_event.isSet()):
-        client.sleep(5)
+        checkInvites()
+        client.sleep(1)
     client.disconnect()
     client.logout()
     factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot]))

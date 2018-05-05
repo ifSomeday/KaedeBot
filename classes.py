@@ -681,6 +681,7 @@ class gameInfo():
     ##one of these will always remain none, based on request type
     discordMessage = None
     jobQueue = None
+    inviteQueue = None
 
     ##64 bit steam IDs of players to invite (includes captains)
     players = []

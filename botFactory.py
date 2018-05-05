@@ -40,8 +40,15 @@ def factory(kstQ, dscQ, factoryQ):
         
         @gen.coroutine
         def get(self):
-            
-            self.get
+
+            key = self.get_query_argument("key", default=None)
+
+            ##verify key
+            if(not key == keys.LD2L_API_KEY):
+                self.set_status(403)
+                self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
+                self.finish()
+                return
 
             resp = {}
             resp["lobbies"] = []
@@ -79,18 +86,19 @@ def factory(kstQ, dscQ, factoryQ):
         def post(self):
             
             self.data = tornado.escape.json_decode(self.request.body)
-            print(self.data)
 
             ##verify key
             if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
                 self.set_status(403)
-                self.finish("Invalid key")
+                self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
+                self.finish()
                 return
 
             ##verify ident
             if(not "ident" in self.data or self.data["ident"] in list(active_lobbies.keys())):
                 self.set_status(403)
-                self.finish("duplicate ident")
+                self.write(json.dumps({"result" : False, "reason" : "duplicate ident"}))
+                self.finish()
                 return
 
             ##get lobby ident
@@ -116,8 +124,9 @@ def factory(kstQ, dscQ, factoryQ):
                         self.info.players.append(player)
                     self.info.captains.append(team["captain"])
 
-            ##set job queue       
+            ##queues 
             self.info.jobQueue = queue.Queue()
+            self.info.inviteQueue = queue.Queue()
 
             ##aquire a bot
             sBot = acquireBot()
@@ -150,6 +159,29 @@ def factory(kstQ, dscQ, factoryQ):
                  self.write(json.dumps({"result" : False, "reason" : "NO FREE BOTS"}))
             self.finish()
 
+    class LobbyInviteHandler(tornado.web.RequestHandler):
+
+        def post(self):
+
+            self.data = tornado.escape.json_decode(self.request.body)
+
+            ##verify key
+            if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
+                self.set_status(403)
+                self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
+                self.finish()
+                return
+
+            ##verify ident
+            if(not "ident" in self.data or not self.data["ident"] in list(active_lobbies.keys())):
+                self.set_status(400)
+                self.write(json.dumps({"result" : False, "reason" : "ident not found"}))
+                self.finish()
+                return
+
+            if("player" in self.data):
+                inviteQueue = active_lobbies[self.data["ident"]].inviteQueue
+                inviteQueue.put(self.data["player"])
 
     def processMatch(cmd):
         ##gameInfo the gameInfo specified when this lobby was created
@@ -174,7 +206,8 @@ def factory(kstQ, dscQ, factoryQ):
     def make_app():
         return tornado.web.Application([
         (r"/lobbies/create", LobbyCreateHandler),
-        (r"/lobbies", LobbyInfoRequestHandler)
+        (r"/lobbies", LobbyInfoRequestHandler),
+        (r"/lobbies/invite", LobbyInviteHandler)
         ])
 
     ##starts a lobby from a discord command
