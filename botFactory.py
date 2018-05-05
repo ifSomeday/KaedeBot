@@ -158,8 +158,12 @@ def factory(kstQ, dscQ, factoryQ):
         ##msg the CSODOTALobby result from the lobby_removed message
         msg = cmd.args[1]
         match = lobbyResults.processMatch(msg)
+        ident = gameInfo.ident
 
-        match["ident"] = gameInfo.ident
+        match["ident"] = ident
+
+        ##remove lobby with ident from
+        active_lobbies.pop(ident, None)
 
         if(not gameInfo.hook == ''):
             asc = httpclient.AsyncHTTPClient()
@@ -245,7 +249,7 @@ def factory(kstQ, dscQ, factoryQ):
 
     ##set up app
     app = make_app()
-    app.listen(8888)
+    app.listen(80)
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()
