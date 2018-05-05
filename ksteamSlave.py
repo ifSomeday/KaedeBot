@@ -479,7 +479,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         client.sleep(1)
     client.disconnect()
     client.logout()
-    factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot]))
+    factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot, gameInfo]))
     return
 
 if(__name__ == "__main__"):

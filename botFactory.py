@@ -246,6 +246,8 @@ def factory(kstQ, dscQ, factoryQ):
                 if(bot.name == sBot.name):
                     bot.in_use = False
                     break
+        gameInfo = cmd.args[1]
+        active_lobbies.pop(gameInfo.ident, None)
 
     ##gets a list of the free bots
     def getFreeBots(*args, **kwargs):
