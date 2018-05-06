@@ -234,15 +234,15 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             while(dota.lobby):
                 dota.sleep(0.1) ##SPIN
         d['game_name'] = lobby_name
-        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_AP
+        d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
-        d['allow_cheats'] = True
+        d['allow_cheats'] = False
         d['visibility'] = dota2.enums.DOTALobbyVisibility.Public ##Public, Friends, Unlisted
         d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120
         d['pause_setting'] = dota2.enums.LobbyDotaPauseSetting.Unlimited ##Unlimited, Limited, Disabled
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
         d['allow_spectating'] = True
-        d['fill_with_bots'] = True
+        d['fill_with_bots'] = False
 
         if(tournament):
             pass
