@@ -17,6 +17,7 @@ from plugins import leagueResults
 import markovChaining, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
+import tweepy
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
@@ -33,6 +34,11 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     media_messages = {}
 
     cfg = classes.discordConfigHelper()
+
+    tweepy_auth = tweepy.OAuthHandler(keys.CONSUMER_KEY, keys.CONSUMER_SECRET)
+    tweepy_auth.set_access_token(keys.ACCESS_TOKEN, keys.ACCESS_SECRET)
+
+    tweepy_api = tweepy.API(tweepy_auth)
 
 
     def botLog(text):
@@ -635,6 +641,51 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                         await client.send_message(ip_channel, kyouko.mention)
                         await client.send_message(ip_channel, ip)
             await asyncio.sleep(240)
+    
+
+    async def tree_diary():
+        await client.wait_until_ready()
+
+        ##get channel
+
+        channel = client.get_channel("321900902497779713")
+        if(sys.platform.startswith('linux')):
+            channel = client.get_channel("443169808482172968")
+        while(not client.is_closed):
+
+            ##set up tweet tracking
+            lastTweet = 0
+            filePath = os.getcwd() + "/dataStores/lastTreeTweet.pickle"
+            if(os.path.isfile(filePath)):
+                with open(filePath, "rb") as f:
+                    lastTweet = pickle.load(f)
+            currLastTweet = lastTweet
+
+            ##iterate through status
+            for status in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
+                if(status._json["id"] <= lastTweet):
+                    break
+                else:
+
+                    ##set up embed
+                    text = re.sub(r'http\S+', '', status._json["text"], flags=re.MULTILINE)
+                    emb = discord.Embed()
+                    emb.description=text
+                    emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
+                    emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
+                    emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
+                    media = status._json["entities"]["media"]
+                    if(len(media) > 0):
+                        emb.set_image(url=media[0]["media_url"])
+                    await client.send_message(channel, embed=emb)
+                    currLastTweet = max(currLastTweet, status._json["id"])
+
+                    ##save last tweet
+                    with open(filePath, "wb") as f:
+                        pickle.dump(currLastTweet, f)
+            
+            ##wait 2 minutes
+            await asyncio.sleep(120)
 
     @client.event
     async def on_reaction_add(reaction, user):
@@ -687,6 +738,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     client.loop.create_task(saveTables())
     client.loop.create_task(league_results())
     client.loop.create_task(logIp())
+    client.loop.create_task(tree_diary())
     client.run(keys.TOKEN)
 
 if(__name__ == "__main__"):
