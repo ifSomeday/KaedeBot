@@ -73,6 +73,49 @@ def factory(kstQ, dscQ, factoryQ):
             self.finish()
             
 
+    class SingleLobbyInfoHandler(tornado.web.RequestHandler):
+
+        @gen.coroutine
+        def get(self, slug):
+
+            key = self.get_query_argument("key", default=None)
+
+            ##verify key
+            if(not key == keys.LD2L_API_KEY):
+                self.set_status(403)
+                self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
+                self.finish()
+                return
+
+            ##verify ident
+            if(not slug in list(active_lobbies.keys())):
+                self.set_status(400)
+                self.write(json.dumps({"result" : False, "reason" : "ident not found"}))
+                self.finish()
+                return
+
+            resp = {"result" : True}
+
+            lobbyInfo = active_lobbies[slug]
+
+            lobby = {}
+
+            ##request info
+            lobby["ident"] = slug
+            lobby["lobbyName"] = lobbyInfo.lobbyName
+            lobby["lobbyPassword"] = lobbyInfo.lobbyPassword
+            lobby["tournament"] = lobbyInfo.tournament
+            lobby["hook"] = lobbyInfo.hook
+            lobby["timeout"] = lobbyInfo.timeout
+
+            if(not lobbyInfo.lobby == None):
+                lobby["lobby"] = lobbyResults.processMatch(lobbyInfo.lobby)
+
+            resp["lobby"] = lobby
+
+            self.write(json.dumps(resp))
+            self.finish()
+
 
     class LobbyCreateHandler(tornado.web.RequestHandler):
 
@@ -182,6 +225,8 @@ def factory(kstQ, dscQ, factoryQ):
             if("player" in self.data):
                 inviteQueue = active_lobbies[self.data["ident"]].inviteQueue
                 inviteQueue.put(self.data["player"])
+                self.write(json.dumps({"result" : True}))
+                self.finish()
 
     def processMatch(cmd):
         ##gameInfo the gameInfo specified when this lobby was created
@@ -207,7 +252,8 @@ def factory(kstQ, dscQ, factoryQ):
         return tornado.web.Application([
         (r"/lobbies/create", LobbyCreateHandler),
         (r"/lobbies", LobbyInfoRequestHandler),
-        (r"/lobbies/invite", LobbyInviteHandler)
+        (r"/lobbies/invite", LobbyInviteHandler),
+        (r"/lobbies/([^/]+)", SingleLobbyInfoHandler)
         ])
 
     ##starts a lobby from a discord command
