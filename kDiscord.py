@@ -662,21 +662,24 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             currLastTweet = lastTweet
 
             ##iterate through status
-            for status in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
+            for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
+                status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
+                print(status)
                 if(status._json["id"] <= lastTweet):
                     break
                 else:
 
                     ##set up embed
-                    text = re.sub(r'http\S+', '', status._json["text"], flags=re.MULTILINE)
+                    text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
                     emb = discord.Embed()
                     emb.description=text
                     emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
                     emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
                     emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
-                    media = status._json["entities"]["media"]
-                    if(len(media) > 0):
-                        emb.set_image(url=media[0]["media_url"])
+                    if("media" in status._json["entities"]):
+                        media = status._json["entities"]["media"]
+                        if(len(media) > 0):
+                            emb.set_image(url=media[0]["media_url"])
                     await client.send_message(channel, embed=emb)
                     currLastTweet = max(currLastTweet, status._json["id"])
 
