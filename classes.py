@@ -571,6 +571,16 @@ class botFactoryCommands(Enum):
     SHUTDOWN_BOT = 3
     PROCESS_BASIC = 4
 
+################################################################
+################################################################
+################################################################
+################################################################
+################################################################
+
+class slaveBotCommands(Enum):
+    INVITE_PLAYER = 0
+    RELEASE_BOT = 1
+
 ######## ########    ###    ##     ##  ######
    ##    ##         ## ##   ###   ### ##    ##
    ##    ##        ##   ##  #### #### ##
@@ -681,7 +691,7 @@ class gameInfo():
     ##one of these will always remain none, based on request type
     discordMessage = None
     jobQueue = None
-    inviteQueue = None
+    commandQueue = None
 
     ##64 bit steam IDs of players to invite (includes captains)
     players = []

@@ -1,0 +1,265 @@
+<body>
+	<h1>Super Ghetto KaedeBot Api Reference</h1>
+	
+	<h2>Endpoints</h2>
+
+	<p>Note: Url parameters are quite simply URL parameters. Body parameters are expected to be in the form of a JOSN object</p>
+	<ul>
+		<li id="lobbiesGet">
+			<h3><code>GET /lobbies</code></h3>
+			<p>Gets a list of the current lobbies hosted using the KBaaS API.
+				<dl><b>Required URL Params</b>
+					<dt><code>key</code>:</dt>
+					<dd>KBaaS API Key</dd>
+				</dl>
+				<dl>
+					<dt><b>Returns:</b></dt>
+					<dd>List of <a href="#lobbyResp"><code>LobbyResponse</code></a> Objects</dd>
+				</dl>
+			</p>
+		</li>
+		<br /> 
+
+		<li id="createPost">
+			<h3><code>POST /lobbies/create</code></h3>
+			<p>Creates a lobby using the information specified in the POST request, using one of the KBaaS Steam slave bots. All fields are required, unless they are empty.
+				<dl><b>Required Body Params</b>
+					<dt><code>key</code>:</dt>
+					<dd>KBaaS API Key</dd>
+
+					<dt><code>ident</code>:</dt>
+					<dd>Unique identifier used to reference the lobby. Alpha-numeric preferred.</dd>
+
+					<dt><code>hook</code>:</dt>
+					<dd>URL hook to POST a <a href="#lobbyResp"><code>LobbyResponse</code></a> object when the lobby is finished or abandoned</dd>
+
+					<dt><code>lobbyName</code>:</dt>
+					<dd>Name of lobby to create</dd>
+
+					<dt><code>lobbyPassword</code>:</dt>
+					<dd>Password for created lobby</dd>
+
+					<dt><code>tournament</code>:</dt>
+					<dd>Tournament/Ticket ID. Provided Bots have access to this ticket, the lobbies created will be done so under that tournament</dd>
+
+					<dt><code>teams</code>:</dt>
+					<dd>Array of 2 <a href="#requestTeam"><code>RequestTeam</code></a> objects.</dd>
+
+					<dt><code>config</code>:</dt>
+					<dd>JSON object contain all fields in the lobby settings that should be custom set, and what they should be set to as KVPs. See Lobby config protos in SteamKit or dota-node</dd>
+				</dl>
+				<dl><b>Returns:</b>
+					<dt><code>Result</code>:</dt>
+					<dd>Request status, True if successful, False if failed</dd>
+
+					<dt><code>Reason</code>:</dt>
+					<dd>if result is false, a string detailing why it failed</dd>
+				</dl>
+			</p>
+		</li>
+		<br /> 
+
+		<li id="invitePost">
+			<h3><code>POST /lobbies/invite</code></h3>
+			<p>Invites a person to the lobby
+				<dl><b>Required Body Params</b>
+					<dt><code>key</code>:</dt>
+					<dd>KBaaS API Key</dd>
+
+					<dt><code>ident</code>:</dt>
+					<dd>Ident of Lobby to invite player to</dd>
+
+					<dt><code>player</code>:</dt>
+					<dd>Steam ID64 of the player to invite</dd>
+				</dl>
+				<dl>
+					<dt><b>Returns:</b>
+						<dt><code>Result</code>:</dt>
+						<dd>Request status, True if successful, False if failed</dd>
+
+						<dt><code>Reason</code>:</dt>
+						<dd>if result is false, a string detailing why it failed</dd>
+					</dt>
+				</dl>
+			</p>
+		</li>
+		<br /> 
+
+		<li id="removePost">
+			<h3><code>POST /lobbies/remove</code></h3>
+			<p>Removes specified lobby
+					<dl><b>Required Body Params</b>
+						<dt><code>key</code>:</dt>
+						<dd>KBaaS API Key</dd>
+	
+						<dt><code>ident</code>:</dt>
+						<dd>Ident of Lobby to remove</dd>
+					</dl>
+					<dl>
+						<dt><b>Returns:</b>
+							<dt><code>Result</code>:</dt>
+							<dd>Request status, True if successful, False if failed</dd>
+	
+							<dt><code>Reason</code>:</dt>
+							<dd>if result is false, a string detailing why it failed</dd>
+						</dt>
+					</dl>
+				</p>
+		</li>
+		<br /> 
+
+		<li id="identGet">
+			<h3><code>GET /lobbies/{ident}</code></h3>
+			<p>Gets data from specified Lobby
+					<dl><b>Required URL Params</b>
+						<dt><code>key</code>:</dt>
+						<dd>KBaaS API Key</dd>
+	
+						<dt><code>ident</code>:</dt>
+						<dd>Ident of Lobby to query</dd>
+					</dl>
+					<dl>
+						<dt><b>Returns:</b>
+							<dt><code>Result</code>:</dt>
+							<dd>Request status, True if successful, False if failed</dd>
+	
+							<dt><code>Reason</code>:</dt>
+							<dd>if result is false, a string detailing why it failed</dd>
+							
+							<dt>Lobby Data:</dt>
+							<dd>If response was succesful, the response will also include a <a href="#lobbyResponse"><code>LobbyResponse</code></a> object at the top level</dd>
+						</dt>
+					</dl>
+				</p>
+		</li>
+
+	</ul>
+	<br /> <br />
+	<h2>Data Objects</h2>
+	<p>Definitions for the data objects mentioned above</p>
+
+	<ul>
+		<li id="requestTeam">
+			<h3><code>RequestTeam</code></h3>
+			<p>Team object found in <a href="#createPost"><code>/lobbies/create</code></a> request:</p>
+			<pre>
+{
+	"players" : [ Array of Steam IDs of players to invite (including captains) ]
+	"captain" : Steam ID of team captain
+}
+			</pre>
+		</li>
+
+		<li id="lobbyResp">
+			<h3><code>LobbyResponse</code></h3>
+			<pre>
+{
+	"ident" : Unique lobby identifier,
+	"lobbyName" : The lobby's Name,
+	"lobbyPassword" : The lobby's Password,
+	"tournament" : The ID of the tournament/ticket being used,
+	"hook" : the url the bot will post the lobby results to,
+	"timeout" : time in UTC since epoch that the lobby bot will close the lobby if nobody has joined
+	"lobby" <a href="#lobbyData">LobbyData</a> object
+}
+			</pre>
+		</li>
+		<li id="lobbyData">
+			<h3><code>LobbyData</code></h3>
+			<p>The following fields are available no matter what state the lobby is in:</p>
+			<pre>
+{
+	"game_mode" : Game Mode Enum,
+	"state" : Lobby State Enum,
+	"leader_id" : Steam ID64 of the lobby leader,
+	"lobby_type" : Lobby type Enum,
+	"allow_cheats" : Boolean indicator of whether cheats are enabled,
+	"fill_with_bots" : Boolean indicator of if empty slots will be filled with bots,
+	"intro_mode" : Boolean no fucking clue,
+	"server_region" : Server region Enum,
+	"cm_pick" : Team that gets first pick Enum,
+	"allow_spectating" : Boolean indicating if spectators are allowed or not,
+	"bot_difficulty_radiant" : Bot difficulty for radiant,
+	"game_version" : Gamer version. This will always be the latest version,
+	"pass_key" : Lobby password,
+	"leagueid" : ID of tournament/ticket being used,
+	"penalty_level_radiant" : Draft penalty for radiant team,
+	"penalty_level_dire" : Draft penality for dire team,
+	"series_type" : Indicates if the series is a BO3 or BO5,
+	"radiant_series_wins" : Number of wins the Radiant team has in the series,
+	"dire_series_wins" : Numer of wins the Dire team has in the series,
+	"allchat" : Boolean indicating if all chat is enabled,
+	"dota_tv_delay" : delay for Dota TV viewers,
+	"lan" : Boolean indicating if this is a LAN lobby,
+	"lan_host_ping_to_server_region" : Host's ping to server? no clue
+	"visibility" : Enum indicating if the lobby visibility is public, friends, or unlisted,
+	"league_series_id" : league series ID, tracks radiant/dire_series_wins
+	"league_game_id" : league Game ID,
+	"previous_match_override" : indicates if the last series match should be overriden,
+	"pausing_setting" : Sets pause time, enabled/disabled,
+	"bot_difficulty_dire" : Bot difficulty for dire,
+	"bot_radiant" : if radiant has bots?,
+	"bot_dire" : if dire has bots?,
+	"selection_priority_rules" : No fucking clue
+
+	"member" : [
+		{
+			"id" : Steam ID,
+			"hero_id" : Hero ID,
+			"team" : team,
+			"name" : Steam name,
+			"slot" : lobby_slot,
+			"meta_level" : No fucking clue,
+			"meta_xp" : No fucking clue,
+			"meta_xp_awarded" : No fucking clue,
+			"leaver_status" : Indicates if the player has left/abandoned the game,
+			"channel" : lobby channel,
+			"partner_account_type" : No fucking clue,
+			"coach_team" : Something to do with coaches,
+			"cameraman" : Indicates if player is the cameraman?,
+			"favorite_team_packed" : Why is it packed and not picked?,
+			"is_plus_subscriber" : Indicates if the palyer is a Dota plus subscriber
+		},
+		...
+	]
+}
+
+			</pre>
+
+			<p>If the match is in-progress/ended, the following fields are available<br />Note: Radiant/Dire objects won't be filled if captains did not set teams</p>
+			<pre>
+{
+	"connect" : params for console command used to connect to games,
+	"server_id" : ID of the server the game is/was played on,
+	"game_state" : The current game state,
+	"match_id : Match ID,
+	"first_blood_happened" : Boolean indicating if first blood happened,
+	"match_outcome" : Game outcome,
+	"game_start_time" : Start time of the game,
+	"radiant" : {
+		see <a href="#lobbyTeam"><code>LobbyTeam</code></a> object
+	},
+	"dire" : {
+		see <a href="#lobbyTeam"><code>LobbyTeam</code></a> object
+	}
+}
+			</pre>
+		</li>
+		<li id="lobbyTeam">
+			<h3><code>LobbyTeam</code></h3>
+			<p>Team object found in <a href="#lobbyData"><code>LobbyData</code></a> objects:</p>
+			<pre>
+{
+	"team_name" : Team name
+	"team_tag" : Team tag
+	"team_id" : Team ID
+	"team_logo" : Team logo
+	"team_base_logo" : Team base logo
+	"team_banner_logo" : Team banner logo
+	"team_complete" : Boolean indicating if complete team is present
+	"rank" : Team rank
+}
+			</pre>
+		</li>
+	</ul>
+</body>
