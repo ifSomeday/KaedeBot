@@ -670,6 +670,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 else:
 
                     ##set up embed
+                    print(status._json["full_text"])
                     text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
                     emb = discord.Embed()
                     emb.description=text
@@ -704,7 +705,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     @client.event
     async def on_ready():
         botLog("discord bot Online")
-        await client.change_presence(game=discord.Game(name='Yuru Yuri San Hai !!'))
+        await client.change_presence(game=discord.Game(name='api.kaedebot.com'))
 
     @client.event
     async def on_message_delete(message):
