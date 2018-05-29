@@ -652,41 +652,43 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(sys.platform.startswith('linux')):
             channel = client.get_channel("443169808482172968")
         while(not client.is_closed):
+            try:
+                ##set up tweet tracking
+                lastTweet = 0
+                filePath = os.getcwd() + "/dataStores/lastTreeTweet.pickle"
+                if(os.path.isfile(filePath)):
+                    with open(filePath, "rb") as f:
+                        lastTweet = pickle.load(f)
+                currLastTweet = lastTweet
 
-            ##set up tweet tracking
-            lastTweet = 0
-            filePath = os.getcwd() + "/dataStores/lastTreeTweet.pickle"
-            if(os.path.isfile(filePath)):
-                with open(filePath, "rb") as f:
-                    lastTweet = pickle.load(f)
-            currLastTweet = lastTweet
+                ##iterate through status
+                for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
+                    status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
+                    print(status)
+                    if(status._json["id"] <= lastTweet):
+                        break
+                    else:
 
-            ##iterate through status
-            for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
-                status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
-                print(status)
-                if(status._json["id"] <= lastTweet):
-                    break
-                else:
+                        ##set up embed
+                        print(status._json["full_text"])
+                        text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
+                        emb = discord.Embed()
+                        emb.description=text
+                        emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
+                        emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
+                        emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
+                        if("media" in status._json["entities"]):
+                            media = status._json["entities"]["media"]
+                            if(len(media) > 0):
+                                emb.set_image(url=media[0]["media_url"])
+                        await client.send_message(channel, embed=emb)
+                        currLastTweet = max(currLastTweet, status._json["id"])
 
-                    ##set up embed
-                    print(status._json["full_text"])
-                    text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
-                    emb = discord.Embed()
-                    emb.description=text
-                    emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
-                    emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
-                    emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
-                    if("media" in status._json["entities"]):
-                        media = status._json["entities"]["media"]
-                        if(len(media) > 0):
-                            emb.set_image(url=media[0]["media_url"])
-                    await client.send_message(channel, embed=emb)
-                    currLastTweet = max(currLastTweet, status._json["id"])
-
-                    ##save last tweet
-                    with open(filePath, "wb") as f:
-                        pickle.dump(currLastTweet, f)
+                        ##save last tweet
+                        with open(filePath, "wb") as f:
+                            pickle.dump(currLastTweet, f)
+            except:
+                print("WILLR: twitter error:", sys.exc_info())
             
             ##wait 2 minutes
             await asyncio.sleep(120)
