@@ -553,13 +553,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 return
             mess = []
             count = 0
-            for channel in client.get_server('308515912653340682').channels:
-                botLog(channel)
-                try:
-                    async for message in client.logs_from(channel, limit=sys.maxsize):
-                        mess.append(message)
-                except:
-                    botLog("Unable to get channel info")
+            for server in client.servers:
+                for channel in server.channels:
+                    botLog(channel)
+                    try:
+                        async for message in client.logs_from(channel, limit=sys.maxsize):
+                            mess.append(message)
+                    except:
+                        botLog("Unable to get channel info")
             with open("newpickle", "wb") as f:
                 pickle.dump(mess, f)
             botLog("done")
@@ -732,9 +733,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def on_member_join(member):
         if(member.id == "133811493778096128"):
             for role in member.server.roles:
-                print(role.name + " " +role.id)
                 if(role.id == "203917322010886144"):
                     await client.add_roles(member, role)
+        
+        ##BAN CL
+        if(member.id == '390261725145989120' and member.server.id == '133812880654073857'):
+            client.ban(member)
 
     ##TODO: switch to entirely plugins approach
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
