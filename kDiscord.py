@@ -665,7 +665,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 ##iterate through status
                 for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
                     status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
-                    print(status)
                     if(status._json["id"] <= lastTweet):
                         break
                     else:
