@@ -18,11 +18,17 @@ import markovChaining, keys, BSJ, os, header
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 import tweepy
+import logging
+import datetime
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
+    logging.basicConfig(level=logging.INFO)
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+
+    shadow_council_lock = threading.Lock()
 
     client = discord.Client()
     markovChaining.init()
@@ -88,6 +94,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await spam_check("", msg=message, cb=None, command=None)
         if(message.channel.is_private and message.author.id == '133811493778096128'):
             await pm_command(msg=message)
+        if(message.channel.id == header.SHADOW_COUNCIL_CHANNEL):
+            await shadow_council(msg=message)
         if(message.content.startswith('!') and (len(message.content) > 1)):
             ##TODO: prettier implementation of this:
             cMsg = message.content.lower()[1:].split()
@@ -311,6 +319,27 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 output += (" " + c + ",")
             output = output[:-1]
             return(output)
+
+    async def shadow_council(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            for role in msg.author.roles:
+                if(role.id == header.THE_FELLOWSHIP):
+                    return
+            with shadow_council_lock:
+                perms = msg.channel.overwrites_for(msg.author)
+                perms.read_messages = False
+                perms.send_messages = False
+                perms.add_reactions = False
+                await client.edit_channel_permissions(msg.channel, msg.author, perms)
+                sc = {}
+                if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
+                    with open(header.SHADOW_COUNCIL_FILE, 'rb') as f:
+                        sc = pickle.load(f)
+                sc[msg.author.id] = datetime.datetime.now() + datetime.timedelta(days=1)
+                botLog("shadow-council banned " + msg.author.name + " for 1 day")
+                with open(header.SHADOW_COUNCIL_FILE, 'wb') as f:
+                    pickle.dump(sc, f)
 
     async def permissionStatus(*args, **kwargs):
         if('msg' in kwargs and (kwargs['msg'].author.server_permissions.manage_server or kwargs['msg'].author.id == '133811493778096128')):
@@ -629,6 +658,29 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await leagueResults.new_match_results(client)
             await asyncio.sleep(120)
 
+    async def shadow_council_unban():
+        await client.wait_until_ready()
+        while(not client.is_closed):
+            if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
+                sc = {}
+                sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+                with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
+                    sc = pickle.load(f)
+                for entry in list(sc):
+                    if(sc[entry] <= datetime.datetime.now()):
+                        user = sc_channel.server.get_member(entry)
+                        perms = sc_channel.overwrites_for(user)
+                        perms.read_messages = None
+                        perms.send_messages = None
+                        perms.add_reactions = None
+                        await client.edit_channel_permissions(sc_channel, user, perms)
+                        sc.pop(entry)
+                        botLog("unbanned " + user.name + " from shadow-council")
+                with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
+                    pickle.dump(sc, f)
+            await asyncio.sleep(120)
+                
+
     async def logIp():
         await client.wait_until_ready()
         while(not client.is_closed):
@@ -748,6 +800,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     client.loop.create_task(league_results())
     client.loop.create_task(logIp())
     client.loop.create_task(tree_diary())
+    client.loop.create_task(shadow_council_unban())
     client.run(keys.TOKEN)
 
 if(__name__ == "__main__"):
