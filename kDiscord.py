@@ -341,6 +341,24 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 with open(header.SHADOW_COUNCIL_FILE, 'wb') as f:
                     pickle.dump(sc, f)
 
+    async def yuru_yuri(*args, **kwargs):
+        if('msg' in kwargs):
+            if(cfg.checkMessage("imagemacro", kwargs['msg'])):
+                msg = kwargs['msg']
+                cMsg = args[0]
+                files = os.listdir(header.YURU_YURI_HOME)
+                image = 0
+                try:
+                    image = int(cMsg[1])
+                    if(not (image >= 0 and image < len(files))):
+                        raise(ValueError("A number outside the bounderies [0,"+ str(len(files)) + "] has been picked" ))
+                except:
+                    await client.send_message(msg.channel, "Unknown input, picking random image")
+                    image = random.randint(0, len(files) - 1)
+                await client.send_message(msg.channel, "Yuru Yuri Image " + str(image) + "/" + str(len(files)))
+                await client.send_file(msg.channel, header.YURU_YURI_HOME + "/" + files[image])
+
+
     async def permissionStatus(*args, **kwargs):
         if('msg' in kwargs and (kwargs['msg'].author.server_permissions.manage_server or kwargs['msg'].author.id == '133811493778096128')):
             msg = kwargs['msg']
@@ -635,7 +653,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
-        classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode}
+        classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
+        classes.discordCommands.YURU_YURI_FULL : yuru_yuri}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
@@ -700,7 +719,6 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         await client.wait_until_ready()
 
         ##get channel
-
         channel = client.get_channel("321900902497779713")
         if(sys.platform.startswith('linux')):
             channel = client.get_channel("443169808482172968")

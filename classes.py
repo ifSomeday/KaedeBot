@@ -526,6 +526,7 @@ class discordCommands(Enum):
     LEAGUE_NEW_WEEK = 42
     OMEGA_W = 43
     DECODE = 44
+    YURU_YURI_FULL = 45
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
