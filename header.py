@@ -1,5 +1,6 @@
 import classes
 import os
+import sys
 
 ## DISCORD DEFs ##
 
@@ -28,10 +29,10 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "removeserver" : classes.discordCommands.REMOVE_SERVER_PERMISISON, "featurestatus" : classes.discordCommands.PERMISSION_STATUS,
     "featurehelp" : classes.discordCommands.PERMISSION_HELP, "lobby" : classes.discordCommands.CREATE_LOBBY,
     "seal" : classes.discordCommands.CREATE_LOBBY, "bots" : classes.discordCommands.FREE_BOT_LIST,
-    "test" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
+    "supertest" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN,
     "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W,
-    "decode" : classes.discordCommands.DECODE
+    "decode" : classes.discordCommands.DECODE, "yy" : classes.discordCommands.YURU_YURI_FULL
 }
 
 HOME_SERVER = '133812880654073857'
@@ -40,6 +41,8 @@ THE_FELLOWSHIP = '389285390005043212'
 
 SHADOW_COUNCIL_FILE = os.getcwd() + "/datastores/shadow_council.pickle"
 SHADOW_COUNCIL_CHANNEL = '463406700217499649'
+
+YURU_YURI_HOME = "D:\\Pictures\\YuruYuriDump" if not sys.platform.startswith("linux") else (os.path.dirname(os.getcwd()) + "/YuruYuriPics") 
 
 LEAGUE_IDS = ['5589', '5432', '8078']
 
