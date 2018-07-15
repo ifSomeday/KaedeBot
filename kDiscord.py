@@ -87,22 +87,32 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         """
         if(client.user.mentioned_in(message)):
             if(message.server.id == header.HOME_SERVER or not message.mention_everyone):
+                botLog("reaction to self mention")
                 await client.add_reaction(message, "🖕")
-        if(message.author.id == "305094311928922114" and (message.content.lower().contains("facebook") or message.content.lower().contains("fb"))):
-            client.delete_message(message)
+        
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
+            botLog("Checking floodcontrol")
             await spam_check("", msg=message, cb=None, command=None)
+        
         if(message.channel.is_private and message.author.id == '133811493778096128'):
+            botLog("recieved PM")
             await pm_command(msg=message)
+        
         if(message.channel.id == header.SHADOW_COUNCIL_CHANNEL):
+            botLog("Shadow council message")
             await shadow_council(msg=message)
+        
         if(message.content.startswith('!') and (len(message.content) > 1)):
-            ##TODO: prettier implementation of this:
+            botLog("Got command")
+
             cMsg = message.content.lower()[1:].split()
             command = header.chat_command_translation[cMsg[0]] if cMsg[0] in header.chat_command_translation else classes.discordCommands.INVALID_COMMAND
+            botLog("Command is " + cMsg[0])
             await client.send_typing(message.channel)
             await function_translation[command](cMsg, msg = message, command = command, client = client, cfg = cfg)
+       
         if((ed.distance(message.content.lower(), 'can i get a "what what" from my homies?!') < 6) and cfg.checkMessage("chatresponse", message)):
+            botLog("What What from my homies")
             if(not str(message.author.id) == str(85148771226234880)):
                 await client.send_message(message.channel, "what what")
             else:
@@ -658,110 +668,135 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
-        while(not client.is_closed):
-            while(dscQ.qsize() > 0):
-                cmd = dscQ.get()
-                await function_translation[cmd.command](cmd = cmd)
-            await asyncio.sleep(1)
+        try:
+            while(not client.is_closed):
+                while(dscQ.qsize() > 0):
+                    cmd = dscQ.get()
+                    await function_translation[cmd.command](cmd = cmd)
+                await asyncio.sleep(1)
+        except Exception as e:
+            botLog("Exception in messageHandler method")
+            botLog(str(e))
 
     async def saveTables():
         await client.wait_until_ready()
-        while(not client.is_closed):
-            markovChaining.dumpAllTables()
-            botLog("saving")
-            await asyncio.sleep(1800)
+        try:
+            while(not client.is_closed):
+                markovChaining.dumpAllTables()
+                botLog("saving")
+                await asyncio.sleep(1800)
+        except Exception as e:
+            botLog("Exception in saveTables method")
+            botLog(str(e))
 
     async def league_results():
         await client.wait_until_ready()
-        while(not client.is_closed):
-            await leagueResults.new_match_results(client)
-            await asyncio.sleep(120)
+        try:
+            while(not client.is_closed):
+                await leagueResults.new_match_results(client)
+                await asyncio.sleep(30)
+        except Exception as e:
+            botLog("Exception in leagueResults method")
+            botLog(str(e))
 
     async def shadow_council_unban():
         await client.wait_until_ready()
-        while(not client.is_closed):
-            if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
-                sc = {}
-                sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
-                with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
-                    sc = pickle.load(f)
-                for entry in list(sc):
-                    if(sc[entry] <= datetime.datetime.now()):
-                        user = sc_channel.server.get_member(entry)
-                        perms = sc_channel.overwrites_for(user)
-                        perms.read_messages = None
-                        perms.send_messages = None
-                        perms.add_reactions = None
-                        await client.edit_channel_permissions(sc_channel, user, perms)
-                        sc.pop(entry)
-                        botLog("unbanned " + user.name + " from shadow-council")
-                with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
-                    pickle.dump(sc, f)
-            await asyncio.sleep(120)
+        try:
+            while(not client.is_closed):
+                if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
+                    sc = {}
+                    sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+                    with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
+                        sc = pickle.load(f)
+                    for entry in list(sc):
+                        if(sc[entry] <= datetime.datetime.now()):
+                            user = sc_channel.server.get_member(entry)
+                            perms = sc_channel.overwrites_for(user)
+                            perms.read_messages = None
+                            perms.send_messages = None
+                            perms.add_reactions = None
+                            await client.edit_channel_permissions(sc_channel, user, perms)
+                            sc.pop(entry)
+                            botLog("unbanned " + user.name + " from shadow-council")
+                    with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
+                        pickle.dump(sc, f)
+                await asyncio.sleep(120)
+        except Exception as e:
+            botLog("Exception in shadow_council_unban method")
+            botLog(str(e))
                 
 
     async def logIp():
         await client.wait_until_ready()
-        while(not client.is_closed):
-            async with aiohttp.get("https://api.ipify.org") as r:
-                ip = await r.text()
-                ip_channel = client.get_channel("439161581209649155")
-                last = client.logs_from(ip_channel, limit=1)
-                async for msg in last:
-                    if(not msg.content == ip):
-                        kyouko = await client.get_user_info("133811493778096128")
-                        await client.send_message(ip_channel, kyouko.mention)
-                        await client.send_message(ip_channel, ip)
-            await asyncio.sleep(240)
+        try:
+            while(not client.is_closed):
+                async with aiohttp.get("https://api.ipify.org") as r:
+                    ip = await r.text()
+                    ip_channel = client.get_channel("439161581209649155")
+                    last = client.logs_from(ip_channel, limit=1)
+                    async for msg in last:
+                        if(not msg.content == ip):
+                            kyouko = await client.get_user_info("133811493778096128")
+                            await client.send_message(ip_channel, kyouko.mention)
+                            await client.send_message(ip_channel, ip)
+                await asyncio.sleep(240)
+        except Exception as e:
+            botLog("Exception in logIp")
+            botLog(str(e))
     
 
     async def tree_diary():
         await client.wait_until_ready()
 
-        ##get channel
-        channel = client.get_channel("321900902497779713")
-        if(sys.platform.startswith('linux')):
-            channel = client.get_channel("443169808482172968")
-        while(not client.is_closed):
-            try:
-                ##set up tweet tracking
-                lastTweet = 0
-                filePath = os.getcwd() + "/dataStores/lastTreeTweet.pickle"
-                if(os.path.isfile(filePath)):
-                    with open(filePath, "rb") as f:
-                        lastTweet = pickle.load(f)
-                currLastTweet = lastTweet
+        try:
+            ##get channel
+            channel = client.get_channel("321900902497779713")
+            if(sys.platform.startswith('linux')):
+                channel = client.get_channel("443169808482172968")
+            while(not client.is_closed):
+                try:
+                    ##set up tweet tracking
+                    lastTweet = 0
+                    filePath = os.getcwd() + "/dataStores/lastTreeTweet.pickle"
+                    if(os.path.isfile(filePath)):
+                        with open(filePath, "rb") as f:
+                            lastTweet = pickle.load(f)
+                    currLastTweet = lastTweet
 
-                ##iterate through status
-                for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
-                    status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
-                    if(status._json["id"] <= lastTweet):
-                        break
-                    else:
+                    ##iterate through status
+                    for status_short in tweepy.Cursor(tweepy_api.user_timeline, screen_name="@treebearddoto").items():
+                        status = tweepy_api.get_status(status_short._json["id"], tweet_mode='extended')
+                        if(status._json["id"] <= lastTweet):
+                            break
+                        else:
 
-                        ##set up embed
-                        print(status._json["full_text"])
-                        text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
-                        emb = discord.Embed()
-                        emb.description=text
-                        emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
-                        emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
-                        emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
-                        if("media" in status._json["entities"]):
-                            media = status._json["entities"]["media"]
-                            if(len(media) > 0):
-                                emb.set_image(url=media[0]["media_url"])
-                        await client.send_message(channel, embed=emb)
-                        currLastTweet = max(currLastTweet, status._json["id"])
+                            ##set up embed
+                            print(status._json["full_text"])
+                            text = re.sub(r'http\S+', '', status._json["full_text"], flags=re.MULTILINE)
+                            emb = discord.Embed()
+                            emb.description=text
+                            emb.set_author(name="Treebeard (@Treebearddoto)", url="https://twitter.com/Treebearddoto", icon_url=status._json["user"]["profile_image_url"])
+                            emb.set_footer(text="Twitter", icon_url="https://cdn.discordapp.com/attachments/321900902497779713/443205044222033921/Twitter_Social_Icon_Circle_Color.png")
+                            emb.url="https://twitter.com/Treebearddoto/status/" + str(status._json["id"])
+                            if("media" in status._json["entities"]):
+                                media = status._json["entities"]["media"]
+                                if(len(media) > 0):
+                                    emb.set_image(url=media[0]["media_url"])
+                            await client.send_message(channel, embed=emb)
+                            currLastTweet = max(currLastTweet, status._json["id"])
 
-                        ##save last tweet
-                        with open(filePath, "wb") as f:
-                            pickle.dump(currLastTweet, f)
-            except:
-                print("WILLR: twitter error:", sys.exc_info())
-            
-            ##wait 2 minutes
-            await asyncio.sleep(120)
+                            ##save last tweet
+                            with open(filePath, "wb") as f:
+                                pickle.dump(currLastTweet, f)
+                except:
+                    print("WILLR: twitter error:", sys.exc_info())
+                
+                ##wait 2 minutes
+                await asyncio.sleep(120)
+        except Exception as e:
+            botLog("Exception in treediary")
+            botLog(str(e))
+
 
     @client.event
     async def on_reaction_add(reaction, user):
