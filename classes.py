@@ -1,5 +1,5 @@
 from enum import Enum
-import operator, os, pickle, datetime
+import operator, os, pickle, datetime, math
 
 ##     ## ######## ########   #######     ##    ##    ###    ##     ## ########
 ##     ## ##       ##     ## ##     ##    ###   ##   ## ##   ###   ### ##
@@ -359,19 +359,32 @@ class steamBotInfo:
 
 class league:
 
-    def __init__(self, ids, num_teams, league_name="", broadcast_channel_ids=[], last_match = 0):
+    def __init__(self, ids, league_name, channel_id, num_teams=0, last_match = 0, short_results = False, roundup_only = False, best_of = 2, team_ids=[]):
+        
+        ##Parameters
         self.league_ids = ids
-        self.num_teams = num_teams
-        self.curr_num_results = 0
         self.league_name = league_name
-        self.broadcast_channel_ids = broadcast_channel_ids
+        self.channel_id = channel_id
+        self.num_teams = num_teams
+        self.set_last_matches(last_match)
+        self.short_results = short_results
+        self.roundup_only = roundup_only
+        self.best_of = best_of
+        self.team_ids = team_ids
+
+        ##internal data storage
         self.results = []
         self.awaiting_processing = []
         self.awaiting_opendota = []
-        if(num_teams % 2 == 0):
-            self.est_results = self.num_teams
-        else:
-            self.est_results = (self.num_teams - 1)
+
+        ##Estimated results (based on num_teams and best_of)
+        self.set_est_results()
+
+
+    def set_est_results(self):
+        self.est_results = math.ceil(((self.num_teams if self.num_teams % 2 == 0 else self.num_teams - 1) / 2) * self.best_of)
+
+    def set_last_matches(self, last_match):
         for league_id in self.league_ids:
             self.last_matches = [last_match for x in self.league_ids]
 
@@ -386,10 +399,9 @@ class league:
                 break
         if(not found_match):
             self.results.append(league_series(ids[0], names[0], ids[1], names[1], winner = (1 + winner)))
-        self.curr_num_results += 1
 
     def get_week_done(self):
-        if(self.curr_num_results >= self.est_results):
+        if(not self.num_teams == 0 and len(self.results) >= self.est_results and not len(self.results) == 0):
             return(True)
         return(False)
 
@@ -400,7 +412,6 @@ class league:
         return(out_str)
 
     def new_week(self):
-        self.curr_num_results = 0
         self.results = []
         self.awaiting_processing = []
         self.awaiting_opendota = []
@@ -527,6 +538,8 @@ class discordCommands(Enum):
     OMEGA_W = 43
     DECODE = 44
     YURU_YURI_FULL = 45
+    ADD_NEW_LEAGUE = 46
+    MODIFY_LEAGUE = 47
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
