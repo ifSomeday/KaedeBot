@@ -21,7 +21,7 @@ import getopt
 api = WebAPI(keys.STEAM_WEBAPI)
 od = opendota.openDotaPlugin()
 PICKLE_LOCATION = os.getcwd() + "/dataStores/leagueResults.pickle"
-fileLock = threading.Lock()
+fileLock = asyncio.Lock()
 
 def botLog(text):
     """
@@ -33,44 +33,42 @@ def botLog(text):
         print("MatchResult: Logging error. Probably some retard name", flush = True)
 
 async def new_match_results(client):
-    fileLock.acquire()
-    leagues = __load_leagues_internal()
+    async with fileLock:
+        leagues = __load_leagues_internal()
 
-    res = True
+        res = True
 
 
-    ##get lists of matches to process
-    for league in leagues:
-        res = await process_webapi_initial(league)
-        if(not res):
-            botLog("Stopping all WebAPI processing for this iteration.")
-            break
-
-    ## This also relies WebAPI, so skip if we failed earlier
-    if(res):
+        ##get lists of matches to process
         for league in leagues:
-            res = await process_webapi_secondary(client, league)
+            res = await process_webapi_initial(league)
             if(not res):
-                botLog("Stopping secondary WebAPI processing for this iteration.")
+                botLog("Stopping all WebAPI processing for this iteration.")
                 break
 
-    for league in leagues:
-        res = await process_opendota_match(client, league)
-        if(not res):
-            botLog("Stopping OpenDota processing for this iteration.")
-            break
+        ## This also relies WebAPI, so skip if we failed earlier
+        if(res):
+            for league in leagues:
+                res = await process_webapi_secondary(client, league)
+                if(not res):
+                    botLog("Stopping secondary WebAPI processing for this iteration.")
+                    break
 
-    for league in leagues:
-        if(league.get_week_done()):
-            
-            await client.send_message(client.get_channel(league.channel_id), league.output_results())
+        for league in leagues:
+            res = await process_opendota_match(client, league)
+            if(not res):
+                botLog("Stopping OpenDota processing for this iteration.")
+                break
 
-            league.new_week()
-            botLog("week reset")
+        for league in leagues:
+            if(league.get_week_done()):
+                
+                await client.send_message(client.get_channel(league.channel_id), league.output_results())
 
-    __save_leagues_internal(leagues)
+                league.new_week()
+                botLog("week reset")
 
-    fileLock.release()
+        __save_leagues_internal(leagues)
 
 
 ##This function creates a list of all matches that need to be processed
@@ -228,7 +226,7 @@ async def force_match_process(*args, **kwargs):
     msg = kwargs['msg']
     cfg = kwargs['cfg']
     if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
-        leagues = load_leagues()
+        leagues = await load_leagues()
         ##TODO: print specific leagues. for now we do all
         for league in leagues:
             output = league.output_results()
@@ -243,20 +241,19 @@ async def force_match_process(*args, **kwargs):
         client.add_reaction(msg, '❓')
 
 async def new_week(*args, **kwargs):
-    fileLock.acquire()
-    client = kwargs['client']
-    cMsg = args[0]
-    msg = kwargs['msg']
-    cfg = kwargs['cfg']
-    if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
-        leagues = __load_leagues_internal()
-        for league in leagues:
-            league.new_week()
-        await client.send_message(msg.channel, "League results reset for current week")
-        __save_leagues_internal(leagues)
-    else:
-        client.add_reaction(msg, '❓')
-    fileLock.release()
+    async with fileLock:
+        client = kwargs['client']
+        cMsg = args[0]
+        msg = kwargs['msg']
+        cfg = kwargs['cfg']
+        if(msg.author.server_permissions.manage_server or msg.author.id == '133811493778096128'):
+            leagues = __load_leagues_internal()
+            for league in leagues:
+                league.new_week()
+            await client.send_message(msg.channel, "League results reset for current week")
+            __save_leagues_internal(leagues)
+        else:
+            client.add_reaction(msg, '❓')
 
 async def add_league(*args, **kwargs):
     client = kwargs['client']
@@ -375,7 +372,7 @@ async def add_league(*args, **kwargs):
         roundupOnly = roundupOnly if not roundupOnly is None else False
 
         ##The rest needs to be done under lock
-        with fileLock:
+        async with fileLock:
             leagueArray =  __load_leagues_internal()
 
             ##check for duplicates
@@ -395,7 +392,7 @@ async def add_league(*args, **kwargs):
             await client.send_message(msg.channel, "Missing required parameter --league-name")
             return
         
-        with fileLock:
+        async with fileLock:
             leagueArray =  __load_leagues_internal()
 
             found = False
@@ -442,28 +439,25 @@ def team_info(team_id):
     return(api.IDOTA2Match_570.GetTeamInfoByTeamID(start_at_team_id=team_id, teams_requested=1)['result']['teams'][0])
 
 
-def save_leagues(leagues):
-    try:
-        fileLock.acquire()
-        __save_leagues_internal(leagues)
-    except Exception as e:
-        botLog("Error saving leagues: " + str(e))
-    finally:
-        fileLock.release()
+async def save_leagues(leagues):
+    async with fileLock:
+        try:
+            __save_leagues_internal(leagues)
+        except Exception as e:
+            botLog("Error saving leagues: " + str(e))
 
 def __save_leagues_internal(leagues):
     with open(PICKLE_LOCATION, "wb") as f:
         pickle.dump(leagues, f)
 
-def load_leagues():
-    try:
-        fileLock.acquire()
-        leagues = __load_leagues_internal()
-    except Exception as e:
-        botLog("Error loading leagues: " + str(e))
-    finally:
-        fileLock.release()
-    return(leagues)
+async def load_leagues():
+    async with fileLock:
+        try:
+            leagues = __load_leagues_internal()
+        except Exception as e:
+            botLog("Error loading leagues: " + str(e))
+            return None
+        return(leagues)
 
 def __load_leagues_internal():
     leagueArray = None
