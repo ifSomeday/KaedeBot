@@ -39,7 +39,7 @@ HOME_SERVER = '133812880654073857'
 MY_DISC_ID = '213099188584579072'
 THE_FELLOWSHIP = '389285390005043212'
 
-SHADOW_COUNCIL_FILE = os.getcwd() + "/datastores/shadow_council.pickle"
+SHADOW_COUNCIL_FILE = os.getcwd() + "/dataStores/shadow_council.pickle"
 SHADOW_COUNCIL_CHANNEL = '463406700217499649'
 
 YURU_YURI_HOME = "D:\\Pictures\\YuruYuriDump" if not sys.platform.startswith("linux") else (os.path.dirname(os.getcwd()) + "/YuruYuriPics") 
