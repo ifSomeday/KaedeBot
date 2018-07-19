@@ -11,15 +11,18 @@ import re
 import sys
 import pickle
 import operator
-from plugins import dotaStats
-from plugins import leagueResults
-#import draftThread as dt
 import markovChaining, keys, BSJ, os, header
+#import draftThread as dt
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
 import tweepy
 import logging
 import datetime
+
+##plugins
+from plugins import shadowCouncilSecret
+from plugins import dotaStats
+from plugins import leagueResults
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
@@ -333,9 +336,13 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     async def shadow_council(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
+            #fellowship cannot be banned
             for role in msg.author.roles:
                 if(role.id == header.THE_FELLOWSHIP):
                     return
+            #Does the message match the code?
+            if(shadowCouncilSecret.shadowCouncilVerifier(msg.clean_content)):
+                return
             async with shadow_council_lock:
                 perms = msg.channel.overwrites_for(msg.author)
                 perms.read_messages = False

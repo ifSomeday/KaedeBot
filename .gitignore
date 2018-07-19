@@ -73,3 +73,7 @@ push.txt
 .vscode/*
 
 matchResults/*
+plugins/shadowCouncilSecret.py
+extract.py
+newpickle
+pf.txt
