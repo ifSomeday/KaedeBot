@@ -353,7 +353,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
                     with open(header.SHADOW_COUNCIL_FILE, 'rb') as f:
                         sc = pickle.load(f)
-                sc[msg.author.id] = datetime.datetime.now() + datetime.timedelta(days=1)
+                sc[msg.author.id] = datetime.datetime.now() + datetime.timedelta(hours=12)
                 botLog("shadow-council banned " + msg.author.name + " for 1 day")
                 with open(header.SHADOW_COUNCIL_FILE, 'wb') as f:
                     pickle.dump(sc, f)
