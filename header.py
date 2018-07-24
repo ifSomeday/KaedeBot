@@ -32,11 +32,13 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "supertest" : classes.discordCommands.TEST_COMMAND, "sealresults" : classes.discordCommands.SEAL_EMBEDS,
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN,
     "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W,
-    "decode" : classes.discordCommands.DECODE, "yy" : classes.discordCommands.YURU_YURI_FULL
+    "decode" : classes.discordCommands.DECODE, "yy" : classes.discordCommands.YURU_YURI_FULL,
+    "unbanall" : classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL
 }
 
 HOME_SERVER = '133812880654073857'
 MY_DISC_ID = '213099188584579072'
+GWENHWYFAR = '133811493778096128'
 
 THE_FELLOWSHIP = '389285390005043212'
 SHADOW_MASTER  = '471450236888285194'

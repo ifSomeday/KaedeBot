@@ -540,6 +540,7 @@ class discordCommands(Enum):
     YURU_YURI_FULL = 45
     ADD_NEW_LEAGUE = 46
     MODIFY_LEAGUE = 47
+    SHADOW_COUNCIL_UNBAN_ALL = 48
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

@@ -353,8 +353,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
                     with open(header.SHADOW_COUNCIL_FILE, 'rb') as f:
                         sc = pickle.load(f)
-                sc[msg.author.id] = datetime.datetime.now() + datetime.timedelta(hours=12)
-                botLog("shadow-council banned " + msg.author.name + " for 1 day")
+                sc[msg.author.id] = datetime.datetime.now()
+                botLog("shadow-council banned " + msg.author.name)
                 with open(header.SHADOW_COUNCIL_FILE, 'wb') as f:
                     pickle.dump(sc, f)
 
@@ -644,6 +644,11 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             await client.send_message(msg.author, resp)
 
 
+    async def shadow_council_unban_all(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(msg.author.id == header.GWENHWYFAR):
+                await __unban_action(unbanAll=True)
 
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
@@ -671,7 +676,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
-        classes.discordCommands.YURU_YURI_FULL : yuru_yuri}
+        classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
@@ -710,30 +715,34 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         await client.wait_until_ready()
         try:
             while(not client.is_closed):
-                if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
-                    sc = {}
-                    sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
-                    async with shadow_council_lock:
-                        with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
-                            sc = pickle.load(f)
-                    for entry in list(sc):
-                        if(sc[entry] <= datetime.datetime.now()):
-                            user = sc_channel.server.get_member(entry)
-                            perms = sc_channel.overwrites_for(user)
-                            perms.read_messages = None
-                            perms.send_messages = None
-                            perms.add_reactions = None
-                            await client.edit_channel_permissions(sc_channel, user, perms)
-                            sc.pop(entry)
-                            botLog("unbanned " + user.name + " from shadow-council")
-                    async with shadow_council_lock:
-                        with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
-                            pickle.dump(sc, f)
+                await __unban_action()
                 await asyncio.sleep(120)
         except Exception as e:
             botLog("Exception in shadow_council_unban method")
             botLog(str(e))
-                
+
+
+    async def __unban_action(*args, **kwargs):
+        if(os.path.isfile(header.SHADOW_COUNCIL_FILE)):
+            unban = 'unbanAll' in kwargs and kwargs['unbanAll']
+            sc = {}
+            sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+            async with shadow_council_lock:
+                with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
+                    sc = pickle.load(f)
+            for entry in list(sc):
+                if((sc[entry] + datetime.timedelta(hours=8) <= datetime.datetime.now()) or unban):
+                    user = sc_channel.server.get_member(entry)
+                    perms = sc_channel.overwrites_for(user)
+                    perms.read_messages = None
+                    perms.send_messages = None
+                    perms.add_reactions = None
+                    await client.edit_channel_permissions(sc_channel, user, perms)
+                    sc.pop(entry)
+                    botLog("unbanned " + user.name + " from shadow-council")
+            async with shadow_council_lock:
+                with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
+                    pickle.dump(sc, f)
 
     async def logIp():
         await client.wait_until_ready()
