@@ -37,7 +37,9 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
 
 HOME_SERVER = '133812880654073857'
 MY_DISC_ID = '213099188584579072'
+
 THE_FELLOWSHIP = '389285390005043212'
+SHADOW_MASTER  = '471450236888285194'
 
 SHADOW_COUNCIL_FILE = os.getcwd() + "/dataStores/shadow_council.pickle"
 SHADOW_COUNCIL_CHANNEL = '463406700217499649'
