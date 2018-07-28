@@ -731,7 +731,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
                     sc = pickle.load(f)
             for entry in list(sc):
-                if((sc[entry] + datetime.timedelta(hours=8) <= datetime.datetime.now()) or unban):
+                if((sc[entry] + datetime.timedelta(hours=6) <= datetime.datetime.now()) or unban):
                     user = sc_channel.server.get_member(entry)
                     perms = sc_channel.overwrites_for(user)
                     perms.read_messages = None
