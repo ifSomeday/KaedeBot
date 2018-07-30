@@ -337,15 +337,18 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs):
             msg = kwargs['msg']
             #Does the message match the code?
-            if(await shadowCouncilSecret.shadowCouncilVerifier(msg, client)):
-                await client.add_reaction(msg, '✅')
-                return
-            #fellowship cannot be banned
+            exempt = False
             for role in msg.author.roles:
                 if(role.id == header.THE_FELLOWSHIP or role.id == header.SHADOW_MASTER):
+                    exempt = True
+            if(await shadowCouncilSecret.shadowCouncilVerifier(msg, client)):
+                if(not exempt):
                     await client.add_reaction(msg, '✅')
-                    return
-            await client.add_reaction(msg, '❌')                
+                return
+            #fellowship cannot be banned
+            if(exempt):
+                return
+            await client.add_reaction(msg, '❌')             
             async with shadow_council_lock:
                 perms = msg.channel.overwrites_for(msg.author)
                 perms.read_messages = False
