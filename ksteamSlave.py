@@ -36,8 +36,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     dota = Dota2Client(client)
     bot_SteamID = None
 
-
-
     ##args 0, 1 are always name and password
     lobby_name = gameInfo.lobbyName
     lobby_pass = gameInfo.lobbyPassword
@@ -50,6 +48,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     hosted = threading.Event()
     joined = threading.Event()
+    reconnecting = threading.Lock()
 
     kyouko_toshino = SteamID(75419738)
 
@@ -115,7 +114,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @client.on('disconnected')
     def restart():
         botLog("disconnected from steam. Attempting to relog...")
-        client.reconnect()
+        if(reconnecting.locked()):
+            return
+        with reconnecting:
+            client.reconnect()
 
 
     ##dota lobby on lobby change event handler
