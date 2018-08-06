@@ -660,7 +660,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg' in kwargs):
             msg = kwargs['msg']
             if(cfg.checkAny(msg)):
-                await client.send_message(msg.channel, "invalid command")
+                pass
+                ##await client.send_message(msg.channel, "invalid command")
 
     function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
         classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
