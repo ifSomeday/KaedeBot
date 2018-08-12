@@ -126,6 +126,11 @@ async def role_help(*args, **kwargs):
         ##send message
         await client.send_message(msg.channel, output)
 
+async def monster_hunter_workaround(*args, **kwargs):
+    client = kwargs['client']
+    msg = kwargs['msg']
+    cMsg = ["role", "Monster", "Hunter"]
+    await add_role(cMsg, msg=msg, client=client)
 
 def init(chat_command_translation, function_translation):
 
@@ -133,6 +138,11 @@ def init(chat_command_translation, function_translation):
     function_translation[classes.discordCommands.ADD_ROLE] = add_role
     chat_command_translation["addrole"] = classes.discordCommands.ADD_ROLE
     chat_command_translation["role"] = classes.discordCommands.ADD_ROLE
+
+    ##workaround
+    function_translation[666] = monster_hunter_workaround
+    chat_command_translation["mh"] = 666
+    chat_command_translation["mhme"] = 666
 
     ##role help command
     function_translation[classes.discordCommands.ROLE_HELP] = role_help
