@@ -541,6 +541,8 @@ class discordCommands(Enum):
     ADD_NEW_LEAGUE = 46
     MODIFY_LEAGUE = 47
     SHADOW_COUNCIL_UNBAN_ALL = 48
+    ADD_ROLE = 49
+    ROLE_HELP = 50
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
