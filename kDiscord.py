@@ -24,6 +24,7 @@ from plugins import shadowCouncilSecret
 from plugins import dotaStats
 from plugins import leagueResults
 from plugins import roleCommands
+from plugins import develop
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
@@ -62,9 +63,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     def deleteFilter(string):
         """
-        Determines if a string is eligible for revivign through deletion feature
+        Determines if a string is eligible for reviving through deletion feature
         """
-        botLog(string)
         if(string.startswith("!") and (string[1:].split()[0].lower() in header.chat_command_translation)):
             return(True)
         if(not re.search(keys.SECRET_REGEX_FILTER, string) == None or not re.search(keys.SECRET_REGEX_FILTER2, string) == None):
@@ -842,10 +842,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        ##TEMP joke on aura
-        if(message.server.id == "133812880654073857" and message.author.id == "195348139216076800"):
-            await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
-            return
+        if(not message.author.id == header.MY_DISC_ID):
+            botLog(message.author.name + " deleted message '" + message.clean_content + "' from channel " + message.channel.name + " in " + message.server.name)
         if(cfg.checkMessage("deletion", message) and (not message.author.id == header.MY_DISC_ID)):
             if(deleteFilter(message.content)):
                 return
@@ -874,6 +872,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = roleCommands.init(header.chat_command_translation, function_translation)
+    header.chat_command_translation, function_translation = develop.init(header.chat_command_translation, function_translation)
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())

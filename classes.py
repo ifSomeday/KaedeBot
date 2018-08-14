@@ -543,6 +543,7 @@ class discordCommands(Enum):
     SHADOW_COUNCIL_UNBAN_ALL = 48
     ADD_ROLE = 49
     ROLE_HELP = 50
+    DUMP_ROLES = 51
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

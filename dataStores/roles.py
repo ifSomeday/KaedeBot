@@ -68,6 +68,10 @@ roles = {
 				"category" : "Special",
 				"description" : "These roles are special roles, not related to any of the other categories",
 				"roles" : [
+					{
+						"name" : "Shadow Council",
+						"id" : "476129555774439426"
+					}
 				]
 			}
 		]

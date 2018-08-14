@@ -103,7 +103,7 @@ async def role_help(*args, **kwargs):
         ##if this server has role support
         if(msg.server.id in roles.roles):
             svr = roles.roles[msg.server.id]
-            output = "Currently available roles in " + msg.server.name + " are:\n\n"
+            output = "You can request roles with `!role` or `!addrole`\nCurrently available roles in " + msg.server.name + " are:\n\n"
 
             ##look through groups
             for group in svr['groups']:
