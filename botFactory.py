@@ -363,7 +363,7 @@ def factory(kstQ, dscQ, factoryQ):
 
     ##set up app
     app = make_app()
-    app.listen(80)
+    app.listen(80, xheaders=True)
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()
