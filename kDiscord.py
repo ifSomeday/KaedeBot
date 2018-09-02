@@ -25,6 +25,7 @@ from plugins import dotaStats
 from plugins import leagueResults
 from plugins import roleCommands
 from plugins import develop
+from plugins import commitlog
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
@@ -770,7 +771,16 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         except Exception as e:
             botLog("Exception in logIp")
             botLog(str(e))
-    
+
+    async def githubTracker():
+        await client.wait_until_ready()
+        try:
+            while(not client.is_closed):
+                await commitlog.latest_commit(client)
+                await asyncio.sleep(600)
+        except Exception as e:
+            botLog("Exception in githubTracker:")
+            botLog(str(e))
 
     async def tree_diary():
         await client.wait_until_ready()
@@ -881,6 +891,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     client.loop.create_task(logIp())
     client.loop.create_task(tree_diary())
     client.loop.create_task(shadow_council_unban())
+    client.loop.create_task(githubTracker())
     client.run(keys.TOKEN)
 
 if(__name__ == "__main__"):

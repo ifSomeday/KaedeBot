@@ -46,6 +46,8 @@ SHADOW_MASTER  = '471450236888285194'
 SHADOW_COUNCIL_FILE = os.getcwd() + "/dataStores/shadow_council.pickle"
 SHADOW_COUNCIL_CHANNEL = '463406700217499649'
 
+COMMIT_LOG_CHANNEL = '485597300304117761'
+
 YURU_YURI_HOME = "D:\\Pictures\\YuruYuriDump" if not sys.platform.startswith("linux") else (os.path.dirname(os.getcwd()) + "/YuruYuriPics") 
 
 LEAGUE_IDS = ['5589', '5432', '8078']
