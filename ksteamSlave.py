@@ -113,11 +113,13 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     @client.on('disconnected')
     def restart():
-        botLog("disconnected from steam. Attempting to relog...")
-        if(reconnecting.locked()):
-            return
-        with reconnecting:
-            client.reconnect()
+        if(not stop_event.isSet()):
+            botLog("disconnected from steam")
+            if(reconnecting.locked()):
+                return
+            with reconnecting:
+                botLog("Attempting to relog...")
+                client.reconnect()
 
 
     ##dota lobby on lobby change event handler
