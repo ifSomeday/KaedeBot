@@ -13,7 +13,7 @@ async def latest_commit(client):
     commits = repo.get_commits()
     commit = commits[0]
     
-    if(not commit.sha == __get_latest_commit() and not sys.platform.startswith("linux")):
+    if(not commit.sha == __get_latest_commit() and sys.platform.startswith("linux")):
         mess = commit.commit.message + "\n```\n" + "\n".join(file.filename + " +" + str(file.additions) + "|-" + str(file.deletions) + "" for file in commit.files) + "\n```\n" + ""
         await client.send_message(client.get_channel(header.COMMIT_LOG_CHANNEL), mess)
         __save_latest_commit(commit.sha)

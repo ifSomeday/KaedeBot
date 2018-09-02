@@ -776,7 +776,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         try:
             while(not client.is_closed):
                 await commitlog.latest_commit(client)
-                await asyncio.sleep(10)
+                await asyncio.sleep(600)
         except Exception as e:
             botLog("Exception in githubTracker:")
             botLog(str(e))
