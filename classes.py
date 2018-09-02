@@ -545,6 +545,7 @@ class discordCommands(Enum):
     ROLE_HELP = 50
     DUMP_ROLES = 51
     CHECK_VERIFIER = 52
+    REMOVE_ROLE = 53
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
