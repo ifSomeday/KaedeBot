@@ -221,7 +221,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             dota.join_practice_lobby_team(4)
 
             for player in gameInfo.players:
-                dota.invite_to_lobby(int(player))
+                dota.invite_to_lobby(SteamID(player).as_64)
 
     ##party invite event handler
     @dota.on('party_invite')
@@ -494,4 +494,10 @@ if(__name__ == "__main__"):
     kstQ = queue.Queue()
     dstQ = queue.Queue()
     factoryQ = queue.Queue()
-    steamSlave(sBot, kstQ, dstQ, factoryQ, ["test", "test", None])
+    gameInfo = classes.gameInfo()
+    gameInfo.lobbyName = "test"
+    gameInfo.lobbyPassword = "test"
+    gameInfo.jobQueue = queue.Queue()
+    gameInfo.commandQueue = queue.Queue()
+    gameInfo.players = []
+    steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)
