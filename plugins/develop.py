@@ -68,7 +68,7 @@ async def test_verifier(*args, **kwargs):
             total += 1
             if(await shadowCouncilSecret.shadowCouncilVerifier(message, client)):
                 passing += 1
-        await client.send_message(msg.channel, "With current verifier, " + str(passing) + "/" + str(total) + " (" + str(round(passing/total, 2)) + "%) of messages in the current shadow council would pass.")
+        await client.send_message(msg.channel, "With current verifier, " + str(passing) + "/" + str(total) + " (" + str(round((passing/total) * 100, 2)) + "%) of messages in the current shadow council would pass.")
 
         
 
