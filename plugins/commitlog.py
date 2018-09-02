@@ -4,11 +4,12 @@ import os
 import sys
 
 import header
+import keys
 
 COMMIT_FILE = os.getcwd() + "/dataStores/latestcommit.pickle"
 
 async def latest_commit(client):
-    gh = Github()
+    gh = Github(keys.GITHUB_PERSONAL_ACCESS_TOKEN)
     repo = gh.get_repo("ifSomeday/KaedeBot")
     commits = repo.get_commits()
     commit = commits[0]
