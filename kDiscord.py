@@ -741,13 +741,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             for entry in list(sc):
                 if((sc[entry] + datetime.timedelta(hours=6) <= datetime.datetime.now()) or unban):
                     user = sc_channel.server.get_member(entry)
-                    perms = sc_channel.overwrites_for(user)
-                    perms.read_messages = None
-                    perms.send_messages = None
-                    perms.add_reactions = None
-                    await client.edit_channel_permissions(sc_channel, user, perms)
+                    if(not user is None):
+                        perms = sc_channel.overwrites_for(user)
+                        perms.read_messages = None
+                        perms.send_messages = None
+                        perms.add_reactions = None
+                        await client.edit_channel_permissions(sc_channel, user, perms)
+                        botLog("unbanned " + user.name + " from shadow-council")
                     sc.pop(entry)
-                    botLog("unbanned " + user.name + " from shadow-council")
             async with shadow_council_lock:
                 with open(header.SHADOW_COUNCIL_FILE, "wb") as f:
                     pickle.dump(sc, f)
