@@ -16,6 +16,7 @@ from steam import SteamID
 from dota2 import Dota2Client
 import dota2
 import discord
+import logging
 
 ##ENUM IMPORTS
 from steam.enums.emsg import EMsg
@@ -68,8 +69,15 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
         "status" : classes.steamCommands.STATUS}
 
+    debug = True
+    if(debug):
+        logging.basicConfig(filename=sBot.name + ".log", format='[%(asctime)s] %(levelname)s %(name)s: %(message)s', level=logging.DEBUG)
+        logging.debug("====================NEW SESSION====================DEADBEEF====================")
+
     def botLog(text):
         try:
+            if(debug):
+                logging.debug(sBot.name + ": " +  str(text))
             print(sBot.name + ": " +  str(text), flush=True)
         except:
             print(sBot.name + ": Logging error. Probably some retard name", flush = True)
@@ -78,11 +86,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     ##after logon, launch dota
     @client.on('logged_on')
     def start_dota():
-        botLog("Logged into steam, starting dota")
+        botLog("Logged into steam")
         if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
             botLog("Already in logon queue...")
             return
         if(not dota.connection_status is dConStat.HAVE_SESSION):
+            botLog("launching dota")
             dota.launch()
 
     ##At this point dota is ready
@@ -102,20 +111,22 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
             botLog("Already in logon queue...")
             return
-        if(not dota.connection_status is dConStat.HAVE_SESSION):
-            dota.exit()
-            dota.launch()
+        ##NOTE: disabling this is a test to fix zombie threads
+        ##if(not dota.connection_status is dConStat.HAVE_SESSION):
+        ##    dota.exit()
+        ##    dota.launch()
 
-
-    @dota.on(dGCbase.EMsgGCPingRequest)
-    def reply():
-        dota.send(dGCbase.EMsgGCPingResponseResponse, {})
+    ##NOTE: this needs work. May be impossible to enter actual game
+    ##@dota.on(dGCbase.EMsgGCPingRequest)
+    ##def reply():
+    ##    dota.send(dGCbase.EMsgGCPingResponseResponse, {})
 
     @client.on('disconnected')
     def restart():
         if(not stop_event.isSet()):
             botLog("disconnected from steam")
             if(reconnecting.locked()):
+                botLog("We are already attempting a reconnection")
                 return
             with reconnecting:
                 botLog("Attempting to relog...")
@@ -126,7 +137,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_changed')
     def lobby_change_handler(msg):
         if(hosted.isSet()):
+            botLog("The hosted lobby has changed")
             gameInfo.lobby = msg
+        else:
+            botLog("We have not hosted a lobby yet, ignoring change")
         return
 
     #TODO: this shit is a fucking mess
@@ -134,7 +148,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_removed')
     def lobby_removed(msg):
 
-        botLog(msg)
+        ## lobby remove is flooding logs
+        ##botLog(msg)
+
 
         if(not hosted.isSet()):
             return
@@ -166,12 +182,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def steam_message_handler(msg):
         ##TODO: check you have permission to release
         msgT = msg.body.message.decode("utf-8").rstrip('\x00')
+        if(not msg.body.steamid_from in header.LD2L_ADMIN_STEAM_IDS):
+            return
         if(len(msgT) > 0):
             cMsg = msgT.lower().split()
             if((msgT == "release" or msgT == "!release")and msg.body.steamid_from == kyouko_toshino.as_64):
                 botLog("releasing")
                 botCleanup()
-            elif(msgT == "lobby" and SteamID(msg.body.steamid_from).as_32 in list(header.captain_steam_ids.keys())):
+            elif(msgT == "lobby"):
                 hosted.clear()
                 hostLobby(tournament=True)
             else:
@@ -199,9 +217,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     @dota.on('lobby_invite')
     def lobby_invite(msg):
-        if(dota.lobby == None):
-            botLog("joining lobby")
-            dota.respond_lobby_invite(msg.group_id, accept=True)
+        if(msg.sender_id in header.LD2L_ADMIN_STEAM_IDS):
+            if(dota.lobby == None):
+                botLog("joining lobby")
+                dota.respond_lobby_invite(msg.group_id, accept=True)
 
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
@@ -219,18 +238,19 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             ##TODO: listen for proper team join and remove sleep
             dota.sleep(1)
             dota.join_practice_lobby_team(4)
-
             for player in gameInfo.players:
                 dota.invite_to_lobby(SteamID(player).as_64)
 
     ##party invite event handler
     @dota.on('party_invite')
     def party_invite(msg):
-        leave_lobby()
-        dota.leave_party()
-        if(dota.party == None):
-            botLog(msg)
-            dota.respond_to_party_invite(msg.group_id, accept=True)
+        if(msg.sender_id in header.LD2L_ADMIN_STEAM_IDS):
+            botLog("accepting party invite")
+            leave_lobby()
+            dota.leave_party()
+            if(dota.party == None):
+                botLog(msg)
+                dota.respond_to_party_invite(msg.group_id, accept=True)
 
     def hostLobby(tournament=False):
         if(dota.lobby):
@@ -380,7 +400,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                     botLog(member)
                     if(SteamID(member.id).as_64 == SteamID(msg.account_id).as_64):
                         sender_team = member.team
-            if(tot_mem == 1):
+            if(tot_mem == len(set(gameInfo.players))) :
                 if(sender_team == 1 or sender_team == 0):
                     sides_ready[sender_team] = True
                 else:
@@ -449,6 +469,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def timeoutHandler(*args, **kwargs):
         evnt = args[0]
+        if(stop_event.isSet()):
+            botLog("timeout occoured, but bot is already shutting down!")
+            return
         if(dota.lobby == None):
             botLog("lobby not found")
             botCleanup()
@@ -479,14 +502,27 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     gameInfo.timeout = int(time.time()) + 600
     toH.start()
 
+    botLog("logging in")
     client.cli_login(username=sBot.username, password=sBot.password)
+    botLog("logged in")
+
     bot_SteamID = client.steam_id
+
     while(not stop_event.isSet()):
         checkQueue()
         client.sleep(1)
+    toH.cancel()
+    botLog("Exited loop")
+
     client.disconnect()
+    botLog("Called disconnect")
+
     client.logout()
+    botLog("Called logout")
+
     factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot, gameInfo]))
+    botLog("Put shutdown command")
+
     return
 
 if(__name__ == "__main__"):
@@ -499,5 +535,5 @@ if(__name__ == "__main__"):
     gameInfo.lobbyPassword = "test"
     gameInfo.jobQueue = queue.Queue()
     gameInfo.commandQueue = queue.Queue()
-    gameInfo.players = []
+    gameInfo.players = [76561198035685466]
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)

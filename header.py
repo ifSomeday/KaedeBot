@@ -52,6 +52,9 @@ YURU_YURI_HOME = "D:\\Pictures\\YuruYuriDump" if not sys.platform.startswith("li
 
 LEAGUE_IDS = ['5589', '5432', '8078']
 
+##greg, me, bubbles
+LD2L_ADMIN_STEAM_IDS = [76561198007934819, 76561198035685466, 76561198048886742]
+
 ##TODO: fill with captains
 ##TODO: dump to file so captains can specify other trustworth people
 
