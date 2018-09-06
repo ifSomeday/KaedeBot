@@ -191,16 +191,6 @@ class openDotaPlugin:
 ##########################
 ##########################
 
-    def get_benchmarks(self, hero_id):
-        params = {"hero_id" : hero_id}
-        r = requests.get(self.BASE_URL + "benchmarks")
-        js = r.json()
-        return(js)
-
-##########################
-##########################
-##########################
-
     def get_heroes(self):
         r = requests.get(self.BASE_URL + "heroes")
         js = r.json()
