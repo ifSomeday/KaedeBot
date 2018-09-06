@@ -52,8 +52,7 @@ def processMatch(msg):
     botLog(msg.state)
 
     ##completed match only fields
-    if(msg.state == "POSTGAME"):
-
+    if(msg.state == 3):
         
         match["connect"] = msg.connect
         match["server_id"] = msg.server_id
