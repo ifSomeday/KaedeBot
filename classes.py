@@ -575,6 +575,7 @@ class leagueLobbyCommands(Enum):
     GAME_NAME = 4
     GAME_PASS = 5
     CANCEL_START = 6
+    SHUFFLE = 7
 
 ########   #######  ######## ########  ######  ########     ######  ##     ## ########   ######
 ##     ## ##     ##    ##    ##       ##    ##    ##       ##    ## ###   ### ##     ## ##    ##

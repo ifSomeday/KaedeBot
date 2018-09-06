@@ -63,7 +63,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                                 "firstpick" :  classes.leagueLobbyCommands.FIRST_PICK, "server": classes.leagueLobbyCommands.SERVER,
                                 "start" : classes.leagueLobbyCommands.START, "name" : classes.leagueLobbyCommands.GAME_NAME,
                                 "pass" : classes.leagueLobbyCommands.GAME_PASS, "password" : classes.leagueLobbyCommands.GAME_PASS,
-                                "cancel" : classes.leagueLobbyCommands.CANCEL_START}
+                                "cancel" : classes.leagueLobbyCommands.CANCEL_START, "shuffle" : classes.leagueLobbyCommands.SHUFFLE}
 
     chat_command_translation = {"linvite" : classes.steamCommands.LOBBY_INVITE, "lleave" : classes.steamCommands.LEAVE_LOBBY,
         "leave" : classes.steamCommands.LEAVE_PARTY, "tleave" : classes.steamCommands.LEAVE_TEAM,
@@ -367,6 +367,13 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             sendLobbyMessage("Set lobby password to '" + lobby_pass + "'", msg.channel_id)
             reset_ready(msg=msg)
 
+    def lobby_shuffle(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            dota.balanced_shuffle_lobby()
+            sendLobbyMessage("Lobby shuffled", msg.channel_id)
+
     def first_pick(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -494,8 +501,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
                             classes.leagueLobbyCommands.START : start_lobby, classes.leagueLobbyCommands.GAME_NAME : set_name,
                             classes.leagueLobbyCommands.GAME_PASS : set_pass, classes.leagueLobbyCommands.CANCEL_START : cancel,
-                            classes.steamCommands.LEAVE_LOBBY : leave_lobby,
-                            classes.steamCommands.LEAVE_PARTY : leave_party, classes.steamCommands.STATUS : send_status}
+                            classes.leagueLobbyCommands.SHUFFLE : lobby_shuffle,
+                            classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_PARTY : leave_party, 
+                            classes.steamCommands.STATUS : send_status}
 
     ##five minutes to get in a lobby
     toH = threading.Timer(600.0, timeoutHandler, [stop_event,])
