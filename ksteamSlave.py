@@ -132,6 +132,21 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 botLog("Attempting to relog...")
                 client.reconnect()
 
+    ##determines if the actual teams have changed, and if so, emits the "team_changed" event
+    def emit_team_change_event(msg):
+        changed = False
+        tmpPlayers = []
+        for member in dota.lobby.members:
+            if(member.team in [0, 1]):
+                tmpPlayers.append(member.id)
+                if(not member.id in gameInfo.currPlayers):
+                    changed = True
+        gameInfo.currPlayers = tmpPlayers
+        if(changed):
+            dota.emit("team_changed", msg)
+
+    def set_curr_players(arr):
+        curr_players = arr
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
@@ -139,9 +154,21 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(hosted.isSet()):
             botLog("The hosted lobby has changed")
             gameInfo.lobby = msg
+            emit_team_change_event(msg)
         else:
             botLog("We have not hosted a lobby yet, ignoring change")
         return
+
+    @dota.on("team_changed")
+    def team_change_handler(msg):
+        botLog("team changed")
+        if(len(set(gameInfo.players)) > 0):
+            for member in dota.lobby.members:
+                if(member.team in [0,1]):
+                    if(not member.id in gameInfo.players):
+                        botLog("kicking " + str(member.name) + "from team slots")
+                        dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
+                        ##dota.practice_lobby_kick(SteamID(member.id).as_32)
 
     #TODO: this shit is a fucking mess
     #Triggers on launch if previous lobby existed.
@@ -403,11 +430,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             for member in dota.lobby.members:
                 if member.team == 0 or member.team == 1:
                     tot_mem += 1
-                    botLog("found member")
-                    botLog(member)
+                    botLog("found member " + str(member.name))
                     if(SteamID(member.id).as_64 == SteamID(msg.account_id).as_64):
                         sender_team = member.team
-            if(tot_mem == len(set(gameInfo.players))) :
+            if(tot_mem == len(set(gameInfo.players)) or len(set(gameInfo.players)) == 0 and tot_mem == 10):
                 if(sender_team == 1 or sender_team == 0):
                     sides_ready[sender_team] = True
                 else:
@@ -543,5 +569,5 @@ if(__name__ == "__main__"):
     gameInfo.lobbyPassword = "test"
     gameInfo.jobQueue = queue.Queue()
     gameInfo.commandQueue = queue.Queue()
-    gameInfo.players = [76561198035685466]
+    gameInfo.players = []##[76561198035685466]
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)

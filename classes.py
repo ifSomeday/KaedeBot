@@ -732,6 +732,9 @@ class gameInfo():
     ##the most recent CSOLobby
     lobby = None
 
+    ##the current active players in the lobby (on radiant/dire)
+    currPlayers = []
+
     ##when the lobby times out, in seconds since epoch
     timeout = 0
 
