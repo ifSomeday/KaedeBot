@@ -286,7 +286,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 dota.sleep(0.1) ##SPIN
         d['game_name'] = lobby_name
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
-        d['server_region'] = dota2.enums.EServerRegion.USWest ##USWest, USEast, Europe
+        d['server_region'] = dota2.enums.EServerRegion.USEast ##USWest, USEast, Europe
         d['allow_cheats'] = False
         d['visibility'] = dota2.enums.DOTALobbyVisibility.Public ##Public, Friends, Unlisted
         d['dota_tv_delay'] = dota2.enums.LobbyDotaTVDelay.LobbyDotaTV_120
@@ -294,9 +294,13 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
-
         if(tournament):
             pass
+
+        ##set additional options from request
+        for key, val in gameInfo.config.items():
+            d[key] = val
+
         dota.create_practice_lobby(password=lobby_pass, options=d)
         while(dota.lobby):
             dota.sleep(0.1) ##SPIN
@@ -569,5 +573,5 @@ if(__name__ == "__main__"):
     gameInfo.lobbyPassword = "test"
     gameInfo.jobQueue = queue.Queue()
     gameInfo.commandQueue = queue.Queue()
-    gameInfo.players = []##[76561198035685466]
+    gameInfo.players = [76561198035685466]
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)
