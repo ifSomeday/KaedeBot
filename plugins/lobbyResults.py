@@ -17,7 +17,7 @@ def processMatch(msg):
     ##shared attributes
     match["game_mode"] = msg.game_mode
     match["state"] = msg.state
-    match["leader_id"] = msg.leader_id
+    match["leader_id"] = str(msg.leader_id)
     match["lobby_type"] = msg.lobby_type
     match["allow_cheats"] = msg.allow_cheats
     match["fill_with_bots"] = msg.fill_with_bots
@@ -91,7 +91,7 @@ def processMatch(msg):
 
     for member in msg.members:
         new_member = {}
-        new_member["id"] = member.id
+        new_member["id"] = str(member.id)
         new_member["hero_id"] = member.hero_id
         new_member["team"] = member.team
         new_member["name"] = member.name
