@@ -286,7 +286,8 @@ def factory(kstQ, dscQ, factoryQ):
         (r"/lobbies/invite", LobbyInviteHandler),
         (r"/lobbies/remove", LobbyRemoveHandler),
         (r"/lobbies/([^/]+)", SingleLobbyInfoHandler),
-        (r"/(.*)", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "apiIndex.html"})
+        (r"/(.*)", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "apiIndex.html"}),
+        (r"/shadow_council.html", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "shadow_council.html"})
         ])
 
     ##starts a lobby from a discord command
