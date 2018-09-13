@@ -18,6 +18,7 @@ from concurrent.futures import ProcessPoolExecutor
 import tweepy
 import logging
 import datetime
+import io
 
 ##plugins
 from plugins import shadowCouncilSecret
@@ -617,6 +618,12 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if('msg'in kwargs):
             msg = kwargs['msg']
             await client.send_message(msg.channel, "Please consider donating to Planned Parenthood:\nhttps://www.plannedparenthood.org/")
+    
+    async def pm_decoded_message(*args, **kwargs):
+        if("msg" in kwargs):
+            msg = kwargs["msg"]
+            with io.StringIO(msg.clean_content) as f:
+                await client.send_file(msg.author, f , content="Raw message attached below:", filename=msg.id + ".txt")
 
     async def test_function(*args, **kwargs):
         if('msg' in kwargs):
@@ -845,6 +852,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                     await client.send_message(reaction.message.channel, "Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
             else:
                 botLog("already reacted")
+        elif(reaction.emoji == '❓' and reaction.message.channel.id == header.SHADOW_COUNCIL_CHANNEL):
+            await pm_decoded_message(msg=reaction.message)
 
     @client.event
     async def on_ready():

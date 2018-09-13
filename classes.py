@@ -331,6 +331,8 @@ class discordConfigHelper:
         return(False)
 
     def checkMessage(self, key, message):
+        if(message.channel == None or message.server == None):
+            return(False)
         return(self.check(key, message.channel.id, message.server.id))
 
 
