@@ -165,7 +165,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(len(set(gameInfo.players)) > 0):
             for member in dota.lobby.members:
                 if(member.team in [0,1]):
-                    if(not member.id in gameInfo.players):
+                    if(not str(member.id) in gameInfo.players):
                         botLog("kicking " + str(member.name) + "from team slots")
                         dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
                         ##dota.practice_lobby_kick(SteamID(member.id).as_32)
