@@ -295,7 +295,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
         if(not gameInfo.tournament == None and not gameInfo.tournament == 0):
-            d['tournament_id'] = int(gameInfo.tournament)
+            d["leagueid"] = int(gameInfo.tournament)
 
         ##set additional options from request
         for key, val in gameInfo.config.items():
