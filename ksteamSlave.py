@@ -101,7 +101,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         botLog(dota.connection_status)
         botLog("Dota is ready")
         if(not hosted.isSet()):
-            hostLobby(tournament=True)
+            hostLobby()
 
     @dota.on('notready')
     def reload():
@@ -164,7 +164,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         botLog("team changed")
         if(len(set(gameInfo.players)) > 0):
             for member in dota.lobby.members:
-                if(member.team in [0,1]):
+                if(member.team in [0, 1]):
                     if(not member.id in gameInfo.players):
                         botLog("kicking " + str(member.name) + "from team slots")
                         dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
@@ -218,7 +218,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 botCleanup()
             elif(msgT == "lobby"):
                 hosted.clear()
-                hostLobby(tournament=True)
+                hostLobby()
             else:
                 if(cMsg[0].startswith("!")):
                   cMsg[0] = cMsg[0][1:]
@@ -279,7 +279,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 botLog(msg)
                 dota.respond_to_party_invite(msg.group_id, accept=True)
 
-    def hostLobby(tournament=False):
+    def hostLobby():
         if(dota.lobby):
             test = dota.leave_practice_lobby()
             while(dota.lobby):
@@ -294,8 +294,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
-        if(tournament):
-            pass
+        if(not gameInfo.tournament == None and not gameInfo.tournament == 0):
+            d['tournament_id'] = int(gameInfo.tournament)
 
         ##set additional options from request
         for key, val in gameInfo.config.items():
