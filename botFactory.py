@@ -18,7 +18,6 @@ import asyncio
 
 import requests
 
-
 def factory(kstQ, dscQ, factoryQ):
 
     ##this starts in a thread, so we need to create an event loop
@@ -37,6 +36,13 @@ def factory(kstQ, dscQ, factoryQ):
     for i in range(0, len(keys.SLAVEBOTNAMES)):
         sBotArray.append(classes.steamBotInfo(keys.SLAVEBOTNAMES[i], keys.SLAVEUSERNAMES[i], keys.SLAVEPASSWORDS[i], keys.SLAVEBOTSTEAMLINKS[i]))
 
+    def botLog(text):
+        try:
+            print("BotFactory: " +  str(text), flush = True)
+        except:
+            print("BotFactory: Logging error. Probably some retard name", flush = True)
+
+
     class LobbyInfoRequestHandler(tornado.web.RequestHandler):
         
         @gen.coroutine
@@ -46,6 +52,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify key
             if(not key == keys.LD2L_API_KEY):
+                botLog("Info Request error, invalid key")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
                 self.finish()
@@ -70,6 +77,8 @@ def factory(kstQ, dscQ, factoryQ):
 
                 resp["lobbies"].append(lobby)
 
+            botLog("Responding to info request")
+
             self.write(json.dumps(resp))
             self.finish()
             
@@ -83,6 +92,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify key
             if(not key == keys.LD2L_API_KEY):
+                botLog("Single Lobby Info error, invalid key")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
                 self.finish()
@@ -90,6 +100,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify ident
             if(not slug in list(active_lobbies.keys())):
+                botLog("Single Lobby Info error, invalid ident")
                 self.set_status(400)
                 self.write(json.dumps({"result" : False, "reason" : "ident not found"}))
                 self.finish()
@@ -114,6 +125,8 @@ def factory(kstQ, dscQ, factoryQ):
 
             resp["lobby"] = lobby
 
+            botLog("Responding to single info request")
+
             self.write(json.dumps(resp))
             self.finish()
 
@@ -133,6 +146,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify key
             if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
+                botLog("Lobby Create error, invalid key")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
                 self.finish()
@@ -140,6 +154,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify ident
             if(not "ident" in self.data or self.data["ident"] in list(active_lobbies.keys())):
+                botLog("Lobby Create error, invalid ident")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "duplicate ident"}))
                 self.finish()
@@ -163,10 +178,13 @@ def factory(kstQ, dscQ, factoryQ):
             ##get Players to invite
             teams = self.data["teams"]
             if(not teams is None):
+                self.info.teams = [x["players"] for x in teams]
                 for team in teams:
                     for player in team["players"]:
                         self.info.players.append(player)
                     self.info.captains.append(team["captain"])
+
+            
 
             ##queues 
             self.info.jobQueue = queue.Queue()
@@ -195,12 +213,14 @@ def factory(kstQ, dscQ, factoryQ):
 
                 ##didn't get a lobby, returning false
                 else:
+                    botLog("Lobby Create error, couldn't get lobby")
                     self.res['result'] = False
                 self.write(json.dumps(self.res))
 
             ##no bot, so return false
             else:
-                 self.write(json.dumps({"result" : False, "reason" : "NO FREE BOTS"}))
+                botLog("Lobby Create error, no free bots")
+                self.write(json.dumps({"result" : False, "reason" : "NO FREE BOTS"}))
             self.finish()
 
     class LobbyInviteHandler(tornado.web.RequestHandler):
@@ -212,6 +232,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify key
             if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
+                botLog("Lobby Invite error, invalid key")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
                 self.finish()
@@ -219,6 +240,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify ident
             if(not "ident" in self.data or not self.data["ident"] in list(active_lobbies.keys())):
+                botLog("Lobby Invite error, invalid ident")
                 self.set_status(400)
                 self.write(json.dumps({"result" : False, "reason" : "ident not found"}))
                 self.finish()
@@ -227,6 +249,8 @@ def factory(kstQ, dscQ, factoryQ):
             if("player" in self.data):
                 commandQueue = active_lobbies[self.data["ident"]].commandQueue
                 commandQueue.put(classes.command(classes.slaveBotCommands.INVITE_PLAYER, [self.data["player"]]))
+
+                botLog("Inviting user to lobby")
                 self.write(json.dumps({"result" : True}))
                 self.finish()
     
@@ -239,6 +263,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify key
             if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
+                botLog("Lobby Remove error, invalid key")
                 self.set_status(403)
                 self.write(json.dumps({"result" : False, "reason" : "invalid key"}))
                 self.finish()
@@ -246,6 +271,7 @@ def factory(kstQ, dscQ, factoryQ):
 
             ##verify ident
             if(not "ident" in self.data or not self.data["ident"] in list(active_lobbies.keys())):
+                botLog("Lobby Remove error, invalid ident")
                 self.set_status(400)
                 self.write(json.dumps({"result" : False, "reason" : "ident not found"}))
                 self.finish()
@@ -254,12 +280,16 @@ def factory(kstQ, dscQ, factoryQ):
             commandQueue = active_lobbies[self.data["ident"]].commandQueue
             commandQueue.put(classes.command(classes.slaveBotCommands.RELEASE_BOT, [None]))
 
+            botLog("Removing lobby")
+
             self.write(json.dumps({"result" : True}))
             self.finish()
 
                  
 
     def processMatch(cmd):
+
+        botLog("Got match process")
         ##gameInfo the gameInfo specified when this lobby was created
         gameInfo = cmd.args[0]
 
@@ -274,6 +304,7 @@ def factory(kstQ, dscQ, factoryQ):
         active_lobbies.pop(ident, None)
 
         if(not gameInfo.hook == ''):
+            botLog("Posting to hook")
             asc = httpclient.AsyncHTTPClient()
             r = httpclient.HTTPRequest(gameInfo.hook, method="POST", body=json.dumps(match))
             asc.fetch(r)
@@ -301,7 +332,7 @@ def factory(kstQ, dscQ, factoryQ):
         if(sBot):
             slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
             return(sBot)
-        print("Issue getting lobby bot")
+        botLog("Issue getting lobby bot")
         dscQ.put(classes.command(classes.discordCommands.NO_BOTS_AVAILABLE, [info.discordMessage]))
         return(None)
 
@@ -351,15 +382,20 @@ def factory(kstQ, dscQ, factoryQ):
         while(factoryQ.qsize() > 0):
             cmd = factoryQ.get()
             if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
+                botLog("Got spawn request")
                 startSteamSlave(cmd = cmd)
             elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
+                botLog("Got free request")
                 freeBot(cmd = cmd)
             elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
+                botLog("Got list request")
                 getFreeBots(cmd = cmd)
             elif(cmd.command == classes.botFactoryCommands.SHUTDOWN_BOT):
+                botLog("Got shutdown request")
                 shutdownBots(cmd = cmd)
                 running = False
             elif(cmd.command == classes.botFactoryCommands.PROCESS_BASIC):
+                botLog("Got process request")
                 processMatch(cmd)
 
     ##set up app
