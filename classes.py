@@ -719,6 +719,9 @@ class gameInfo():
     ##64 bit steam IDs of players to invite (includes captains)
     players = []
 
+    ##64 bit steam IDS of players, seperated into teams. Used for telling players which team to join
+    teams = []
+
     ##64 bit steam IDs of captains in lobby
     captains = []
 
