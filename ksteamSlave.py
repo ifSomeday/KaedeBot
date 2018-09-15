@@ -284,7 +284,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 job_queue.put((True, gameInfo))
             
             ##TODO: listen for proper team join and remove sleep
-            dota.sleep(1)
+            dota.wait_event("lobby_new", 5.0)
             dota.join_practice_lobby_team(4)
             for player in gameInfo.players:
                 dota.invite_to_lobby(SteamID(player).as_64)
@@ -303,8 +303,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def hostLobby():
         if(dota.lobby):
             test = dota.leave_practice_lobby()
-            while(dota.lobby):
-                dota.sleep(0.1) ##SPIN
+            dota.wait_event("lobby_removed", 5.0)
         d['game_name'] = lobby_name
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USEast ##USWest, USEast, Europe
@@ -323,8 +322,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             d[key] = val
 
         dota.create_practice_lobby(password=lobby_pass, options=d)
-        while(dota.lobby):
-            dota.sleep(0.1) ##SPIN
+        dota.wait_event("lobby_new", 5.0)
+
         botLog("Lobby hosted")
         hosted.set()
 
