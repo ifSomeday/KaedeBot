@@ -54,6 +54,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     kyouko_toshino = SteamID(75419738)
 
     d = {}
+    kickList = {}
 
     sides_ready = [False, False]
 
@@ -137,6 +138,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         changed = False
         tmpPlayers = []
         for member in dota.lobby.members:
+            if(not member.id in gameInfo.members):
+                lobby_broadcast_slot(member)
+            gameInfo.members.append(member.id)
             if(member.team in [0, 1]):
                 tmpPlayers.append(member.id)
                 if(not member.id in gameInfo.currPlayers):
@@ -145,8 +149,17 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(changed):
             dota.emit("team_changed", msg)
 
-    def set_curr_players(arr):
-        curr_players = arr
+    ##broadcast slot to join to new member
+    def lobby_broadcast_slot(member):
+        for i in range(0, len(gameInfo.teams)):
+            if(str(member.id) in gameInfo.teams[i]):
+                loop = 0
+                while(True and loop < 5):
+                    channel, joined, left = dota.channels.wait_event("members_update", 2.0)
+                    if(member.id in joined):
+                        break
+                    loop += 1
+                sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
@@ -166,9 +179,17 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             for member in dota.lobby.members:
                 if(member.team in [0, 1]):
                     if(not str(member.id) in gameInfo.players):
-                        botLog("kicking " + str(member.name) + "from team slots")
-                        dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
-                        ##dota.practice_lobby_kick(SteamID(member.id).as_32)
+                        if(not str(member.id) in kickList):
+                            kickList[str(member.id)] = 0
+                        kickList[str(member.id)] += 1
+                        botLog(member.name + " kick #" + str(kickList[str(member.id)]))
+                        if(kickList[str(member.id)] > 3):
+                            botLog("kicking " + str(member.name) + "from lobby")
+                            dota.practice_lobby_kick(SteamID(member.id).as_32)
+                        else:
+                            botLog("kicking " + str(member.name) + "from team slots")
+                            dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
+                        
 
     #TODO: this shit is a fucking mess
     #Triggers on launch if previous lobby existed.
@@ -252,8 +273,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
         if(hosted.isSet()):
-
-            dota.channels.join_channel("Lobby_%s" % msg.lobby_id,channel_type=3)
+            
+            dota.channels.join_channel("Lobby_%s" % msg.lobby_id, channel_type=3)
             ##botLog(msg)
             ##msg is set to none for web requests
             if(lobby_msg != None):
@@ -310,15 +331,16 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def naw(*args, **kwargs):
         pass
 
-    def sendLobbyMessage(message, channel_id):
-        dota.send(dGCMsg.EMsgGCChatMessage, {"channel_id": channel_id, "text": message})
+    ##wrapper for lobby chat
+    def sendLobbyMessage(message):
+        dota.channels.lobby.send(message)
 
     def set_penalty(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 3):
-                sendLobbyMessage("Please specify a side and a penalty level (0 - 3)", msg.channel_id)
+                sendLobbyMessage("Please specify a side and a penalty level (0 - 3)")
                 return
             side = str(cMsg[1]).lower().strip()
             if(edit_distance.distance(side, 'radiant') < 3):
@@ -328,7 +350,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_BAD_GUYS
                 side = "dire"
             else:
-                sendLobbyMessage("Invalid side (Radiant, Dire)", msg.channel_id)
+                sendLobbyMessage("Invalid side (Radiant, Dire)")
                 return
             level = cMsg[2].strip()
             try:
@@ -336,11 +358,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             except:
                 level = 4
             if(not level in range(0,4)):
-                sendLobbyMessage("Invalid penalty level (0 - 3)", msg.channel_id)
+                sendLobbyMessage("Invalid penalty level (0 - 3)")
                 return
             d['penalty_level_' + side] = level
             ##TODO: second translation here
-            sendLobbyMessage("Set penalty level of " + side + " to " + str(level), msg.channel_id)
+            sendLobbyMessage("Set penalty level of " + side + " to " + str(level))
 
 
     def swap_teams(*args, **kwargs):
@@ -348,7 +370,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             msg = kwargs['msg']
             dota.flip_lobby_teams()
             ##sides_ready[0], sides_ready[1] = sides_ready[1], sides_ready[0]
-            sendLobbyMessage("Sides switched", msg.channel_id)
+            sendLobbyMessage("Sides switched")
             reset_ready(msg=msg)
 
     def set_server(*args, **kwargs):
@@ -356,7 +378,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
-                sendLobbyMessage("Please specify a server region (USW USE EU)", msg.channel_id)
+                sendLobbyMessage("Please specify a server region (USW USE EU)")
                 return
             server = str(cMsg[1]).lower().strip()
             if(server == 'usw'):
@@ -366,23 +388,23 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             elif(server == 'eu'):
                 d['server_region'] = dota2.enums.EServerRegion.Europe
             else:
-                sendLobbyMessage("Invalid region (USW USE EU)", msg.channel_id)
+                sendLobbyMessage("Invalid region (USW USE EU)")
                 return
             dota.config_practice_lobby(d)
             reset_ready(msg=msg)
-            sendLobbyMessage(("Set region to " + server.upper()), msg.channel_id)
+            sendLobbyMessage(("Set region to " + server.upper()))
 
     def set_name(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
-                sendLobbyMessage("Please specify a lobby name", msg.channel_id)
+                sendLobbyMessage("Please specify a lobby name")
                 return
             lobby_name = str(cMsg[1]).strip()
             d['game_name'] = lobby_name
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby name to '" + lobby_name + "'", msg.channel_id)
+            sendLobbyMessage("Set lobby name to '" + lobby_name + "'")
             reset_ready(msg=msg)
 
     def set_pass(*args, **kwargs):
@@ -390,12 +412,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
-                sendLobbyMessage("Please specify a lobby password", msg.channel_id)
+                sendLobbyMessage("Please specify a lobby password")
                 return
             lobby_pass = str(cMsg[1]).strip()
             d['pass_key'] = lobby_pass
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'", msg.channel_id)
+            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'")
             reset_ready(msg=msg)
 
     def lobby_shuffle(*args, **kwargs):
@@ -403,14 +425,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             msg = kwargs['msg']
             cMsg = args[0]
             dota.balanced_shuffle_lobby()
-            sendLobbyMessage("Lobby shuffled", msg.channel_id)
+            sendLobbyMessage("Lobby shuffled")
 
     def first_pick(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
-                sendLobbyMessage("Please specify a side (Radiant, Dire)", msg.channel_id)
+                sendLobbyMessage("Please specify a side (Radiant, Dire)")
                 return
             side = str(cMsg[1]).lower().strip()
             if(edit_distance.distance(side, 'radiant') < 3):
@@ -420,9 +442,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_BAD_GUYS
                 side = "Dire"
             else:
-                sendLobbyMessage("Invalid side (Radiant, Dire)", msg.channel_id)
+                sendLobbyMessage("Invalid side (Radiant, Dire)")
                 return
-            sendLobbyMessage(("Gave first pick to " + side), msg.channel_id)
+            sendLobbyMessage("Gave first pick to " + side)
             dota.config_practice_lobby(d)
             reset_ready(msg=msg)
 
@@ -441,25 +463,25 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 if(sender_team == 1 or sender_team == 0):
                     sides_ready[sender_team] = True
                 else:
-                    sendLobbyMessage("Please only ready up if you are on a team.", msg.channel_id)
+                    sendLobbyMessage("Please only ready up if you are on a team.")
                     return
             launch = True
             for side in sides_ready:
                 launch = side and launch
             if(launch):
-                sendLobbyMessage("Starting lobby. Use !cancel to stop countdown", msg.channel_id)
+                sendLobbyMessage("Starting lobby. Use !cancel to stop countdown")
                 for i in range(5, 0, -1):
                     for side in sides_ready:
                         launch = side and launch
                     if(launch):
-                        sendLobbyMessage(str(i), msg.channel_id)
+                        sendLobbyMessage(str(i))
                         dota.sleep(1)
                     else:
-                        sendLobbyMessage("Countdown canceled", msg.channel_id)
+                        sendLobbyMessage("Countdown canceled")
                         return
                 dota.launch_practice_lobby()
             else:
-                sendLobbyMessage("One side readied up. Waiting for other team..", msg.channel_id)
+                sendLobbyMessage("One side readied up. Waiting for other team..")
 
 
     def leave_lobby(*args, **kwargs):
@@ -494,7 +516,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         sides_ready[1] = False
         if ('msg' in kwargs):
             msg = kwargs['msg']
-            sendLobbyMessage("Reset ready status.", msg.channel_id)
+            sendLobbyMessage("Reset ready status.")
 
 
     def botCleanup():
@@ -570,8 +592,9 @@ if(__name__ == "__main__"):
     factoryQ = queue.Queue()
     gameInfo = classes.gameInfo()
     gameInfo.lobbyName = "test"
-    gameInfo.lobbyPassword = "test"
+    gameInfo.lobbyPassword = "test00001111"
     gameInfo.jobQueue = queue.Queue()
     gameInfo.commandQueue = queue.Queue()
-    gameInfo.players = [76561198035685466]
+    gameInfo.players = ["76561198035685466"]
+    gameInfo.teams = [["76561198035685466"], []]
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)

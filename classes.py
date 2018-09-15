@@ -720,7 +720,10 @@ class gameInfo():
     players = []
 
     ##64 bit steam IDS of players, seperated into teams. Used for telling players which team to join
-    teams = []
+    teams = [[], []]
+
+    ##all the members of the lobby
+    members = []
 
     ##64 bit steam IDs of captains in lobby
     captains = []
