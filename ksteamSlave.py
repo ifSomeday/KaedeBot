@@ -211,10 +211,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_removed')
     def lobby_removed(msg):
 
-        ## lobby remove is flooding logs
-        ##botLog(msg)
-
-
         if(not hosted.isSet()):
             return
         factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[gameInfo, msg]))
@@ -334,6 +330,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         d['cm_pick'] = dota2.enums.DOTA_CM_PICK.DOTA_CM_GOOD_GUYS
         d['allow_spectating'] = True
         d['fill_with_bots'] = False
+        d['selection_priority_rules'] = dota2.enums.DOTASelectionPriorityRules.Automatic
         if(not gameInfo.tournament == None and not gameInfo.tournament == 0):
             d["leagueid"] = int(gameInfo.tournament)
 
@@ -384,6 +381,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def swap_teams(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
+            gameInfo.teams[0], gameInfo.teams[1] = gameInfo.teams[1], gameInfo.teams[0]
             dota.flip_lobby_teams()
             ##sides_ready[0], sides_ready[1] = sides_ready[1], sides_ready[0]
             sendLobbyMessage("Sides switched")
@@ -466,6 +464,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def start_lobby(*args, **kwargs):
         if ('msg' in kwargs):
+            if(not len(dota.lobby.team_details) == 2 or any(x is None for x in dota.lobby.team_details)):
+                sendLobbyMessage("Both teams must have a name set before starting.")
+                return
             msg = kwargs['msg']
             tot_mem = 0
             sender_team = -1
@@ -495,7 +496,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                     else:
                         sendLobbyMessage("Countdown canceled")
                         return
-                dota.launch_practice_lobby()
+                if(not len(dota.lobby.team_details) == 2 or any(x is None for x in dota.lobby.team_details)):
+                    reset_ready()
+                    sendLobbyMessage("Cannot start lobby without both teams being set!")
+                else:
+                    dota.launch_practice_lobby()
             else:
                 sendLobbyMessage("One side readied up. Waiting for other team..")
 
