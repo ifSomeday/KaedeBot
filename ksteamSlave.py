@@ -245,19 +245,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             return
         if(len(msgT) > 0):
             cMsg = msgT.lower().split()
-            if((msgT == "release" or msgT == "!release")and msg.body.steamid_from == kyouko_toshino.as_64):
+            if(msgT == "release" or msgT == "!release"):
                 botLog("releasing")
                 botCleanup()
-            elif((msgT == "start" or msgT == "!start")and SteamID(msg.body.steamid_from).as_64 in header.LD2L_ADMIN_STEAM_IDS):
+            elif(msgT == "start" or msgT == "!start"):
+                botLog("starting")
                 dota.launch_practice_lobby()
-            elif(msgT == "lobby"):
-                hosted.clear()
-                hostLobby()
-            else:
-                if(cMsg[0].startswith("!")):
-                  cMsg[0] = cMsg[0][1:]
-                command = chat_command_translation[cMsg[0]] if cMsg[0] in chat_command_translation else classes.steamCommands.INVALID_COMMAND
-                function_translation[command](cMsg, msg = msg)
         else:
             ##just someone typing
             pass
@@ -382,6 +375,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def swap_teams(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             gameInfo.teams[0], gameInfo.teams[1] = gameInfo.teams[1], gameInfo.teams[0]
             dota.flip_lobby_teams()
@@ -392,6 +386,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def set_server(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
+            if(not str(SteamID(msg.account_id).as_64) in gameInfo.captains):
+                sendLobbyMessage("You must be a captain to use this command.")
+                return
             cMsg = args[0]
             if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a server region (USW USE EU)")
@@ -412,6 +409,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def set_name(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
@@ -426,6 +424,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     def set_pass(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
+            return
             cMsg = args[0]
             if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a lobby password")
@@ -446,6 +445,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def first_pick(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             cMsg = args[0]
             if(len(cMsg) < 2):
@@ -467,7 +467,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def start_lobby(*args, **kwargs):
         if ('msg' in kwargs):
-            if(not len(dota.lobby.team_details) == 2 or any(x.team_id == "" for x in dota.lobby.team_details)):
+            if(not len(dota.lobby.team_details) == 2 or any(x.team_id == 0 for x in dota.lobby.team_details)):
                 sendLobbyMessage("Both teams must have a name set before starting.")
                 return
             msg = kwargs['msg']
@@ -538,6 +538,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def cancel(*args, **kwargs):
         if('msg' in kwargs):
+            msg = kwargs['msg']
+            if(not str(SteamID(msg.account_id).as_64) in gameInfo.captains):
+                sendLobbyMessage("You must be a captain to use this command.")
+                return
             reset_ready()
 
     def reset_ready(*args, **kwargs):
