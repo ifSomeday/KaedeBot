@@ -7,7 +7,6 @@ import tornado
 import keys
 import classes
 import ksteamSlave
-from plugins import lobbyResults
 
 import threading
 import queue
@@ -17,6 +16,8 @@ import os
 import asyncio
 
 import requests
+
+from google.protobuf.json_format import MessageToJson, MessageToDict
 
 def factory(kstQ, dscQ, factoryQ):
 
@@ -73,7 +74,7 @@ def factory(kstQ, dscQ, factoryQ):
                 lobby["timeout"] = info.timeout
 
                 if(not info.lobby == None):
-                    lobby["lobby"] = lobbyResults.processMatch(info.lobby)
+                    lobby["lobby"] = MessageToDict(info.lobby)
 
                 resp["lobbies"].append(lobby)
 
@@ -121,7 +122,7 @@ def factory(kstQ, dscQ, factoryQ):
             lobby["timeout"] = lobbyInfo.timeout
 
             if(not lobbyInfo.lobby == None):
-                lobby["lobby"] = lobbyResults.processMatch(lobbyInfo.lobby)
+                lobby["lobby"] = MessageToDict(lobbyInfo.lobby)
 
             resp["lobby"] = lobby
 
@@ -142,6 +143,10 @@ def factory(kstQ, dscQ, factoryQ):
         @gen.coroutine
         def post(self):
             
+            self.data = {}
+            self.info = classes.gameInfo()
+            self.res = {}
+
             self.data = tornado.escape.json_decode(self.request.body)
 
             ##verify key
@@ -293,7 +298,7 @@ def factory(kstQ, dscQ, factoryQ):
 
         ##msg the CSODOTALobby result from the lobby_removed message
         msg = cmd.args[1]
-        match = lobbyResults.processMatch(msg)
+        match = MessageToDict(msg)
         ident = gameInfo.ident
 
         match["ident"] = ident

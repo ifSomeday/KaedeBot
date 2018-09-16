@@ -28,7 +28,6 @@ from dota2.enums import EMatchOutcome as dOutcome
 from dota2.enums import GCConnectionStatus as dConStat
 from dota2.enums import EGCBaseClientMsg as dGCbase
 
-
 import keys, edit_distance
 
 def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
@@ -213,7 +212,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
         if(not hosted.isSet()):
             return
-        factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[gameInfo, msg]))
 
         matchId = msg.match_id
         with open(os.getcwd() + "/matchResults/" + str(matchId) + "_basic.txt", "w") as f:
@@ -232,8 +230,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(matchRes.result == 1):
             with open(os.getcwd() + "/matchResults/" + str(matchId) + "_detailed.txt", "w") as f:
                 f.write(str(matchRes.match))
+            factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC, [gameInfo, matchRes]))
         else:
             botLog("ERROR: UNABLE TO GET DATA FOR " + str(matchId))
+            factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[gameInfo, msg]))
         
         botCleanup()
 
