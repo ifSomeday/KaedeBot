@@ -184,8 +184,6 @@ def factory(kstQ, dscQ, factoryQ):
                         self.info.players.append(player)
                     self.info.captains.append(team["captain"])
 
-            
-
             ##queues 
             self.info.jobQueue = queue.Queue()
             self.info.commandQueue = queue.Queue()

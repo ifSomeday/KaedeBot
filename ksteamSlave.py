@@ -112,10 +112,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
             botLog("Already in logon queue...")
             return
-        ##NOTE: disabling this is a test to fix zombie threads
-        ##if(not dota.connection_status is dConStat.HAVE_SESSION):
-        ##    dota.exit()
-        ##    dota.launch()
 
     ##NOTE: this needs work. May be impossible to enter actual game
     ##@dota.on(dGCbase.EMsgGCPingRequest)
@@ -136,14 +132,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     ##determines if the actual teams have changed, and if so, emits the "team_changed" event
     def emit_team_change_event(msg):
         changed = False
-        tmpPlayers = []
+        tmpPlayers = [[], []]
         for member in dota.lobby.members:
             if(not member.id in gameInfo.members):
                 lobby_broadcast_slot(member)
             gameInfo.members.append(member.id)
             if(member.team in [0, 1]):
-                tmpPlayers.append(member.id)
-                if(not member.id in gameInfo.currPlayers):
+                tmpPlayers[member.team].append(member.id)
+                if(not member.id in gameInfo.currPlayers[member.team]):
                     changed = True
         gameInfo.currPlayers = tmpPlayers
         if(changed):
@@ -178,17 +174,36 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(len(set(gameInfo.players)) > 0):
             for member in dota.lobby.members:
                 if(member.team in [0, 1]):
+
+                    ##if player is not supposed to be in a team
                     if(not str(member.id) in gameInfo.players):
+
+                        ##add to kicklist if not already
                         if(not str(member.id) in kickList):
                             kickList[str(member.id)] = 0
+
+                        ##increment kick counter
                         kickList[str(member.id)] += 1
                         botLog(member.name + " kick #" + str(kickList[str(member.id)]))
+
+                        ###if kicked 3 times already, kick from lobby
                         if(kickList[str(member.id)] > 3):
                             botLog("kicking " + str(member.name) + "from lobby")
                             dota.practice_lobby_kick(SteamID(member.id).as_32)
+
+                        ##kick from slot
                         else:
                             botLog("kicking " + str(member.name) + "from team slots")
                             dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
+                
+                    ##if player IS supposed to be in a team
+                    else:
+                        for i in range(0, len(gameInfo.teams)):
+                            ##if player is in the wrong team, kick from team and send mesasge
+                            if(str(member.id) in gameInfo.teams[i] and not member.team == i):
+                                dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
+                                sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
+
                         
 
     #TODO: this shit is a fucking mess
@@ -273,9 +288,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
         if(hosted.isSet()):
-            
-            dota.channels.join_channel("Lobby_%s" % msg.lobby_id, channel_type=3)
-            ##botLog(msg)
+   
             ##msg is set to none for web requests
             if(lobby_msg != None):
                 args = [lobby_name, lobby_pass, lobby_msg, sBot]
@@ -283,11 +296,18 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             else:
                 job_queue.put((True, gameInfo))
             
-            ##TODO: listen for proper team join and remove sleep
-            dota.wait_event("lobby_new", 5.0)
+            ##join chat channel
+            dota.channels.join_channel("Lobby_%s" % msg.lobby_id, channel_type=3)
+
+            ##switch to unassigned team so we don't prevent the lobby from loading
             dota.join_practice_lobby_team(4)
+
+            ##invite all players
             for player in gameInfo.players:
                 dota.invite_to_lobby(SteamID(player).as_64)
+
+                ##attempt to fix the missing invites
+                client.sleep(0.3)
 
     ##party invite event handler
     @dota.on('party_invite')
@@ -322,9 +342,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             d[key] = val
 
         dota.create_practice_lobby(password=lobby_pass, options=d)
-        dota.wait_event("lobby_new", 5.0)
-
-        botLog("Lobby hosted")
         hosted.set()
 
     def naw(*args, **kwargs):
