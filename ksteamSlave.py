@@ -248,6 +248,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             if((msgT == "release" or msgT == "!release")and msg.body.steamid_from == kyouko_toshino.as_64):
                 botLog("releasing")
                 botCleanup()
+            elif((msgT == "start" or msgT == "!start")and SteamID(msg.body.steamid_from).as_64 in header.LD2L_ADMIN_STEAM_IDS):
+                dota.launch_practice_lobby()
             elif(msgT == "lobby"):
                 hosted.clear()
                 hostLobby()
@@ -436,6 +438,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def lobby_shuffle(*args, **kwargs):
         if('msg' in kwargs):
+            return
             msg = kwargs['msg']
             cMsg = args[0]
             dota.balanced_shuffle_lobby()
@@ -464,7 +467,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def start_lobby(*args, **kwargs):
         if ('msg' in kwargs):
-            if(not len(dota.lobby.team_details) == 2 or any(x is None for x in dota.lobby.team_details)):
+            if(not len(dota.lobby.team_details) == 2 or any(x.team_id == "" for x in dota.lobby.team_details)):
                 sendLobbyMessage("Both teams must have a name set before starting.")
                 return
             msg = kwargs['msg']
@@ -476,15 +479,20 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                     botLog("found member " + str(member.name))
                     if(SteamID(member.id).as_64 == SteamID(msg.account_id).as_64):
                         sender_team = member.team
-            if(tot_mem == len(set(gameInfo.players)) or len(set(gameInfo.players)) == 0 and tot_mem == 10):
+            if(tot_mem >= 10 or tot_mem == len(set(gameInfo.players)) or SteamID(msg.account_id).as_64 in header.LD2L_ADMIN_STEAM_IDS):
                 if(sender_team == 1 or sender_team == 0):
                     sides_ready[sender_team] = True
                 else:
                     sendLobbyMessage("Please only ready up if you are on a team.")
                     return
+            else:
+                sendLobbyMessage("Please wait for the teams to be filled")
+                return
+            botLog(sides_ready)
             launch = True
             for side in sides_ready:
                 launch = side and launch
+            botLog(launch)
             if(launch):
                 sendLobbyMessage("Starting lobby. Use !cancel to stop countdown")
                 for i in range(5, 0, -1):
@@ -616,6 +624,6 @@ if(__name__ == "__main__"):
     gameInfo.lobbyPassword = "test00001111"
     gameInfo.jobQueue = queue.Queue()
     gameInfo.commandQueue = queue.Queue()
-    gameInfo.players = ["76561198035685466"]
-    gameInfo.teams = [["76561198035685466"], []]
+    gameInfo.players = []
+    gameInfo.teams = [[], []]
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)
