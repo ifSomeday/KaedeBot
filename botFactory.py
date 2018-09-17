@@ -149,6 +149,9 @@ def factory(kstQ, dscQ, factoryQ):
 
             self.data = tornado.escape.json_decode(self.request.body)
 
+            botLog("GREGGREG")
+            botLog(self.data)
+
             ##verify key
             if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
                 botLog("Lobby Create error, invalid key")

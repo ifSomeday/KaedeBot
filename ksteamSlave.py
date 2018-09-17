@@ -150,9 +150,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             if(str(member.id) in gameInfo.teams[i]):
                 loop = 0
                 while(True and loop < 5):
-                    channel, joined, left = dota.channels.wait_event("members_update", 2.0)
-                    if(member.id in joined):
-                        break
+                    res = dota.channels.wait_event("members_update", 2.0)
+                    if(not res == None):
+                        channel, joined, left = res
+                        if(member.id in joined):
+                            break
                     loop += 1
                 sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
 
