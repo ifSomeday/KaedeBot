@@ -354,6 +354,8 @@ class steamBotInfo:
         self.password = password
         self.steamLink = steamLink
         self.in_use = False
+        self.primed = False
+        self.commandQueue = None
         self.requester = requester
         self.teams = teams
 
@@ -603,6 +605,10 @@ class botFactoryCommands(Enum):
 class slaveBotCommands(Enum):
     INVITE_PLAYER = 0
     RELEASE_BOT = 1
+    LAUNCH_IDLE = 2
+    LAUNCH_DOTA = 3
+    HOST_LOBBY = 4
+    REJOIN_LOBBY = 5
 
 ######## ########    ###    ##     ##  ######
    ##    ##         ## ##   ###   ### ##    ##
@@ -711,6 +717,9 @@ class gameInfo():
     lobbyPassword = ""
     tournament = 0
 
+    ## command the bot shoudl startup with
+    startupCommand = slaveBotCommands.LAUNCH_IDLE
+
     ##one of these will always remain none, based on request type
     discordMessage = None
     jobQueue = None
@@ -748,3 +757,34 @@ class gameInfo():
 
     def __init__(self):
         pass
+
+    def update(self, info):
+        self.source = info.source
+
+        self.lobbyName = info.lobbyName
+        self.lobbyPassword = info.lobbyPassword
+        self.tournament = info.tournament
+
+        self.startupCommand = info.startupCommand
+
+        self.discordMessage = info.discordMessage
+        self.jobQueue = info.jobQueue
+        self.commandQueue = info.commandQueue
+
+        self.players = info.players
+
+        self.teams = info.teams
+
+        self.captains = info.captains
+
+        self.hook = info.hook
+
+        self.ident = info.ident
+
+        self.config = info.config
+
+        self.lobby = info.lobby
+
+        self.currPlayers = info.currPlayers
+
+        self.timeout = info.timeout

@@ -36,18 +36,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     dota = Dota2Client(client)
     bot_SteamID = None
 
-    ##args 0, 1 are always name and password
-    lobby_name = gameInfo.lobbyName
-    lobby_pass = gameInfo.lobbyPassword
-
     ##args 2 is a msg for discord requests, None for web requests
     lobby_msg = gameInfo.discordMessage
 
-    ##args 3 is then the queue to put hosted result in
-    job_queue = gameInfo.jobQueue
-
     hosted = threading.Event()
     joined = threading.Event()
+    launching = threading.Event()
     reconnecting = threading.Lock()
 
     kyouko_toshino = SteamID(75419738)
@@ -85,23 +79,44 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     ##after logon, launch dota
     @client.on('logged_on')
-    def start_dota():
+    def steam_logon_handler():
         botLog("Logged into steam")
-        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
-            botLog("Already in logon queue...")
-            return
-        if(not dota.connection_status is dConStat.HAVE_SESSION):
-            botLog("launching dota")
-            dota.launch()
+
+        ##if the startupcommand is launch Dota, rejoin Lobby, or host Lobby we want to continue with the startup procedure
+        if(gameInfo.startupCommand in [classes.slaveBotCommands.LAUNCH_DOTA, classes.slaveBotCommands.HOST_LOBBY, classes.slaveBotCommands.REJOIN_LOBBY]):
+
+            ##we do not need to do anything else special here, launch dota handles that
+            launch_dota()
 
     ##At this point dota is ready
     @dota.on('ready')
-    def ready0():
+    def dota_ready_handler():
+
+        ##log connection status here, debug purposes
         botLog("Connection status:")
         botLog(dota.connection_status)
         botLog("Dota is ready")
-        if(not hosted.isSet()):
-            hostLobby()
+
+        ##host lobby specific code
+        if(gameInfo.startupCommand == classes.slaveBotCommands.HOST_LOBBY):
+            if(not hosted.isSet()):
+                hostLobby()
+
+        ##rejoin lobby specific code
+        elif(gameInfo.startupCommand == classes.slaveBotCommands.REJOIN_LOBBY):
+
+            ##set hosted 
+            hosted.set()
+
+            ##check if we have a lobby to rejoin
+            if(dota.lobby == None):
+                botLog("Attempted to rejoin a lobby, but it did not exist! The lobby probably ended...")
+                botCleanup()
+            else:
+                botLog("Lobby rejoined")
+
+
+
 
     @dota.on('notready')
     def reload():
@@ -154,9 +169,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                     if(not res == None):
                         channel, joined, left = res
                         if(member.id in joined):
-                            break
+                            sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
+                            return
                     loop += 1
-                sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
+                
 
     ##dota lobby on lobby change event handler
     @dota.on('lobby_changed')
@@ -253,6 +269,20 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             elif(msgT == "start" or msgT == "!start"):
                 botLog("starting")
                 dota.launch_practice_lobby()
+
+            ##THESE SHOULD BE USED FOR DEBUG
+            elif(msgT == "launchdota" or msgT == "!launchdota"):
+                botLog("got launchdota")
+                cmd = classes.command(classes.slaveBotCommands.LAUNCH_DOTA, [])
+                gameInfo.commandQueue.put(cmd)
+            elif(msgT == "rejoinlobby" or msgT == "!rejoinlobby"):
+                botLog("got rejoinlobby")
+                cmd = classes.command(classes.slaveBotCommands.REJOIN_LOBBY, [])
+                gameInfo.commandQueue.put(cmd)
+            elif(msgT == "hostlobby" or msgT == "!hostlobby"):
+                botLog("got hostlobby")
+                cmd = classes.command(classes.slaveBotCommands.HOST_LOBBY, [])
+                gameInfo.commandQueue.put(cmd)
         else:
             ##just someone typing
             pass
@@ -284,10 +314,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
    
             ##msg is set to none for web requests
             if(lobby_msg != None):
-                args = [lobby_name, lobby_pass, lobby_msg, sBot]
+                args = [gameInfo.lobbyName, gameInfo.lobbyPassword, lobby_msg, sBot]
                 dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
             else:
-                job_queue.put((True, gameInfo))
+                gameInfo.jobQueue.put((True, gameInfo))
             
             ##join chat channel
             dota.channels.join_channel("Lobby_%s" % msg.lobby_id, channel_type=3)
@@ -317,7 +347,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         if(dota.lobby):
             test = dota.leave_practice_lobby()
             dota.wait_event("lobby_removed", 5.0)
-        d['game_name'] = lobby_name
+        d['game_name'] = gameInfo.lobbyName
         d['game_mode'] = dota2.enums.DOTA_GameMode.DOTA_GAMEMODE_CM
         d['server_region'] = dota2.enums.EServerRegion.USEast ##USWest, USEast, Europe
         d['allow_cheats'] = False
@@ -335,7 +365,12 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
         for key, val in gameInfo.config.items():
             d[key] = val
 
-        dota.create_practice_lobby(password=lobby_pass, options=d)
+        dota.create_practice_lobby(password=gameInfo.lobbyPassword, options=d)
+
+        ##five minutes to get in a lobby
+        gameInfo.timeout = int(time.time()) + 600
+        toH.start()
+
         hosted.set()
 
     def naw(*args, **kwargs):
@@ -417,10 +452,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a lobby name")
                 return
-            lobby_name = str(cMsg[1]).strip()
-            d['game_name'] = lobby_name
+            gameInfo.lobbyName = str(cMsg[1]).strip()
+            d['game_name'] = gameInfo.lobbyName
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby name to '" + lobby_name + "'")
+            sendLobbyMessage("Set lobby name to '" + gameInfo.lobbyName + "'")
             reset_ready(msg=msg)
 
     def set_pass(*args, **kwargs):
@@ -431,10 +466,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             if(len(cMsg) < 2):
                 sendLobbyMessage("Please specify a lobby password")
                 return
-            lobby_pass = str(cMsg[1]).strip()
-            d['pass_key'] = lobby_pass
+            gameInfo.lobbyPassword = str(cMsg[1]).strip()
+            d['pass_key'] = gameInfo.lobbyPassword
             dota.config_practice_lobby(d)
-            sendLobbyMessage("Set lobby password to '" + lobby_pass + "'")
+            sendLobbyMessage("Set lobby password to '" + gameInfo.lobbyPassword + "'")
             reset_ready(msg=msg)
 
     def lobby_shuffle(*args, **kwargs):
@@ -490,12 +525,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             else:
                 sendLobbyMessage("Please wait for the teams to be filled")
                 return
-            botLog(sides_ready)
             launch = True
             for side in sides_ready:
                 launch = side and launch
-            botLog(launch)
-            if(launch):
+            if(launch and not launching.is_set()):
+                launching.set()
                 sendLobbyMessage("Starting lobby. Use !cancel to stop countdown")
                 for i in range(5, 0, -1):
                     for side in sides_ready:
@@ -505,13 +539,15 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                         dota.sleep(1)
                     else:
                         sendLobbyMessage("Countdown canceled")
+                        launching.clear()
                         return
                 if(not len(dota.lobby.team_details) == 2 or any(x is None for x in dota.lobby.team_details)):
                     reset_ready()
                     sendLobbyMessage("Cannot start lobby without both teams being set!")
                 else:
                     dota.launch_practice_lobby()
-            else:
+                launching.clear()
+            elif(not launching.is_set()):
                 sendLobbyMessage("One side readied up. Waiting for other team..")
 
 
@@ -556,8 +592,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def botCleanup():
         botLog("shutting down")
-        if(not job_queue == None):
-            job_queue.put((False, None))
+        if(not gameInfo.jobQueue == None):
+            gameInfo.jobQueue.put((False, None))
             dota.leave_practice_lobby()
         stop_event.set()
 
@@ -576,13 +612,47 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                 botCleanup()
 
     def checkQueue():
-        if(gameInfo.commandQueue.qsize() > 0 and not dota.lobby == None):
+        if(gameInfo.commandQueue.qsize() > 0 and client.logged_on):
             cmd = gameInfo.commandQueue.get()
             if(cmd.command == classes.slaveBotCommands.INVITE_PLAYER):
-                dota.invite_to_lobby(int(cmd.args[0]))
+                botLog("got command to invite player")
+                dota.invite_to_lobby(SteamID(cmd.args[0]).as_64)
             elif(cmd.command == classes.slaveBotCommands.RELEASE_BOT):
+                botLog("got command to release bot")
+                gameInfo.startupCommand = classes.slaveBotCommands.RELEASE_BOT
                 botCleanup()
+            elif(cmd.command == classes.slaveBotCommands.LAUNCH_DOTA):
+                botLog("got command to launch dota")
+                gameInfo.startupCommand = classes.slaveBotCommands.LAUNCH_DOTA
+                launch_dota()
+            elif(cmd.command == classes.slaveBotCommands.REJOIN_LOBBY):
+                botLog("got command to rejoin lobby")
+                gameInfo.startupCommand = classes.slaveBotCommands.REJOIN_LOBBY
+                launch_dota()
+            elif(cmd.command == classes.slaveBotCommands.HOST_LOBBY):
+                botLog("got command to host lobby")
+                if(len(cmd.args) > 0):
+                    gameInfo.update(cmd.args[0])
+                gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY
+                launch_dota()
 
+    ##Launch Dota
+    def launch_dota():
+        if(dota.connection_status is dConStat.NO_SESSION_IN_LOGON_QUEUE):
+            botLog("Already in logon queue...")
+            return
+        elif(not dota.connection_status is dConStat.HAVE_SESSION):
+            botLog("launching dota")
+            dota.launch()
+        else:
+            botLog("Dota is already online. called ready handler")
+            dota_ready_handler()
+
+
+    ##Rejoin Lobby
+    def rejoin_lobby():
+        if(not dota.connection_status is dConStat.HAVE_SESSION):
+            launch_dota()
 
     function_translation = {classes.leagueLobbyCommands.SWITCH_SIDE : swap_teams, classes.leagueLobbyCommands.FIRST_PICK : first_pick,
                             classes.leagueLobbyCommands.SERVER : set_server, classes.lobbyCommands.INVALID_COMMAND : naw,
@@ -592,10 +662,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                             classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_PARTY : leave_party, 
                             classes.steamCommands.STATUS : send_status}
 
-    ##five minutes to get in a lobby
     toH = threading.Timer(600.0, timeoutHandler, [stop_event,])
-    gameInfo.timeout = int(time.time()) + 600
-    toH.start()
 
     botLog("logging in")
     client.cli_login(username=sBot.username, password=sBot.password)
@@ -632,4 +699,5 @@ if(__name__ == "__main__"):
     gameInfo.commandQueue = queue.Queue()
     gameInfo.players = []
     gameInfo.teams = [[], []]
+    gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY
     steamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)
