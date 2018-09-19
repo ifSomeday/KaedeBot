@@ -149,6 +149,8 @@ def factory(kstQ, dscQ, factoryQ):
 
             self.data = tornado.escape.json_decode(self.request.body)
 
+            self.set_header("Content-type", 'application/json')
+
             botLog("GREGGREG")
             botLog(self.data)
 
