@@ -474,7 +474,7 @@ def factory(kstQ, dscQ, factoryQ):
 
     ##set up app
     app = make_app()
-    app.listen(8080, xheaders=True)
+    app.listen(80, xheaders=True)
 
     attemptPrime(None)
 
