@@ -338,6 +338,8 @@ def factory(kstQ, dscQ, factoryQ):
             botLog("Posting to hook")
             asc = httpclient.AsyncHTTPClient()
             r = httpclient.HTTPRequest(gameInfo.hook, method="POST", body=json.dumps(match))
+            botLog("posting:")
+            botLog(json.dumps(match))
             asc.fetch(r)
 
     ##just sets up routing
