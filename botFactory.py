@@ -317,7 +317,7 @@ def factory(kstQ, dscQ, factoryQ):
 
                  
 
-    def processMatch(cmd):
+    async def processMatch(cmd):
 
         botLog("Got match process")
         ##gameInfo the gameInfo specified when this lobby was created
@@ -340,7 +340,7 @@ def factory(kstQ, dscQ, factoryQ):
             r = httpclient.HTTPRequest(gameInfo.hook, method="POST", body=json.dumps(match))
             botLog("posting:")
             botLog(json.dumps(match))
-            asc.fetch(r)
+            await asc.fetch(r)
 
     ##just sets up routing
     def make_app():
@@ -452,7 +452,7 @@ def factory(kstQ, dscQ, factoryQ):
         kstQ.put(classes.command(classes.steamCommands.SHUTDOWN_BOT, []))
 
     ##checks the queue for new commands
-    def checkQueue():
+    async def checkQueue():
         while(factoryQ.qsize() > 0):
             cmd = factoryQ.get()
             if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
@@ -470,7 +470,7 @@ def factory(kstQ, dscQ, factoryQ):
                 running = False
             elif(cmd.command == classes.botFactoryCommands.PROCESS_BASIC):
                 botLog("Got process request")
-                processMatch(cmd)
+                await processMatch(cmd)
 
     ##set up app
     app = make_app()
