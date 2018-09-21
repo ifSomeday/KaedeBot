@@ -226,25 +226,9 @@ def factory(kstQ, dscQ, factoryQ):
                 ##prime bot
                 attemptPrime(sBot.username)
                
-                ##TODO: REDO THIS
-                ##at 0.2s per cycle this is 15 seconds
-                cycles = 0
-                while(self.info.jobQueue.qsize() < 1 and cycles < 75):
-                    yield gen.sleep(0.2)
-                    cycles += 1
-                
-                ##if we got something, return true
-                if(self.info.jobQueue.qsize() > 0):
-                    result = self.info.jobQueue.get()
-                    self.res['result'] = result[0]
-                    if(result[0]):
-                        self.res['lobby'] = {}
-                        active_lobbies[self.info.ident] = self.info
+                active_lobbies[self.info.ident] = self.info
 
-                ##didn't get a lobby, returning false
-                else:
-                    botLog("Lobby Create error, couldn't get lobby")
-                    self.res['result'] = False
+                self.res['result'] = True
                 self.write(json.dumps(self.res))
 
             ##no bot, so return false
