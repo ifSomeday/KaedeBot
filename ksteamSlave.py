@@ -326,6 +326,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             dota.join_practice_lobby_team(4)
 
             ##invite all players
+            botLog("steamslave: teams, players, captains")
+            botLog(gameInfo.teams)
+            botLog(gameInfo.players)
+            botLog(gameInfo.captains)
             for player in gameInfo.players:
                 dota.invite_to_lobby(SteamID(player).as_64)
 

@@ -193,6 +193,11 @@ def factory(kstQ, dscQ, factoryQ):
                     for player in team["players"]:
                         self.info.players.append(player)
                     self.info.captains.append(team["captain"])
+            
+            botLog("Factory: teams, players, captains")
+            botLog(self.info.teams)
+            botLog(self.info.players)
+            botLog(self.info.captains)
 
             ##queues 
             self.info.jobQueue = queue.Queue()
