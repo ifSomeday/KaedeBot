@@ -134,12 +134,6 @@ def factory(kstQ, dscQ, factoryQ):
 
     class LobbyCreateHandler(tornado.web.RequestHandler):
 
-        data = {}
-
-        info = classes.gameInfo()
-
-        res = {}
-
         @gen.coroutine
         def post(self):
             

@@ -711,52 +711,51 @@ class requester(Enum):
 
 class gameInfo():
 
-    source = requester.UNKNOWN
-
-    lobbyName = ""
-    lobbyPassword = ""
-    tournament = 0
-
-    ## command the bot shoudl startup with
-    startupCommand = slaveBotCommands.LAUNCH_IDLE
-
-    ##one of these will always remain none, based on request type
-    discordMessage = None
-    jobQueue = None
-    commandQueue = None
-
-    ##64 bit steam IDs of players to invite (includes captains)
-    players = []
-
-    ##64 bit steam IDS of players, seperated into teams. Used for telling players which team to join
-    teams = [[], []]
-
-    ##all the members of the lobby
-    members = []
-
-    ##64 bit steam IDs of captains in lobby
-    captains = []
-
-    ##url to POST final match data to
-    hook = ""
-
-    ##ident
-    ident = ""
-
-    ##addition lobby config options
-    config = {}
-
-    ##the most recent CSOLobby
-    lobby = None
-
-    ##the current active players in the lobby (on radiant/dire)
-    currPlayers = [[], []]
-
-    ##when the lobby times out, in seconds since epoch
-    timeout = 0
-
     def __init__(self):
-        pass
+    
+        self.source = requester.UNKNOWN
+
+        self.lobbyName = ""
+        self.lobbyPassword = ""
+        self.tournament = 0
+
+        ## command the bot shoudl startup with
+        self.startupCommand = slaveBotCommands.LAUNCH_IDLE
+
+        ##one of these will always remain none, based on request type
+        self.discordMessage = None
+        self.jobQueue = None
+        self.commandQueue = None
+
+        ##64 bit steam IDs of players to invite (includes captains)
+        self.players = []
+
+        ##64 bit steam IDS of players, seperated into teams. Used for telling players which team to join
+        self.teams = [[], []]
+
+        ##all the members of the lobby
+        self.members = []
+
+        ##64 bit steam IDs of captains in lobby
+        self.captains = []
+
+        ##url to POST final match data to
+        self.hook = ""
+
+        ##ident
+        self.ident = ""
+
+        ##addition lobby config options
+        self.config = {}
+
+        ##the most recent CSOLobby
+        self.lobby = None
+
+        ##the current active players in the lobby (on radiant/dire)
+        self.currPlayers = [[], []]
+
+        ##when the lobby times out, in seconds since epoch
+        self.timeout = 0
 
     def update(self, info):
         self.source = info.source

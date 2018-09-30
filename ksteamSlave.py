@@ -692,7 +692,8 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     return
 
 if(__name__ == "__main__"):
-    sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[0], keys.SLAVEUSERNAMES[0], keys.SLAVEPASSWORDS[0], keys.SLAVEBOTSTEAMLINKS[0])
+    botnum = 10
+    sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[botnum], keys.SLAVEUSERNAMES[botnum], keys.SLAVEPASSWORDS[botnum], keys.SLAVEBOTSTEAMLINKS[botnum])
     kstQ = queue.Queue()
     dstQ = queue.Queue()
     factoryQ = queue.Queue()
