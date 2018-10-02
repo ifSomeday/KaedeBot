@@ -595,6 +595,7 @@ class botFactoryCommands(Enum):
     LIST_BOTS_D = 2
     SHUTDOWN_BOT = 3
     PROCESS_BASIC = 4
+    UPDATE_LOBBY = 5
 
 ################################################################
 ################################################################

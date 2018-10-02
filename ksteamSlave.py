@@ -220,6 +220,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                             if(str(member.id) in gameInfo.teams[i] and not member.team == i):
                                 dota.practice_lobby_kick_from_team(SteamID(member.id).as_32)
                                 sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
+        
+        ##update lobby
+        gameInfo.lobby = dota.lobby
+        factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_LOBBY, [gameInfo]))
 
                         
 

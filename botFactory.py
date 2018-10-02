@@ -337,6 +337,14 @@ def factory(kstQ, dscQ, factoryQ):
         (r"/shadow_council.html", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "shadow_council.html"})
         ])
 
+    ##updates lobby info for /lobbies endpoint
+    def updateLobby(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+            gameInfo = cmd.args[0]
+
+            active_lobbies[gameInfo.ident] = gameInfo
+
     ##starts a lobby from a discord command
     def startSteamSlave(*args, **kwargs):
         ##TODO: Check trust level here, or when requested in discord
@@ -444,6 +452,9 @@ def factory(kstQ, dscQ, factoryQ):
             elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
                 botLog("Got free request")
                 freeBot(cmd = cmd)
+            elif(cmd.command == classes.botFactoryCommands.UPDATE_LOBBY):
+                botLog("Update Lobby Request")
+                updateLobby(cmd = cmd)
             elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
                 botLog("Got list request")
                 getFreeBots(cmd = cmd)
