@@ -665,6 +665,27 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             if(msg.author.id == header.GWENHWYFAR):
                 await __unban_action(unbanAll=True)
 
+    async def sc_lookup(*args, **kwargs):
+        if('cmd' in kwargs):
+            cmd = kwargs['cmd']
+
+            msg_id = str(cmd.args[0])
+            resp = cmd.args[1]
+
+            channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+            
+            try:
+                msg = await client.get_message(channel, msg_id)
+                botLog("found message")
+                resp.put(msg)
+
+            except Exception as e:
+                print(e)
+                botLog("unable to find message")
+                resp.put(None)
+
+            return
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']

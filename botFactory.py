@@ -300,6 +300,39 @@ def factory(kstQ, dscQ, factoryQ):
 
                  
 
+    class scLookupHandler(tornado.web.RequestHandler):
+
+        @gen.coroutine
+        def get(self, slug):
+
+            botLog(slug)
+
+            rspQ = queue.Queue()
+
+            cmd = classes.command(classes.discordCommands.SC_LOOKUP, [slug, rspQ])
+            dscQ.put(cmd)
+
+            resp = rspQ.get()
+
+            if(resp is None):
+                self.write(json.dumps({"status" : 404}))
+
+            else:
+                j = {}
+
+                ##success
+                j["status"] = 0
+            
+                j["content"] = resp.clean_content
+                j["timestamp"] = resp.timestamp.timestamp()
+
+                self.write(json.dumps(j))
+
+            self.finish()
+
+            
+
+
     async def processMatch(cmd):
 
         botLog("Got match process")
@@ -333,8 +366,10 @@ def factory(kstQ, dscQ, factoryQ):
         (r"/lobbies/invite", LobbyInviteHandler),
         (r"/lobbies/remove", LobbyRemoveHandler),
         (r"/lobbies/([^/]+)", SingleLobbyInfoHandler),
+        (r"/sc/lookup/(\d+)", scLookupHandler),
         (r"/(.*)", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "apiIndex.html"}),
         (r"/shadow_council.html", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "shadow_council.html"})
+        
         ])
 
     ##updates lobby info for /lobbies endpoint

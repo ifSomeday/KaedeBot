@@ -231,9 +231,6 @@ class draftPlayer:
 
 class command:
 
-    command = None
-    args = []
-
     def __init__(self, command, args):
         self.command = command
         self.args = args
@@ -550,6 +547,7 @@ class discordCommands(Enum):
     DUMP_ROLES = 51
     CHECK_VERIFIER = 52
     REMOVE_ROLE = 53
+    SC_LOOKUP = 54
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
