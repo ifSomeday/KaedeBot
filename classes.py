@@ -594,6 +594,7 @@ class botFactoryCommands(Enum):
     SHUTDOWN_BOT = 3
     PROCESS_BASIC = 4
     UPDATE_LOBBY = 5
+    UPDATE_STATE = 6
 
 ################################################################
 ################################################################
@@ -786,3 +787,26 @@ class gameInfo():
         self.currPlayers = info.currPlayers
 
         self.timeout = info.timeout
+
+################################################################
+################################################################
+################################################################
+################################################################
+################################################################
+
+class lobbyState(Enum):
+    CREATED = 0
+    CREATING = 1
+    FAILED = 2
+    REMOVED = 3
+    STARTED = 4
+    COMPLETE = 5
+
+class stateData():
+
+    def __init__(self, hook, state, reason, apiKey, ident):
+        self.hook = hook
+        self.state = state
+        self.reason = reason
+        self.apiKey = apiKey
+        self.ident = ident

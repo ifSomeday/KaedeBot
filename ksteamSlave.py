@@ -315,6 +315,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     @dota.on('lobby_new')
     def on_lobby_joined(msg):
         if(hosted.isSet()):
+
+            ##send created state
+            factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(gameInfo.hook, classes.lobbyState.CREATED, "Lobby created", keys.LD2L_API_KEY, gameInfo.ident)]))
    
             ##msg is set to none for web requests
             if(lobby_msg != None):
@@ -689,6 +692,9 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     client.logout()
     botLog("Called logout")
+
+    factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, gameInfo.ident)]))
+    botLog("Called state update (shutdown)")
 
     factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot, gameInfo]))
     botLog("Put shutdown command")
