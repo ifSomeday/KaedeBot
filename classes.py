@@ -548,6 +548,7 @@ class discordCommands(Enum):
     CHECK_VERIFIER = 52
     REMOVE_ROLE = 53
     SC_LOOKUP = 54
+    NEW_CHALLENGE = 55
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##

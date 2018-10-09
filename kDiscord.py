@@ -686,6 +686,25 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
             return
 
+    async def new_challenge(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(msg.author.id == header.GWENHWYFAR):
+                await client.delete_message(msg)
+                await __unban_action(unbanAll=True)
+
+                serv = client.get_server(header.HOME_SERVER)
+                role = None
+                for r in serv.roles:
+                    if(r.id == "476129555774439426"):
+                        role = r
+
+                await client.edit_role(serv, role, mentionable=True)
+                await client.send_message(client.get_channel(header.SHADOW_COUNCIL_CHANNEL), role.mention + " the old challenge has been solved by " + " ".join(cMsg[1:]) + "! The new challenge starts now!")
+                await client.edit_role(serv, role, mentionable=False)
+                
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -714,13 +733,14 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
         classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
-        classes.discordCommands.SC_LOOKUP : sc_lookup}
+        classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
         try:
             while(not client.is_closed):
                 while(dscQ.qsize() > 0):
+                    botLog("got command")
                     cmd = dscQ.get()
                     await function_translation[cmd.command](cmd = cmd)
                 await asyncio.sleep(1)
@@ -884,9 +904,9 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     @client.event
     async def on_message_delete(message):
-        if(not message.author.id == header.MY_DISC_ID):
+        if(not message.author.id == header.GWENHWYFAR):
             botLog(message.author.name + " deleted message '" + message.clean_content + "' from channel " + message.channel.name + " in " + message.server.name)
-        if(cfg.checkMessage("deletion", message) and (not message.author.id == header.MY_DISC_ID)):
+        if(cfg.checkMessage("deletion", message) and (not message.author.id == header.GWENHWYFAR)):
             if(deleteFilter(message.content)):
                 return
             if(message.server.id == '308515912653340682' and not message.author.id == "117446235715010569"):
