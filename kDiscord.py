@@ -104,7 +104,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             botLog("recieved PM")
             await pm_command(msg=message)
         
-        if(message.channel.id == '389504390177751054'):##header.SHADOW_COUNCIL_CHANNEL):
+        if(message.channel.id == header.SHADOW_COUNCIL_CHANNEL):
             botLog("Shadow council message")
             await shadow_council(msg=message)
         
