@@ -104,7 +104,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             botLog("recieved PM")
             await pm_command(msg=message)
         
-        if(message.channel.id == header.SHADOW_COUNCIL_CHANNEL):
+        if(message.channel.id == '389504390177751054'):##header.SHADOW_COUNCIL_CHANNEL):
             botLog("Shadow council message")
             await shadow_council(msg=message)
         
@@ -705,6 +705,24 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.edit_role(serv, role, mentionable=False)
                 
 
+    async def sc_update(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(msg.author.id == header.GWENHWYFAR):   
+                await client.delete_message(msg)
+                await __unban_action(unbanAll=True)
+
+                serv = client.get_server(header.HOME_SERVER)
+                role = None
+                for r in serv.roles:
+                    if(r.id == "476129555774439426"):
+                        role = r
+
+                await client.edit_role(serv, role, mentionable=True)
+                await client.send_message(client.get_channel(header.SHADOW_COUNCIL_CHANNEL), role.mention + " ".join(cMsg[1:]))
+                await client.edit_role(serv, role, mentionable=False)
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -733,7 +751,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
         classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
-        classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge}
+        classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge,
+        classes.discordCommands.SC_UPDATE : sc_update}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

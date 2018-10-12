@@ -33,7 +33,8 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "champs" : classes.discordCommands.HONORARY_CHAMPS, "shutdownbot" : classes.discordCommands.REQUEST_SHUTDOWN,
     "egift" : classes.discordCommands.EGIFT, "abbaomega" : classes.discordCommands.OMEGA_W,
     "decode" : classes.discordCommands.DECODE, "yy" : classes.discordCommands.YURU_YURI_FULL,
-    "unbanall" : classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL, "newchallenge" : classes.discordCommands.NEW_CHALLENGE
+    "unbanall" : classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL, "newchallenge" : classes.discordCommands.NEW_CHALLENGE,
+    "scupdate" : classes.discordCommands.SC_UPDATE
 }
 
 HOME_SERVER = '133812880654073857'

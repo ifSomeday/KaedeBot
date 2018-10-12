@@ -549,6 +549,7 @@ class discordCommands(Enum):
     REMOVE_ROLE = 53
     SC_LOOKUP = 54
     NEW_CHALLENGE = 55
+    SC_UPDATE = 56
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
