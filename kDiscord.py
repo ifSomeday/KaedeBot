@@ -953,6 +953,22 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         if(member.id == '390261725145989120' and member.server.id == '133812880654073857'):
             client.ban(member)
 
+        async with shadow_council_lock:
+            sc = {}
+            with open(header.SHADOW_COUNCIL_FILE, "rb") as f:
+                sc = pickle.load(f)
+            ids = list(sc)
+            if(member.id in ids):
+                botLog("rebanning member %s" % member.name)
+                sc_channel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+                perms = sc_channel.overwrites_for(member)
+                perms.read_messages = False
+                perms.send_messages = False
+                perms.add_reactions = False
+                await client.edit_channel_permissions(sc_channel, member, perms)
+
+        
+
     ##TODO: switch to entirely plugins approach
     header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
