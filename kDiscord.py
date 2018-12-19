@@ -108,7 +108,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             botLog("Shadow council message")
             await shadow_council(msg=message)
         
-        if(message.author.id == "305094311928922114" and (x in message.clean_content.lower() for x in ["facebook", "fb"] )):
+        if(message.author.id == "305094311928922114" and any(x in message.clean_content.lower() for x in ["facebook", "fb"] )):
             await client.delete_message(message)
             return
 
@@ -934,7 +934,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 return
             if(message.server.id == '308515912653340682' and not message.author.id == "117446235715010569"):
                 return
-            if(message.author.id == "305094311928922114" and (x in message.clean_content.lower() for x in ["facebook", "fb"] )):
+            if(message.author.id == "305094311928922114" and any(x in message.clean_content.lower() for x in ["facebook", "fb"] )):
                 return
             await client.send_message(message.channel, message.author.mention + ' deleted message: "' + message.content + '"')
 
