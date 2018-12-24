@@ -27,6 +27,7 @@ from plugins import leagueResults
 from plugins import roleCommands
 from plugins import develop
 from plugins import commitlog
+from plugins import youtubeRewind
 
 def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
@@ -96,6 +97,13 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 botLog("reaction to self mention")
                 await client.add_reaction(message, "🖕")
         
+        ##try to add to rewind lib
+        try:
+            await youtubeRewind.onMessageProcessor(message)
+        except Exception as e:
+            botLog(e)
+            pass
+
         if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
             botLog("Checking floodcontrol")
             await spam_check("", msg=message, cb=None, command=None)
@@ -974,6 +982,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
     header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = roleCommands.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = develop.init(header.chat_command_translation, function_translation)
+    header.chat_command_translation, function_translation = youtubeRewind.init(header.chat_command_translation, function_translation)
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
