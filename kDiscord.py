@@ -629,24 +629,30 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             with io.StringIO(msg.clean_content) as f:
                 await client.send_file(msg.author, f , content="Raw message attached below:", filename=msg.id + ".txt")
 
+    async def my_color(*args, **kwargs):
+        if("msg" in kwargs):
+            msg = kwargs["msg"]
+            if(cfg.checkMessage("chatresponse", msg)):
+                await client.send_message(msg.channel, "Your color is %s in RGB" % str(msg.author.color.to_tuple()))
+
     async def test_function(*args, **kwargs):
-        if('msg' in kwargs):
-            msg = kwargs['msg']
-            if(not msg.author.id == '133811493778096128'):
-                return
-            mess = []
-            count = 0
-            for server in client.servers:
-                for channel in server.channels:
-                    botLog(channel)
-                    try:
-                        async for message in client.logs_from(channel, limit=sys.maxsize):
-                            mess.append(message)
-                    except:
-                        botLog("Unable to get channel info")
-            with open("newpickle", "wb") as f:
-                pickle.dump(mess, f)
-            botLog("done")
+        return
+        #     msg = kwargs['msg']
+        #     if(not msg.author.id == '133811493778096128'):
+        #         return
+        #     mess = []
+        #     count = 0
+        #     for server in client.servers:
+        #         for channel in server.channels:
+        #             botLog(channel)
+        #             try:
+        #                 async for message in client.logs_from(channel, limit=sys.maxsize):
+        #                     mess.append(message)
+        #             except:
+        #                 botLog("Unable to get channel info")
+        #     with open("newpickle", "wb") as f:
+        #         pickle.dump(mess, f)
+        #     botLog("done")
 
     async def decode(*args, **kwargs):
         if("msg" in kwargs):
@@ -756,7 +762,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
         classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
         classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge,
-        classes.discordCommands.SC_UPDATE : sc_update}
+        classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()

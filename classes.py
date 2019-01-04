@@ -550,6 +550,7 @@ class discordCommands(Enum):
     SC_LOOKUP = 54
     NEW_CHALLENGE = 55
     SC_UPDATE = 56
+    MY_COLOR = 57
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
