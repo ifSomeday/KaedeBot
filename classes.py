@@ -551,6 +551,7 @@ class discordCommands(Enum):
     NEW_CHALLENGE = 55
     SC_UPDATE = 56
     MY_COLOR = 57
+    REWIND = 58
 
 ##        #######  ########  ########  ##    ##     ######  ##     ## ########   ######
 ##       ##     ## ##     ## ##     ##  ##  ##     ##    ## ###   ### ##     ## ##    ##
