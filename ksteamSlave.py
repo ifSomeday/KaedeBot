@@ -168,7 +168,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                     res = dota.channels.wait_event("members_update", 2.0)
                     if(not res == None):
                         channel, joined, left = res
-                        if(member.id in joined):
+                        if(member.id in joined and not launching.isSet()):
                             sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
                             return
                     loop += 1
@@ -380,7 +380,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
         ##five minutes to get in a lobby
         gameInfo.timeout = int(time.time()) + 600
-        toH.start()
 
         hosted.set()
 
@@ -601,29 +600,35 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             sendLobbyMessage("Reset ready status.")
 
 
-    def botCleanup():
+    def botCleanup(shutdown = False):
         botLog("shutting down")
         if(not gameInfo.jobQueue == None):
             gameInfo.jobQueue.put((False, None))
             dota.leave_practice_lobby()
-        stop_event.set()
+        if(shutdown):
+            stop_event.set()
+        else:    
+            dota.exit()
+            hosted.clear()
+            freeBot()
 
     def timeoutHandler(*args, **kwargs):
-        evnt = args[0]
-        if(stop_event.isSet()):
-            botLog("timeout occoured, but bot is already shutting down!")
-            return
-        if(dota.lobby == None):
-            botLog("lobby not found")
-            botCleanup()
-        else:
-            botLog("im in a lobby!")
-            if(len(dota.lobby.members) < 2):
-                botLog("but im alone")
+        if(hosted.isSet() and time.time() > gameInfo.timeout):
+            botLog("timeout triggered")
+            if(stop_event.isSet()):
+                botLog("timeout occoured, but bot is already shutting down!")
+                return
+            if(dota.lobby == None):
+                botLog("lobby not found")
                 botCleanup()
+            else:
+                if(len(dota.lobby.members) < 2):
+                    botLog("cleaning up empty lobby")
+                    botCleanup()
 
     def checkQueue():
         if(gameInfo.commandQueue.qsize() > 0 and client.logged_on):
+            botLog("got command")
             cmd = gameInfo.commandQueue.get()
             if(cmd.command == classes.slaveBotCommands.INVITE_PLAYER):
                 botLog("got command to invite player")
@@ -659,6 +664,14 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
             botLog("Dota is already online. called ready handler")
             dota_ready_handler()
 
+    def freeBot():
+        ##update (remove) lobby
+        factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, gameInfo.ident)]))
+        botLog("Called state update (shutdown)")
+
+        ##free bot for future use
+        factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot, gameInfo]))
+        botLog("Put shutdown command")
 
     ##Rejoin Lobby
     def rejoin_lobby():
@@ -673,8 +686,6 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
                             classes.steamCommands.LEAVE_LOBBY : leave_lobby, classes.steamCommands.LEAVE_PARTY : leave_party, 
                             classes.steamCommands.STATUS : send_status}
 
-    toH = threading.Timer(600.0, timeoutHandler, [stop_event,])
-
     botLog("logging in")
     client.cli_login(username=sBot.username, password=sBot.password)
     botLog("logged in")
@@ -683,8 +694,11 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     while(not stop_event.isSet()):
         checkQueue()
+        timeoutHandler()
         client.sleep(1)
-    toH.cancel()
+
+    freeBot()
+
     botLog("Exited loop")
 
     client.disconnect()
@@ -693,16 +707,10 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     client.logout()
     botLog("Called logout")
 
-    factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, gameInfo.ident)]))
-    botLog("Called state update (shutdown)")
-
-    factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [sBot, gameInfo]))
-    botLog("Put shutdown command")
-
     return
 
 if(__name__ == "__main__"):
-    botnum = 10
+    botnum = 0
     sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[botnum], keys.SLAVEUSERNAMES[botnum], keys.SLAVEPASSWORDS[botnum], keys.SLAVEBOTSTEAMLINKS[botnum])
     kstQ = queue.Queue()
     dstQ = queue.Queue()

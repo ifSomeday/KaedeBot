@@ -196,37 +196,24 @@ def factory(kstQ, dscQ, factoryQ):
             botLog(self.info.players)
             botLog(self.info.captains)
 
-            ##queues 
-            self.info.jobQueue = queue.Queue()
-            self.info.commandQueue = queue.Queue()
-
             ##aquire a bot
             sBot = acquireBot()
 
             ##if we get a bot, start it and wait for lobby create
             if(sBot):
 
-                ##bot has been primed, meaning it is already online
-                if(sBot.primed):
-                    if(sBot.commandQueue is None):
-                        botLog("Bot doesnt have a queue, we are stuck")
-                        self.write(json.dumps({"status" : 1, "reason" : "NO COMMAND QUEUE"}))
-                        self.finish()
-                        return
-                    else:
-                        botLog("Hosting lobby with primed bot: " + sBot.username)
-                        sBot.commandQueue.put(classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info]))
+                ##queues 
+                self.info.jobQueue = queue.Queue()
+                self.info.commandQueue = sBot.commandQueue
 
-                ##bot has not been primed, meaning its not online
+                if(sBot.commandQueue is None):
+                    botLog("Bot doesnt have a queue, we are stuck")
+                    self.write(json.dumps({"status" : 1, "reason" : "NO COMMAND QUEUE"}))
+                    self.finish()
+                    return
                 else:
-
-                    ##specify lobby create
-                    self.info.startupCommand = classes.slaveBotCommands.HOST_LOBBY
-                    botLog("Hosting lobby with unprimed bot: " + sBot.username)
-                    slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, self.info)).start()
-
-                ##prime bot
-                attemptPrime(sBot.username)
+                    botLog("Hosting lobby with bot: " + sBot.username)
+                    sBot.commandQueue.put(classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info]))
                
                 active_lobbies[self.info.ident] = self.info
 
@@ -437,11 +424,6 @@ def factory(kstQ, dscQ, factoryQ):
     ##acquires a lobby bot under lock
     def acquireBot():
         with count_lock:
-            ##prefer primed bots
-            for bot in sBotArray:
-                if(not bot.in_use and bot.primed):
-                    bot.in_use = True
-                    return(bot)
             ##fallback on offline bots
             for bot in sBotArray:
                 if(not bot.in_use):
@@ -449,41 +431,19 @@ def factory(kstQ, dscQ, factoryQ):
                     return(bot)
         return(None)
 
-    ##attempts to prime the next bot in line
-    def attemptPrime(botName):
+
+    def primeBots():
         with count_lock:
-            ##try to get the next bot
-            for i in range(0, len(sBotArray)):
-                if(sBotArray[i].username == botName):
-                    ##bot is ready to be primed
-                    nextIdx = (i + 1) % len(sBotArray)
-                    if(not sBotArray[nextIdx].in_use and not sBotArray[nextIdx].primed):
-                        botLog("entering priority prime")
-
-                        info = classes.gameInfo()
-                        info.commandQueue = queue.Queue()
-                        info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
-                        sBotArray[nextIdx].commandQueue = info.commandQueue
-
-                        slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBotArray[nextIdx], kstQ, dscQ, factoryQ, info)).start()
-                        sBotArray[nextIdx].primed = True
-
-                        botLog("Primed: " + sBotArray[nextIdx].name)
-                        return
-            ##try to get any bot
             for sBot in sBotArray:
-                if(not sBot.in_use and not sBot.primed):
-                    botLog("entering secondary prime")
+                info = classes.gameInfo()
+                info.commandQueue = queue.Queue()
+                info.jobQueue = queue.Queue()
+                info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
 
-                    info = classes.gameInfo()
-                    info.commandQueue = queue.Queue()
-                    sBot.commandQueue = info.commandQueue
-                    info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
-                    slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
-                    sBot.primed = True
+                sBot.commandQueue = info.commandQueue
 
-                    botLog("Primed: " + sBot.name)
-                    return
+                threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
+
 
     ##frees a previously in use bot
     def freeBot(*args, **kwargs):
@@ -493,8 +453,6 @@ def factory(kstQ, dscQ, factoryQ):
             for bot in sBotArray:
                 if(bot.name == sBot.name):
                     bot.in_use = False
-                    bot.primed = False
-                    bot.commandQueue = None
                     break
         gameInfo = cmd.args[1]
         active_lobbies.pop(gameInfo.ident, None)
@@ -547,7 +505,7 @@ def factory(kstQ, dscQ, factoryQ):
     app = make_app()
     app.listen(80, xheaders=True)
 
-    attemptPrime(None)
+    primeBots()
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()
