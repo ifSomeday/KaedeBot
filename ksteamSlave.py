@@ -614,7 +614,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
 
     def timeoutHandler(*args, **kwargs):
         if(hosted.isSet() and time.time() > gameInfo.timeout):
-            botLog("timeout triggered")
+            ##botLog("timeout triggered")
             if(stop_event.isSet()):
                 botLog("timeout occoured, but bot is already shutting down!")
                 return
