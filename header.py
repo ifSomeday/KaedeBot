@@ -54,6 +54,8 @@ YURU_YURI_HOME = "D:\\Pictures\\YuruYuriDump" if not sys.platform.startswith("li
 
 LEAGUE_IDS = ['5589', '5432', '8078']
 
+CHRIS_FILTER = ["facebook", "fb", "tom", "brady", "bill", "belichick", "tb", "bb", "pats", "patriots", "frank", "pepe", "pizza", "superbowl"]
+
 ##greg, me, bubbles
 LD2L_ADMIN_STEAM_IDS = [76561198007934819, 76561198035685466, 76561198048886742]
 
