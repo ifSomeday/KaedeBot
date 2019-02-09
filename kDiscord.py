@@ -356,6 +356,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
             for role in msg.author.roles:
                 if(role.id == header.THE_FELLOWSHIP or role.id == header.SHADOW_MASTER):
                     exempt = True
+            if(msg.author.id == header.MY_DISC_ID):
+                return
             if(await shadowCouncilSecret.shadowCouncilVerifier(msg, client)):
                 if(not exempt):
                     await client.add_reaction(msg, '✅')
