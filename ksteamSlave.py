@@ -693,7 +693,7 @@ def steamSlave(sBot, kstQ, dscQ, factoryQ, gameInfo):
     bot_SteamID = client.steam_id
 
     while(not stop_event.isSet()):
-        if(not client.logged_on()):
+        if(not client.logged_on):
             restart()
         checkQueue()
         timeoutHandler()
