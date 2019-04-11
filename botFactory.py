@@ -442,7 +442,9 @@ def factory(kstQ, dscQ, factoryQ):
 
                 sBot.commandQueue = info.commandQueue
 
-                threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
+                bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, factoryQ, info)
+                bot.run()
+                ##threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
 
 
     ##frees a previously in use bot
