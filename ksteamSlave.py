@@ -124,7 +124,7 @@ class SteamSlave(Thread):
             self.timeoutHandler()
 
             ##sleeps for a second
-            ##self.client.sleep(1)
+            self.client.sleep(0.5)
 
         self.freeBot()
 
@@ -389,8 +389,6 @@ class SteamSlave(Thread):
 
 
     def steam_message_handler(self, msg):
-
-        
         
         ##decode the weirdness that is steam messages
         msgT = msg.body.message.decode("utf-8").rstrip('\x00')
