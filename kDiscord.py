@@ -743,6 +743,29 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(client.get_channel(header.SHADOW_COUNCIL_CHANNEL), role.mention + " ".join(cMsg[1:]))
                 await client.edit_role(serv, role, mentionable=False)
 
+
+    async def kill_count(*args, **kwargs):
+
+        print("here")
+
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+            if(cfg.checkMessage("chatresponse", msg) and cMsg[1] == "cox"):
+
+                resp = "Your Chambers of Xeric kill count is {0}."
+
+                if(msg.author.id in ["133811493778096128", "125412820538884096", "225768977115250688"]):
+                    resp = resp.format("1")
+                elif(msg.author.id == "92997797795602432"):
+                    resp = resp.format("300")
+                elif(msg.author.id == "480310636086034433"):
+                    resp = resp.format("1. Scrub.")
+                else:
+                    resp = resp.format("0")
+
+                await client.send_message(msg.channel, resp)
+
     async def invalid_command(*args, **kwargs):
         if('msg' in kwargs):
             msg = kwargs['msg']
@@ -772,7 +795,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
         classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
         classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge,
-        classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color}
+        classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color, classes.discordCommands.KC : kill_count}
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
