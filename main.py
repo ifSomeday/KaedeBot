@@ -50,7 +50,7 @@ def startDraft(drft):
     return(drft)
 
 def startFactory(fct):
-    fct = threading.Thread(target = botFactory.factory, args=(kstQ, dscQ, factoryQ,))
+    fct = threading.Thread(target = botFactory.factory, args=(kstQ, dscQ, ))
     fct.start()
     return(fct)
 

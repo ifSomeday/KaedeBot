@@ -1,8 +1,10 @@
 from gevent import monkey
-monkey.patch_ssl()
-monkey.patch_socket()
+monkey.patch_all()
+
+import zmq
 
 from threading import Thread
+import multiprocessing
 import threading
 import queue
 import classes
@@ -29,10 +31,14 @@ from dota2.enums import GCConnectionStatus as dConStat
 from dota2.enums import EGCBaseClientMsg as dGCbase
 
 import keys, edit_distance
+from plugins import zmqutils
 
 class SteamSlave(Thread):
 
-    def __init__(self, sBot, kstQ, dscQ, factoryQ, gameInfo):
+    def __init__(self, sBot, kstQ, dscQ, gameInfo, context=None):
+
+        #GUIDO
+        threading.Thread.__init__(self)
 
         ##bot info
         self.sBot = sBot
@@ -43,8 +49,15 @@ class SteamSlave(Thread):
         ##queues for communication
         self.kstQ = kstQ
         self.dscQ = dscQ
-        self.factoryQ = factoryQ
-        
+
+        ##zmq context
+        self.context = context or zmq.Context()
+
+        ##create socket
+        self.sock = self.context.socket(zmq.DEALER)
+        self.sock.setsockopt(zmq.IDENTITY, bytes(self.sBot.username, 'utf-8'))
+        self.sock.connect("tcp://127.0.0.1:9001")
+
         ##client info
         self.client = SteamClient()
         self.dota = Dota2Client(self.client)
@@ -101,15 +114,19 @@ class SteamSlave(Thread):
         self.__register_steam_callbacks()
         self.__register_dota_callbacks()
 
-        ##start bot
-        self.run()
-
 
     def run(self):
 
         ##initiate log on
         self.botLog("logging in")
-        self.client.cli_login(username=self.sBot.username, password=self.sBot.password)
+
+        while(not self.client.logged_on):
+            try:
+                self.client.cli_login(username=self.sBot.username, password=self.sBot.password)
+            except Exception as e:
+                self.botLog(e)
+                self.botLog("logon failed, sleeping 60 and retrying")
+                self.client.sleep(60)
 
         ##update my steam id
         self.bot_SteamID = self.client.steam_id
@@ -117,14 +134,16 @@ class SteamSlave(Thread):
         ##main loop
         while(not self.stop_event.isSet()):
 
-            ##checks message queue
-            self.checkQueue()
+            ##check zmq
+            self.recvMsg()
 
             ##checks if the lobby has timed out
             self.timeoutHandler()
 
             ##sleeps for a second
             self.client.sleep(0.5)
+
+
 
         self.freeBot()
 
@@ -220,11 +239,11 @@ class SteamSlave(Thread):
     ##attempts to restart steam
     def restart(self):
         if(not self.stop_event.isSet()):
-            self.botLog("disconnected from steam")
+            #self.botLog("disconnected from steam")
             if(self.reconnecting.locked()):
                 return
             with self.reconnecting:
-                self.botLog("Attempting to relog...")
+                #self.botLog("Attempting to relog...")
                 self.client.reconnect()
         else:
             self.botLog("No need to reconnect, we are stopping")
@@ -342,7 +361,9 @@ class SteamSlave(Thread):
         
         ##update lobby
         self.gameInfo.lobby = self.dota.lobby
-        self.factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_LOBBY, [self.gameInfo]))
+        
+        cmd = classes.command(classes.botFactoryCommands.UPDATE_LOBBY, [self.gameInfo])
+        zmqutils.sendObjDealer(self.sock, cmd)
 
                         
 
@@ -378,12 +399,14 @@ class SteamSlave(Thread):
         if(matchRes.result == 1):
             with open(os.getcwd() + "/matchResults/" + str(matchId) + "_detailed.txt", "w") as f:
                 f.write(str(matchRes.match))
-            self.factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC, [self.gameInfo, matchRes]))
+            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC, [self.gameInfo, matchRes])
+            zmqutils.sendObjDealer(self.sock, cmd)
 
         ##we did not get a result, request process on the original message
         else:
             self.botLog("ERROR: UNABLE TO GET DATA FOR " + str(matchId))
-            self.factoryQ.put(classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[self.gameInfo, msg]))
+            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[self.gameInfo, msg])
+            zmqutils.sendObjDealer(self.sock, cmd)
         
         self.botCleanup()
 
@@ -397,6 +420,8 @@ class SteamSlave(Thread):
 
         ##if the length is 0, then the message was just someone typing
         if(len(msgT) > 0):
+
+            cmd = None
 
             ##parse message
             cMsg = msgT.lower().split()
@@ -415,20 +440,20 @@ class SteamSlave(Thread):
             elif(msgT == "launchdota" or msgT == "!launchdota"):
                 self.botLog("got launchdota")
                 cmd = classes.command(classes.slaveBotCommands.LAUNCH_DOTA, [])
-                self.gameInfo.commandQueue.put(cmd)
 
             ##rejoin last lobby
             elif(msgT == "rejoinlobby" or msgT == "!rejoinlobby"):
                 self.botLog("got rejoinlobby")
                 cmd = classes.command(classes.slaveBotCommands.REJOIN_LOBBY, [])
-                self.gameInfo.commandQueue.put(cmd)
             
             ##host a new lobby
             elif(msgT == "hostlobby" or msgT == "!hostlobby"):
                 self.botLog("got hostlobby")
                 cmd = classes.command(classes.slaveBotCommands.HOST_LOBBY, [])
-                self.gameInfo.commandQueue.put(cmd)
 
+            ##do work here if we have to
+            if(not cmd is None):
+                self.parseCommand(cmd)
 
     def lobby_message_handler(self, msg):
 
@@ -466,8 +491,9 @@ class SteamSlave(Thread):
         if(self.hosted.isSet()):
 
             ##send created state
-            self.factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.CREATED, "Lobby created", keys.LD2L_API_KEY, self.gameInfo.ident)]))
-   
+            cmd = classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.CREATED, "Lobby created", keys.LD2L_API_KEY, self.gameInfo.ident)])
+            zmqutils.sendObjDealer(self.sock, cmd)
+
             ##msg is set to none for web requests
             if(self.lobby_msg != None):
                 args = [self.gameInfo.lobbyName, self.gameInfo.lobbyPassword, self.lobby_msg, self.sBot]
@@ -942,56 +968,68 @@ class SteamSlave(Thread):
                     self.botLog("cleaning up empty lobby")
                     self.botCleanup()
 
-    ##check the queue for jobs
-    def checkQueue(self):
-        if(self.gameInfo.commandQueue.qsize() > 0 and self.client.logged_on):
-            self.botLog("got command")
-            cmd = self.gameInfo.commandQueue.get()
+                    
+    def parseCommand(self, cmd):
+        ##invite a player
+        if(cmd.command == classes.slaveBotCommands.INVITE_PLAYER):
+            self.botLog("got command to invite player")
+            self.dota.invite_to_lobby(SteamID(cmd.args[0]).as_64)
 
-            ##invite a player
-            if(cmd.command == classes.slaveBotCommands.INVITE_PLAYER):
-                self.botLog("got command to invite player")
-                self.dota.invite_to_lobby(SteamID(cmd.args[0]).as_64)
+        ##release this bot
+        elif(cmd.command == classes.slaveBotCommands.RELEASE_BOT):
+            self.botLog("got command to release bot")
+            self.gameInfo.startupCommand = classes.slaveBotCommands.RELEASE_BOT
+            self.botCleanup()
 
-            ##release this bot
-            elif(cmd.command == classes.slaveBotCommands.RELEASE_BOT):
-                self.botLog("got command to release bot")
-                self.gameInfo.startupCommand = classes.slaveBotCommands.RELEASE_BOT
-                self.botCleanup()
+        ##launch dota
+        elif(cmd.command == classes.slaveBotCommands.LAUNCH_DOTA):
+            self.botLog("got command to launch dota")
+            self.gameInfo.startupCommand = classes.slaveBotCommands.LAUNCH_DOTA
+            self.launch_dota()
 
-            ##launch dota
-            elif(cmd.command == classes.slaveBotCommands.LAUNCH_DOTA):
-                self.botLog("got command to launch dota")
-                self.gameInfo.startupCommand = classes.slaveBotCommands.LAUNCH_DOTA
-                self.launch_dota()
+        ##rejoin existing lobby
+        elif(cmd.command == classes.slaveBotCommands.REJOIN_LOBBY):
+            self.botLog("got command to rejoin lobby")
+            self.gameInfo.startupCommand = classes.slaveBotCommands.REJOIN_LOBBY
+            self.launch_dota()
 
-            ##rejoin existing lobby
-            elif(cmd.command == classes.slaveBotCommands.REJOIN_LOBBY):
-                self.botLog("got command to rejoin lobby")
-                self.gameInfo.startupCommand = classes.slaveBotCommands.REJOIN_LOBBY
-                self.launch_dota()
+        ##host a new lobby
+        elif(cmd.command == classes.slaveBotCommands.HOST_LOBBY):
+            self.botLog("got command to host lobby")
 
-            ##host a new lobby
-            elif(cmd.command == classes.slaveBotCommands.HOST_LOBBY):
-                self.botLog("got command to host lobby")
+            ##update existing info
+            if(len(cmd.args) > 0):
+                self.gameInfo.update(cmd.args[0])
+                self.d = {}
 
-                ##update existing info
-                if(len(cmd.args) > 0):
-                    self.gameInfo.update(cmd.args[0])
-                    self.d = {}
+            ##set startup command, then launch dota to trigger it
+            self.gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY
+            self.launch_dota()
 
-                ##set startup command, then launch dota to trigger it
-                self.gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY
-                self.launch_dota()
+    def recvMsg(self):
+        try:
+            cmd = zmqutils.recvObjDealer(self.sock, zmq.DONTWAIT)
+
+            self.parseCommand(cmd)
+        except zmq.error.Again as e:
+            ##self.botLog("Nothing to recv currently.")
+            pass
+        except Exception as e:
+            print("socket error:\n %s" % str(e))
+
+
+
 
     ##notifies factory that the bot is done and ready for more jobs
     def freeBot(self):
         ##update (remove) lobby
-        self.factoryQ.put(classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, self.gameInfo.ident)]))
+        cmd = classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, self.gameInfo.ident)])
+        zmqutils.sendObjDealer(self.sock, cmd)
         self.botLog("Called state update (shutdown)")
 
         ##free bot for future use
-        self.factoryQ.put(classes.command(classes.botFactoryCommands.FREE_SLAVE, [self.sBot, self.gameInfo]))
+        cmd = classes.command(classes.botFactoryCommands.FREE_SLAVE, [self.sBot, self.gameInfo])
+        zmqutils.sendObjDealer(self.sock, cmd)
         self.botLog("Put shutdown command")
 
     ##Rejoin Lobby
@@ -1006,7 +1044,6 @@ if(__name__ == "__main__"):
     sBot = classes.steamBotInfo(keys.SLAVEBOTNAMES[botnum], keys.SLAVEUSERNAMES[botnum], keys.SLAVEPASSWORDS[botnum], keys.SLAVEBOTSTEAMLINKS[botnum])
     kstQ = queue.Queue()
     dstQ = queue.Queue()
-    factoryQ = queue.Queue()
     gameInfo = classes.gameInfo()
     gameInfo.lobbyName = "test"
     gameInfo.lobbyPassword = "test"
@@ -1015,6 +1052,6 @@ if(__name__ == "__main__"):
     gameInfo.players = []
     gameInfo.teams = [[], []]
     gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY
-    slave = SteamSlave(sBot, kstQ, dstQ, factoryQ, gameInfo)
-    slave.run()
+    slave = SteamSlave(sBot, kstQ, dstQ, gameInfo)
+    slave.start()
     

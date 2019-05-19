@@ -1,3 +1,5 @@
+import zmq
+
 import tornado.ioloop
 import tornado.web
 from tornado import gen
@@ -7,6 +9,7 @@ import tornado
 import keys
 import classes
 import ksteamSlave
+from plugins import zmqutils
 
 import threading
 import queue
@@ -19,7 +22,7 @@ import requests
 
 from google.protobuf.json_format import MessageToJson, MessageToDict
 
-def factory(kstQ, dscQ, factoryQ):
+def factory(kstQ, dscQ):
 
     ##this starts in a thread, so we need to create an event loop
     loop = asyncio.new_event_loop()
@@ -202,19 +205,19 @@ def factory(kstQ, dscQ, factoryQ):
             ##if we get a bot, start it and wait for lobby create
             if(sBot):
 
-                ##queues 
-                self.info.jobQueue = queue.Queue()
-                self.info.commandQueue = sBot.commandQueue
+                print("got bots")
 
-                if(sBot.commandQueue is None):
-                    botLog("Bot doesnt have a queue, we are stuck")
-                    self.write(json.dumps({"status" : 1, "reason" : "NO COMMAND QUEUE"}))
-                    self.finish()
+                botIdent = bytes(sBot.username, 'utf-8')
+
+                botLog("Hosting lobby with bot: " + sBot.username)
+                command = classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info])
+                try:
+                    zmqutils.sendObjRouter(socket, botIdent, command)
+                except Exception as e:
+                    botLog(e)
+                    self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
                     return
-                else:
-                    botLog("Hosting lobby with bot: " + sBot.username)
-                    sBot.commandQueue.put(classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info]))
-               
+                                
                 active_lobbies[self.info.ident] = self.info
 
                 self.res['status'] = 0
@@ -415,7 +418,7 @@ def factory(kstQ, dscQ, factoryQ):
 
         ##if we get a bot, set it up
         if(sBot):
-            slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
+            slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, info)).start()
             return(sBot)
         botLog("Issue getting lobby bot")
         dscQ.put(classes.command(classes.discordCommands.NO_BOTS_AVAILABLE, [info.discordMessage]))
@@ -442,9 +445,9 @@ def factory(kstQ, dscQ, factoryQ):
 
                 sBot.commandQueue = info.commandQueue
 
-                bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, factoryQ, info)
-                bot.run()
-                ##threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, factoryQ, info)).start()
+                bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, info)
+                bot.start()
+                return
 
 
     ##frees a previously in use bot
@@ -476,42 +479,57 @@ def factory(kstQ, dscQ, factoryQ):
         dscQ.put(classes.command(classes.discordCommands.SHUTDOWN_BOT, []))
         kstQ.put(classes.command(classes.steamCommands.SHUTDOWN_BOT, []))
 
-    ##checks the queue for new commands
-    async def checkQueue():
-        while(factoryQ.qsize() > 0):
-            cmd = factoryQ.get()
-            if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
-                botLog("Got spawn request")
-                startSteamSlave(cmd = cmd)
-            elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
-                botLog("Got free request")
-                freeBot(cmd = cmd)
-            elif(cmd.command == classes.botFactoryCommands.UPDATE_LOBBY):
-                botLog("Update Lobby Request")
-                updateLobby(cmd = cmd)
-            elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
-                botLog("Got list request")
-                getFreeBots(cmd = cmd)
-            elif(cmd.command == classes.botFactoryCommands.SHUTDOWN_BOT):
-                botLog("Got shutdown request")
-                shutdownBots(cmd = cmd)
-                running = False
-            elif(cmd.command == classes.botFactoryCommands.PROCESS_BASIC):
-                botLog("Got process request")
-                await processMatch(cmd)
-            elif(cmd.command == classes.botFactoryCommands.UPDATE_STATE):
-                botLog("Got update state request")
-                await updateState(cmd)
+
+    async def checkQueueZMQ():
+        try:
+            botid, cmd = zmqutils.recvObjRouter(socket, zmq.DONTWAIT)
+            await processCommand(cmd)
+        except zmq.error.Again as e:
+            ##botLog("Nothing to recv")
+            pass
+        except Exception as e:
+            botLog("Unexpected recv exception: %s" % str(e))
+
+
+    async def processCommand(cmd):
+        if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
+            botLog("Got spawn request")
+            startSteamSlave(cmd = cmd)
+        elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
+            botLog("Got free request")
+            freeBot(cmd = cmd)
+        elif(cmd.command == classes.botFactoryCommands.UPDATE_LOBBY):
+            botLog("Update Lobby Request")
+            updateLobby(cmd = cmd)
+        elif(cmd.command == classes.botFactoryCommands.LIST_BOTS_D):
+            botLog("Got list request")
+            getFreeBots(cmd = cmd)
+        elif(cmd.command == classes.botFactoryCommands.SHUTDOWN_BOT):
+            botLog("Got shutdown request")
+            shutdownBots(cmd = cmd)
+            running = False
+        elif(cmd.command == classes.botFactoryCommands.PROCESS_BASIC):
+            botLog("Got process request")
+            await processMatch(cmd)
+        elif(cmd.command == classes.botFactoryCommands.UPDATE_STATE):
+            botLog("Got update state request")
+            await updateState(cmd)
+
+
+
+    context = zmq.Context()
+    socket = context.socket(zmq.ROUTER)
+    socket.bind("tcp://*:9001")
 
     ##set up app
     app = make_app()
-    app.listen(80, xheaders=True)
-
-    primeBots()
+    app.listen(8080, xheaders=True)
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()
-    sched = tornado.ioloop.PeriodicCallback(checkQueue, 1000)
+    sched = tornado.ioloop.PeriodicCallback(checkQueueZMQ, 500)
+
+    primeBots()
 
     ##start loops
     sched.start()
@@ -520,8 +538,7 @@ def factory(kstQ, dscQ, factoryQ):
 ##for debug
 if __name__ == "__main__":
 
-    factoryQ = queue.Queue()
     kstQ = queue.Queue()
     dscQ = queue.Queue()
 
-    factory(kstQ, dscQ, factoryQ)
+    factory(kstQ, dscQ)
