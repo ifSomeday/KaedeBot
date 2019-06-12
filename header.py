@@ -35,7 +35,7 @@ chat_command_translation = {"meme" : classes.discordCommands.SEND_MEME, "newmeme
     "decode" : classes.discordCommands.DECODE, "yy" : classes.discordCommands.YURU_YURI_FULL,
     "unbanall" : classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL, "newchallenge" : classes.discordCommands.NEW_CHALLENGE,
     "scupdate" : classes.discordCommands.SC_UPDATE, "col" : classes.discordCommands.MY_COLOR,
-    "kc" : classes.discordCommands.KC
+    "kc" : classes.discordCommands.KC, "sc_reconfigure" : classes.discordCommands.SC_RECONFIGURE
 }
 
 HOME_SERVER = '133812880654073857'

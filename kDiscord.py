@@ -743,6 +743,53 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 await client.send_message(client.get_channel(header.SHADOW_COUNCIL_CHANNEL), role.mention + " ".join(cMsg[1:]))
                 await client.edit_role(serv, role, mentionable=False)
 
+    async def sc_reconfigure(*args, **kwargs):
+        if('msg' in kwargs):
+            msg = kwargs['msg']
+            cMsg = args[0]
+
+            if(msg.author.id == header.GWENHWYFAR):
+                msgCount = 1000
+                if(len(cMsg) > 1):
+                    try:
+                        msgCount = int(cMsg[1])
+                    except:
+                        msgCount = 1000
+                scChannel = client.get_channel(header.SHADOW_COUNCIL_CHANNEL)
+
+                messages = []
+                async for message in client.logs_from(scChannel, limit=msgCount):
+                    messages.append(message)
+
+                for i in range(0, len(messages)):
+                    if(messages[i].author.id == header.MY_DISC_ID and "The new challenge starts now!" in messages[i].clean_content):
+                        botLog("found start: " + str(messages[i].clean_content))
+                        botLog("index {0}".format(i))
+                        break
+
+                messagesToFix = list(reversed(messages[:i-1]))
+
+                me = client.get_server(header.HOME_SERVER).get_member(header.MY_DISC_ID)
+                
+                for message in messagesToFix:
+
+                    await client.remove_reaction(message, '✅', me)
+                    await client.remove_reaction(message, '❌', me)
+
+                    exempt = False
+                    for role in message.author.roles:
+                        if(role.id == header.THE_FELLOWSHIP or role.id == header.SHADOW_MASTER):
+                            exempt = True
+                    if(message.author.id == header.MY_DISC_ID):
+                        continue
+                    if(await shadowCouncilSecret.shadowCouncilVerifier(message, client)):
+                        if(not exempt):
+                            await client.add_reaction(message, '✅')
+                        continue
+                    #fellowship cannot be banned
+                    if(exempt):
+                        continue
+                    await client.add_reaction(message, '❌')
 
     async def kill_count(*args, **kwargs):
 
@@ -773,7 +820,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
                 pass
                 ##await client.send_message(msg.channel, "invalid command")
 
-    function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
+    function_translation = { classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
         classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
         classes.discordCommands.BSJ_MEME : bsj_meme, classes.discordCommands.BSJ_NAME : bsj_name ,
         classes.discordCommands.TWITTER : twitter, classes.discordCommands.GET_STEAM_STATUS : steam_status,
@@ -795,7 +842,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
         classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
         classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge,
-        classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color, classes.discordCommands.KC : kill_count}
+        classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color, classes.discordCommands.KC : kill_count,
+        classes.discordCommands.SC_RECONFIGURE : sc_reconfigure }
 
     async def messageHandler(kstQ, dscQ):
         await client.wait_until_ready()
