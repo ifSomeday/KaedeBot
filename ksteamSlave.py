@@ -33,6 +33,9 @@ from dota2.enums import EGCBaseClientMsg as dGCbase
 import keys, edit_distance
 from plugins import zmqutils
 
+##TODO:
+##  Replace dscQ with zmq
+
 class SteamSlave(Thread):
 
     def __init__(self, sBot, kstQ, dscQ, gameInfo, context=None):
@@ -48,7 +51,7 @@ class SteamSlave(Thread):
 
         ##queues for communication
         self.kstQ = kstQ
-        self.dscQ = dscQ
+        ##self.dscQ = dscQ
 
         ##zmq context
         self.context = context or zmq.Context()
@@ -100,7 +103,7 @@ class SteamSlave(Thread):
                                 classes.leagueLobbyCommands.GAME_PASS : self.set_pass, classes.leagueLobbyCommands.CANCEL_START : self.cancel,
                                 classes.leagueLobbyCommands.SHUFFLE : self.lobby_shuffle,
                                 classes.steamCommands.LEAVE_LOBBY : self.leave_lobby, classes.steamCommands.LEAVE_PARTY : self.leave_party, 
-                                classes.steamCommands.STATUS : self.send_status
+                                classes.steamCommands.STATUS : self.send_status, classes.steamCommands.REQUEST_SHUTDOWN : self.botShutdown
                             }
 
         ##debug enable flag
@@ -154,6 +157,9 @@ class SteamSlave(Thread):
 
         self.client.logout()
         self.botLog("Called logout")
+
+        cmd = classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [self.sBot.username])
+        zmqutils.sendObjDealer(self.sock, cmd)
 
 
     def __register_steam_callbacks(self):
@@ -431,6 +437,11 @@ class SteamSlave(Thread):
                 self.botLog("releasing")
                 self.botCleanup()
 
+            ##shut down the bot completely
+            if(msgT == "shutdown" or msgT == "!release"):
+                self.botLog("shutting down")
+                self.botShutdown()
+
             ##start the lobby immediately
             elif(msgT == "start" or msgT == "!start"):
                 self.botLog("starting")
@@ -497,9 +508,7 @@ class SteamSlave(Thread):
             ##msg is set to none for web requests
             if(self.lobby_msg != None):
                 args = [self.gameInfo.lobbyName, self.gameInfo.lobbyPassword, self.lobby_msg, self.sBot]
-                self.dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
-            else:
-                self.gameInfo.jobQueue.put((True, self.gameInfo))
+                ##self.dscQ.put(classes.command(classes.discordCommands.LOBBY_CREATE_MESSAGE, args))
             
             ##join chat channel
             self.dota.channels.join_channel("Lobby_%s" % msg.lobby_id, channel_type=3)
@@ -926,14 +935,17 @@ class SteamSlave(Thread):
             msg = kwargs['msg']
             self.sendLobbyMessage("Reset ready status.")
 
+    def botShutdown(self):
+        self.botLog("Shutting down thread")
+
+        self.botCleanup(shutdown=True)
 
     ##cleans up the bot
     def botCleanup(self, shutdown = False):
-        self.botLog("shutting down")
+        self.botLog("cleanup triggered")
 
         ##if there was a lobby, leave it
-        if(not self.gameInfo.jobQueue == None):
-            self.gameInfo.jobQueue.put((False, None))
+        if(not self.dota.lobby == None):
             self.dota.leave_practice_lobby()
 
         ##if we want to shutdown, do it
@@ -993,6 +1005,10 @@ class SteamSlave(Thread):
             self.gameInfo.startupCommand = classes.slaveBotCommands.REJOIN_LOBBY
             self.launch_dota()
 
+        elif(cmd.command == classes.steamCommands.REQUEST_SHUTDOWN):
+            self.botLog("got command to kill thread")
+            self.botShutdown()
+
         ##host a new lobby
         elif(cmd.command == classes.slaveBotCommands.HOST_LOBBY):
             self.botLog("got command to host lobby")
@@ -1047,8 +1063,6 @@ if(__name__ == "__main__"):
     gameInfo = classes.gameInfo()
     gameInfo.lobbyName = "test"
     gameInfo.lobbyPassword = "test"
-    gameInfo.jobQueue = queue.Queue()
-    gameInfo.commandQueue = queue.Queue()
     gameInfo.players = []
     gameInfo.teams = [[], []]
     gameInfo.startupCommand = classes.slaveBotCommands.HOST_LOBBY

@@ -2,6 +2,8 @@ import blosc
 import pickle
 import sys
 
+from dota2.enums import EDOTAGCMsg as dGCMsg
+
 def sendObjRouter(socket, ident, obj, flags=0, protocol=-1):
     p = pickle.dumps(obj, protocol=protocol)
     b = blosc.compress(p)

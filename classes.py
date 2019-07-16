@@ -600,6 +600,7 @@ class botFactoryCommands(Enum):
     PROCESS_BASIC = 4
     UPDATE_LOBBY = 5
     UPDATE_STATE = 6
+    
 
 ################################################################
 ################################################################
@@ -614,6 +615,7 @@ class slaveBotCommands(Enum):
     LAUNCH_DOTA = 3
     HOST_LOBBY = 4
     REJOIN_LOBBY = 5
+    REQUEST_SHUTDOWN = 6
 
 ######## ########    ###    ##     ##  ######
    ##    ##         ## ##   ###   ### ##    ##
@@ -729,8 +731,6 @@ class gameInfo():
 
         ##one of these will always remain none, based on request type
         self.discordMessage = None
-        self.jobQueue = None
-        self.commandQueue = None
 
         ##64 bit steam IDs of players to invite (includes captains)
         self.players = []
@@ -749,6 +749,9 @@ class gameInfo():
 
         ##ident
         self.ident = ""
+
+        ##bot ident
+        self.botIdent =""
 
         ##addition lobby config options
         self.config = {}
@@ -772,8 +775,6 @@ class gameInfo():
         self.startupCommand = info.startupCommand
 
         self.discordMessage = info.discordMessage
-        self.jobQueue = info.jobQueue
-        self.commandQueue = info.commandQueue
 
         self.players = info.players
 

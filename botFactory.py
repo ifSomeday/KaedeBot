@@ -22,6 +22,15 @@ import requests
 
 from google.protobuf.json_format import MessageToJson, MessageToDict
 
+##TODO:
+##  Add ability to send bot shutdown into bot restart for post steam maintanence
+##      This should include a reconnect timeout from the perspective of the bot, and trigger
+##      The bot factory to do the restart and create
+## Add more post hooks to alert client of bot lifecycle
+##      Specifically, one to alert after the lobby has been successfully created
+## Add bot shutdown handler that does not restart the bot
+## Add shutdown all, restart all, start all methods and endpoints
+
 def factory(kstQ, dscQ):
 
     ##this starts in a thread, so we need to create an event loop
@@ -208,6 +217,7 @@ def factory(kstQ, dscQ):
                 print("got bots")
 
                 botIdent = bytes(sBot.username, 'utf-8')
+                self.info["botIdent"] = botIdent
 
                 botLog("Hosting lobby with bot: " + sBot.username)
                 command = classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info])
@@ -254,8 +264,14 @@ def factory(kstQ, dscQ):
                 return
 
             if("player" in self.data):
-                commandQueue = active_lobbies[self.data["ident"]].commandQueue
-                commandQueue.put(classes.command(classes.slaveBotCommands.INVITE_PLAYER, [self.data["player"]]))
+                
+                try:
+                    invCommand = classes.command(classes.slaveBotCommands.INVITE_PLAYER, [self.data["player"]])
+                    zmqutils.sendObjRouter(socket, self.data["ident"]["botIdent"], invCommand)
+                except Exception as e:
+                    botLog(e)
+                    self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                    return
 
                 botLog("Inviting user to lobby")
                 self.write(json.dumps({"status" : 0}))
@@ -284,14 +300,61 @@ def factory(kstQ, dscQ):
                 self.finish()
                 return
 
-            commandQueue = active_lobbies[self.data["ident"]].commandQueue
-            commandQueue.put(classes.command(classes.slaveBotCommands.RELEASE_BOT, [None]))
+            try:
+                rmvCommand = classes.command(classes.slaveBotCommands.RELEASE_BOT, [None])
+                zmqutils.sendObjRouter(socket, self.data["ident"]["botIdent"], rmvCommand)
+            except Exception as e:
+                botLog(e)
+                self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                return
 
             botLog("Removing lobby")
 
             self.write(json.dumps({"status" : 0}))
             self.finish()
 
+
+    class BotRestartHandler(tornado.web.RequestHandler):
+
+        @gen.coroutine
+        def post(self):
+
+            self.data = tornado.escape.json_decode(self.request.body)
+
+            ##verify key
+            if(not "key" in self.data or not self.data["key"] == keys.LD2L_API_KEY):
+                botLog("Bot Restart error, invalid key")
+                self.set_status(403)
+                self.write(json.dumps({"status" : 1, "reason" : "invalid key"}))
+                self.finish()
+                return
+
+            if(not "botIdent" in self.data or not self.data["botIdent"] in [x.username for x in sBotArray]):
+                botLog("Bot Restart error, invalid ident")
+                self.set_status(400)
+                self.write(json.dumps({"status" : 1, "reason" : "ident not found"}))
+                self.finish()
+                return
+
+            botLog("here3")
+
+            command = classes.command(classes.steamCommands.REQUEST_SHUTDOWN, [None])
+
+            botLog("here4")
+
+            try:
+                zmqutils.sendObjRouter(socket, bytes(self.data["botIdent"], 'utf-8'), command)
+                botLog("here5")
+            except Exception as e:
+                botLog("here6")
+                botLog(e)
+                self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                return
+
+            botLog("here7")
+
+            self.write(json.dumps({"status" : 0}))
+            self.finish()
                  
 
     class scLookupHandler(tornado.web.RequestHandler):
@@ -395,6 +458,7 @@ def factory(kstQ, dscQ):
         (r"/lobbies/invite", LobbyInviteHandler),
         (r"/lobbies/remove", LobbyRemoveHandler),
         (r"/lobbies/([^/]+)", SingleLobbyInfoHandler),
+        (r"/bots/restart", BotRestartHandler),
         (r"/sc/lookup/(\d+)", scLookupHandler),
         (r"/(.*)", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "apiIndex.html"}),
         (r"/shadow_council.html", tornado.web.StaticFileHandler, {"path":  os.getcwd() + "/staticHtml", "default_filename": "shadow_council.html"})
@@ -413,15 +477,9 @@ def factory(kstQ, dscQ):
     def startSteamSlave(*args, **kwargs):
         ##TODO: Check trust level here, or when requested in discord
         cmd = kwargs['cmd']
-        info = cmd.args[0]
-        sBot = acquireBot()
+        username = cmd.args[0]
+        sBot = primeBot(username)
 
-        ##if we get a bot, set it up
-        if(sBot):
-            slaveBot = threading.Thread(target = ksteamSlave.steamSlave, args=(sBot, kstQ, dscQ, info)).start()
-            return(sBot)
-        botLog("Issue getting lobby bot")
-        dscQ.put(classes.command(classes.discordCommands.NO_BOTS_AVAILABLE, [info.discordMessage]))
         return(None)
 
     ##acquires a lobby bot under lock
@@ -439,15 +497,21 @@ def factory(kstQ, dscQ):
         with count_lock:
             for sBot in sBotArray:
                 info = classes.gameInfo()
-                info.commandQueue = queue.Queue()
-                info.jobQueue = queue.Queue()
                 info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
-
-                sBot.commandQueue = info.commandQueue
 
                 bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, info)
                 bot.start()
-                return
+                ##return
+
+    def primeBot(username):
+        with count_lock:
+            for sBot in sBotArray:
+                if(sBot.username == username):
+                    info = classes.gameInfo()
+                    info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
+
+                bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, info)
+                bot.start()
 
 
     ##frees a previously in use bot
@@ -523,7 +587,7 @@ def factory(kstQ, dscQ):
 
     ##set up app
     app = make_app()
-    app.listen(8080, xheaders=True)
+    app.listen(80, xheaders=True)
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()
