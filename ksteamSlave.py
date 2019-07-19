@@ -74,6 +74,7 @@ class SteamSlave(Thread):
         self.joined = threading.Event()
         self.launching = threading.Event()
         self.reconnecting = threading.Lock()
+        self.teamChangeLock = threading.Lock()
         self.stop_event = threading.Event()
 
         ##for administration purposes
@@ -256,33 +257,33 @@ class SteamSlave(Thread):
 
     ##determines if the actual teams have changed, and if so, emits the "team_changed" event
     def emit_team_change_event(self, msg):
-        
-        ##temp variables 
-        changed = False
-        tmpPlayers = [[], []]
+        with self.teamChangeLock:
+            ##temp variables 
+            changed = False
+            tmpPlayers = [[], []]
 
-        ##iterate over lobby members
-        for member in self.dota.lobby.members:
+            ##iterate over lobby members
+            for member in self.dota.lobby.members:
 
-            ##track players that join the lobby
-            if(not member.id in self.gameInfo.members):
-                self.lobby_broadcast_slot(member)
-            self.gameInfo.members.append(member.id)
+                ##track players that join the lobby
+                if(not member.id in self.gameInfo.members):
+                    self.lobby_broadcast_slot(member)
+                self.gameInfo.members.append(member.id)
 
-            ##if the person joined a team, add to our temporary player array
-            if(member.team in [0, 1]):
-                tmpPlayers[member.team].append(member.id)
+                ##if the person joined a team, add to our temporary player array
+                if(member.team in [0, 1]):
+                    tmpPlayers[member.team].append(member.id)
 
-                ##if they were not in a team before, we have a real team_change
-                if(not member.id in self.gameInfo.currPlayers[member.team]):
-                    changed = True
+                    ##if they were not in a team before, we have a real team_change
+                    if(not member.id in self.gameInfo.currPlayers[member.team]):
+                        changed = True
 
-        ##update our gameInfo's current player array
-        self.gameInfo.currPlayers = tmpPlayers
+            ##update our gameInfo's current player array
+            self.gameInfo.currPlayers = tmpPlayers
 
-        ##send team change event if the teams did indeed change
-        if(changed):
-            self.dota.emit("team_changed", msg)
+            ##send team change event if the teams did indeed change
+            if(changed):
+                self.dota.emit("team_changed", msg)
 
     ##broadcast slot to join to new member
     def lobby_broadcast_slot(self, member):
