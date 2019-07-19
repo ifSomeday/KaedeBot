@@ -350,8 +350,8 @@ class steamBotInfo:
         self.username = username
         self.password = password
         self.steamLink = steamLink
-        self.in_use = False
-        self.primed = False
+        self.state = botState.OFFLINE
+        ##self.primed = False
         self.commandQueue = None
         self.requester = requester
         self.teams = teams
@@ -600,6 +600,7 @@ class botFactoryCommands(Enum):
     PROCESS_BASIC = 4
     UPDATE_LOBBY = 5
     UPDATE_STATE = 6
+    UPDATE_BOT_STATE = 7
     
 
 ################################################################
@@ -807,6 +808,11 @@ class lobbyState(Enum):
     REMOVED = 3
     STARTED = 4
     COMPLETE = 5
+
+class botState(Enum):
+    OFFLINE = 0
+    ONLINE = 1
+    ACTIVE = 2
 
 class stateData():
 

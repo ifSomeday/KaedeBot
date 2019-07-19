@@ -23,13 +23,14 @@ import requests
 from google.protobuf.json_format import MessageToJson, MessageToDict
 
 ##TODO:
-##  Add ability to send bot shutdown into bot restart for post steam maintanence
-##      This should include a reconnect timeout from the perspective of the bot, and trigger
-##      The bot factory to do the restart and create
-## Add more post hooks to alert client of bot lifecycle
-##      Specifically, one to alert after the lobby has been successfully created
-## Add bot shutdown handler that does not restart the bot
-## Add shutdown all, restart all, start all methods and endpoints
+##  [x] Add ability to send bot shutdown into bot restart for post steam maintanence
+##      [x] This should include a reconnect timeout from the perspective of the bot, and trigger
+##      [x] The bot factory to do the restart and create
+##  [ ] Add more post hooks to alert client of bot lifecycle
+##      [ ] Specifically, one to alert after the lobby has been successfully created
+##  [x] Add addtional bot state, thread started but not connected to steam. Account for this in aquire bot to only get bots that are ready for immediate host
+##  [ ] Add bot shutdown handler that does not restart the bot
+##  [ ] Add shutdown all, restart all, start all methods and endpoints
 
 def factory(kstQ, dscQ):
 
@@ -86,7 +87,7 @@ def factory(kstQ, dscQ):
                 lobby["timeout"] = info.timeout
 
                 if(not info.lobby == None):
-                    lobby["lobby"] = MessageToDict(info.lobby)
+                    lobby["lobby"] = info.lobby
 
                 resp["lobbies"].append(lobby)
 
@@ -134,7 +135,7 @@ def factory(kstQ, dscQ):
             lobby["timeout"] = lobbyInfo.timeout
 
             if(not lobbyInfo.lobby == None):
-                lobby["lobby"] = MessageToDict(lobbyInfo.lobby)
+                lobby["lobby"] = lobbyInfo.lobby
 
             resp["lobby"] = lobby
 
@@ -157,7 +158,6 @@ def factory(kstQ, dscQ):
 
             self.set_header("Content-type", 'application/json')
 
-            botLog("GREGGREG")
             botLog(self.data)
 
             ##verify key
@@ -202,11 +202,6 @@ def factory(kstQ, dscQ):
                     for player in team["players"]:
                         self.info.players.append(player)
                     self.info.captains.append(team["captain"])
-            
-            botLog("Factory: teams, players, captains")
-            botLog(self.info.teams)
-            botLog(self.info.players)
-            botLog(self.info.captains)
 
             ##aquire a bot
             sBot = acquireBot()
@@ -214,10 +209,10 @@ def factory(kstQ, dscQ):
             ##if we get a bot, start it and wait for lobby create
             if(sBot):
 
-                print("got bots")
+                ##botLog("Requesting lobby with bot: %s" % sBot.name)
 
                 botIdent = bytes(sBot.username, 'utf-8')
-                self.info["botIdent"] = botIdent
+                self.info.botIdent = botIdent
 
                 botLog("Hosting lobby with bot: " + sBot.username)
                 command = classes.command(classes.slaveBotCommands.HOST_LOBBY, [self.info])
@@ -225,7 +220,7 @@ def factory(kstQ, dscQ):
                     zmqutils.sendObjRouter(socket, botIdent, command)
                 except Exception as e:
                     botLog(e)
-                    self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                    self.write(json.dumps({"status" : 1, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
                     return
                                 
                 active_lobbies[self.info.ident] = self.info
@@ -238,6 +233,7 @@ def factory(kstQ, dscQ):
             else:
                 botLog("Lobby Create error, no free bots")
                 self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "NO FREE BOTS"}))
+
             self.finish()
 
     class LobbyInviteHandler(tornado.web.RequestHandler):
@@ -329,29 +325,34 @@ def factory(kstQ, dscQ):
                 self.finish()
                 return
 
-            if(not "botIdent" in self.data or not self.data["botIdent"] in [x.username for x in sBotArray]):
+            if(not "botIdent" in self.data or (not self.data["botIdent"] in [x.username for x in sBotArray] and not self.data["botIdent"] == "all")):
                 botLog("Bot Restart error, invalid ident")
                 self.set_status(400)
                 self.write(json.dumps({"status" : 1, "reason" : "ident not found"}))
                 self.finish()
                 return
 
-            botLog("here3")
+            if(not self.data["botIdent"] == "all"):
 
-            command = classes.command(classes.steamCommands.REQUEST_SHUTDOWN, [None])
+                command = classes.command(classes.steamCommands.REQUEST_SHUTDOWN, [None])
 
-            botLog("here4")
+                try:
+                    zmqutils.sendObjRouter(socket, bytes(self.data["botIdent"], 'utf-8'), command)
+                except Exception as e:
+                    botLog(e)
+                    self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                    return
+            else:
 
-            try:
-                zmqutils.sendObjRouter(socket, bytes(self.data["botIdent"], 'utf-8'), command)
-                botLog("here5")
-            except Exception as e:
-                botLog("here6")
-                botLog(e)
-                self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
-                return
+                command = classes.command(classes.steamCommands.REQUEST_SHUTDOWN, [None])
 
-            botLog("here7")
+                for botUsername in keys.SLAVEUSERNAMES:
+                    try:
+                        zmqutils.sendObjRouter(socket, bytes(botUsername, 'utf-8'), command)
+                    except Exception as e:
+                        botLog(e)
+                        self.write(json.dumps({"status" : classes.slaveBotCommands.FAILED, "reason" : "SOCKET ERROR DURING BOT COMMUNICATION"}))
+                        
 
             self.write(json.dumps({"status" : 0}))
             self.finish()
@@ -387,8 +388,6 @@ def factory(kstQ, dscQ):
 
             self.finish()
 
-            
-
 
     async def processMatch(cmd):
 
@@ -397,8 +396,7 @@ def factory(kstQ, dscQ):
         gameInfo = cmd.args[0]
 
         ##msg the CSODOTALobby result from the lobby_removed message
-        msg = cmd.args[1]
-        match = MessageToDict(msg)
+        match = cmd.args[1]
         ident = gameInfo.ident
 
         ##check if hook empty
@@ -450,6 +448,30 @@ def factory(kstQ, dscQ):
 
         botLog("Sent update " + str(updateStruct.state))
 
+    async def setBotState(username, state):
+        with count_lock:
+            for bot in sBotArray:
+                if(bot.username == username):
+                    bot.state = state
+                    return(True)
+        return(False)
+
+
+    async def updateBotState(cmd):
+        
+        ##unpack data
+        botUsername = cmd.args[0]
+        botState = cmd.args[1]
+
+        botLog("here")
+
+        ret = await setBotState(botUsername, botState)
+
+        botLog("here2")
+
+        if(not ret):
+            botLog("Unable to set botstate for %s to %s" % (botUsername, str(botState)))
+
     ##just sets up routing
     def make_app():
         return tornado.web.Application([
@@ -487,8 +509,8 @@ def factory(kstQ, dscQ):
         with count_lock:
             ##fallback on offline bots
             for bot in sBotArray:
-                if(not bot.in_use):
-                    bot.in_use = True
+                if(bot.state == classes.botState.ONLINE):
+                    bot.state = classes.botState.ACTIVE
                     return(bot)
         return(None)
 
@@ -510,8 +532,8 @@ def factory(kstQ, dscQ):
                     info = classes.gameInfo()
                     info.startupCommand = classes.slaveBotCommands.LAUNCH_IDLE
 
-                bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, info)
-                bot.start()
+                    bot = ksteamSlave.SteamSlave(sBot, kstQ, dscQ, info)
+                    bot.start()
 
 
     ##frees a previously in use bot
@@ -521,7 +543,7 @@ def factory(kstQ, dscQ):
         with count_lock:
             for bot in sBotArray:
                 if(bot.name == sBot.name):
-                    bot.in_use = False
+                    bot.state = classes.botState.ONLINE
                     break
         gameInfo = cmd.args[1]
         active_lobbies.pop(gameInfo.ident, None)
@@ -533,7 +555,7 @@ def factory(kstQ, dscQ):
         l = []
         with count_lock:
             for bot in sBotArray:
-                if(bot.in_use == False):
+                if(bot.state == classes.botState.ONLINE):
                     l.append(bot.name)
         dscQ.put(classes.command(classes.discordCommands.BOT_LIST_RET, [msg, l]))
 
@@ -578,6 +600,9 @@ def factory(kstQ, dscQ):
         elif(cmd.command == classes.botFactoryCommands.UPDATE_STATE):
             botLog("Got update state request")
             await updateState(cmd)
+        elif(cmd.command == classes.botFactoryCommands.UPDATE_BOT_STATE):
+            botLog("got update bot state command")
+            await updateBotState(cmd)
 
 
 
@@ -587,7 +612,7 @@ def factory(kstQ, dscQ):
 
     ##set up app
     app = make_app()
-    app.listen(80, xheaders=True)
+    app.listen(8080, xheaders=True)
 
     ##set up loops
     main_loop = tornado.ioloop.IOLoop.current()

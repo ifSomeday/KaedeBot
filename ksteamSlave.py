@@ -30,11 +30,13 @@ from dota2.enums import EMatchOutcome as dOutcome
 from dota2.enums import GCConnectionStatus as dConStat
 from dota2.enums import EGCBaseClientMsg as dGCbase
 
+from google.protobuf.json_format import MessageToJson, MessageToDict
+
 import keys, edit_distance
 from plugins import zmqutils
 
 ##TODO:
-##  Replace dscQ with zmq
+##  [ ] Replace dscQ with zmq
 
 class SteamSlave(Thread):
 
@@ -198,6 +200,10 @@ class SteamSlave(Thread):
     def steam_logon_handler(self):
         self.botLog("Logged into steam")
 
+        ##Alert the factory we logged on to steam
+        updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.ONLINE])
+        zmqutils.sendObjDealer(self.sock, updateCmd)
+
         ##if the startupcommand is launch Dota, rejoin Lobby, or host Lobby we want to continue with the startup procedure
         if(self.gameInfo.startupCommand in [classes.slaveBotCommands.LAUNCH_DOTA, classes.slaveBotCommands.HOST_LOBBY, classes.slaveBotCommands.REJOIN_LOBBY]):
 
@@ -245,13 +251,21 @@ class SteamSlave(Thread):
     
     ##attempts to restart steam
     def restart(self):
+
+        ##let the factory know we are offline
+        updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.OFFLINE])
+        zmqutils.sendObjDealer(self.sock, updateCmd)
+
         if(not self.stop_event.isSet()):
             #self.botLog("disconnected from steam")
             if(self.reconnecting.locked()):
                 return
             with self.reconnecting:
                 #self.botLog("Attempting to relog...")
-                self.client.reconnect()
+                if(not self.client.reconnect(maxdelay=120, retry=10)):
+                    botLog("Unable to reconnect, restarting thread")
+                    self.botShutdown()
+
         else:
             self.botLog("No need to reconnect, we are stopping")
 
@@ -325,7 +339,7 @@ class SteamSlave(Thread):
             self.botLog("The hosted lobby has changed")
 
             ##update lobby object
-            self.gameInfo.lobby = msg
+            self.gameInfo.lobby = MessageToDict(msg)
 
             ##emit teams changed
             self.emit_team_change_event(msg)
@@ -367,7 +381,7 @@ class SteamSlave(Thread):
                                 self.sendLobbyMessage(member.name + ", please join the " + ("radiant" if i == 0 else "dire") + " team.")
         
         ##update lobby
-        self.gameInfo.lobby = self.dota.lobby
+        self.gameInfo.lobby = MessageToDict(self.dota.lobby)
         
         cmd = classes.command(classes.botFactoryCommands.UPDATE_LOBBY, [self.gameInfo])
         zmqutils.sendObjDealer(self.sock, cmd)
@@ -406,7 +420,7 @@ class SteamSlave(Thread):
         if(matchRes.result == 1):
             with open(os.getcwd() + "/matchResults/" + str(matchId) + "_detailed.txt", "w") as f:
                 f.write(str(matchRes.match))
-            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC, [self.gameInfo, matchRes])
+            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC, [self.gameInfo, MessageToDict(matchRes)])
             zmqutils.sendObjDealer(self.sock, cmd)
 
         ##we did not get a result, request process on the original message
@@ -951,13 +965,23 @@ class SteamSlave(Thread):
 
         ##if we want to shutdown, do it
         if(shutdown):
+            
+            updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.OFFLINE])
+            zmqutils.sendObjDealer(self.sock, updateCmd)
+            
             self.stop_event.set()
 
         ##otherwise just leave dota
-        else:    
+        else:
+
+            updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.ACTIVE])
+            zmqutils.sendObjDealer(self.sock, updateCmd)
+
             self.dota.exit()
             self.hosted.clear()
             self.freeBot()
+
+
 
 
     ##handles lobby timeout
@@ -1040,13 +1064,13 @@ class SteamSlave(Thread):
     ##notifies factory that the bot is done and ready for more jobs
     def freeBot(self):
         ##update (remove) lobby
-        cmd = classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, self.gameInfo.ident)])
-        zmqutils.sendObjDealer(self.sock, cmd)
+        updateCmd = classes.command(classes.botFactoryCommands.UPDATE_STATE, [classes.stateData(self.gameInfo.hook, classes.lobbyState.REMOVED, "Bot shutting down", keys.LD2L_API_KEY, self.gameInfo.ident)])
+        zmqutils.sendObjDealer(self.sock, updateCmd)
         self.botLog("Called state update (shutdown)")
 
         ##free bot for future use
-        cmd = classes.command(classes.botFactoryCommands.FREE_SLAVE, [self.sBot, self.gameInfo])
-        zmqutils.sendObjDealer(self.sock, cmd)
+        freeCmd = classes.command(classes.botFactoryCommands.FREE_SLAVE, [self.sBot, self.gameInfo])
+        zmqutils.sendObjDealer(self.sock, freeCmd)
         self.botLog("Put shutdown command")
 
     ##Rejoin Lobby
