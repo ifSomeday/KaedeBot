@@ -263,7 +263,7 @@ class SteamSlave(Thread):
             with self.reconnecting:
                 #self.botLog("Attempting to relog...")
                 if(not self.client.reconnect(maxdelay=120, retry=10)):
-                    botLog("Unable to reconnect, restarting thread")
+                    self.botLog("Unable to reconnect, restarting thread")
                     self.botShutdown()
 
         else:
