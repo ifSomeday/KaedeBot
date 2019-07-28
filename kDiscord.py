@@ -22,8 +22,8 @@ import io
 
 ##plugins
 from plugins import shadowCouncilSecret
-from plugins import dotaStats
-from plugins import leagueResults
+#from plugins import dotaStats
+f#rom plugins import leagueResults
 from plugins import roleCommands
 from plugins import develop
 from plugins import commitlog
@@ -1009,8 +1009,8 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
         
 
     ##TODO: switch to entirely plugins approach
-    header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
-    header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
+    #header.chat_command_translation, function_translation = dotaStats.init(header.chat_command_translation, function_translation)
+    #header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = roleCommands.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = develop.init(header.chat_command_translation, function_translation)
     header.chat_command_translation, function_translation = youtubeRewind.init(header.chat_command_translation, function_translation)
