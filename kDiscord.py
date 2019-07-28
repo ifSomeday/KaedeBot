@@ -23,7 +23,7 @@ import io
 ##plugins
 from plugins import shadowCouncilSecret
 #from plugins import dotaStats
-f#rom plugins import leagueResults
+#from plugins import leagueResults
 from plugins import roleCommands
 from plugins import develop
 from plugins import commitlog
