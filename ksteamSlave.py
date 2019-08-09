@@ -261,7 +261,7 @@ class SteamSlave(Thread):
             if(self.reconnecting.locked()):
                 return
             with self.reconnecting:
-                #self.botLog("Attempting to relog...")
+                self.botLog("Attempting to relog...")
                 if(not self.client.reconnect(maxdelay=120, retry=10)):
                     self.botLog("Unable to reconnect, restarting thread")
                     self.botShutdown()
@@ -556,6 +556,9 @@ class SteamSlave(Thread):
         if(self.dota.lobby):
             test = self.dota.leave_practice_lobby()
             self.dota.wait_event("lobby_removed", 5.0)
+
+        ##reset kickList
+        self.kickList = {}
 
         ##set lobby settings field
         self.d['game_name'] = self.gameInfo.lobbyName
