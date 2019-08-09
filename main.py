@@ -50,8 +50,8 @@ def startDraft(drft):
     return(drft)
 
 def startFactory(fct):
-    fct = threading.Thread(target = botFactory.factory, args=(kstQ, dscQ, ))
-    fct.start()
+##    fct = threading.Thread(target = botFactory.factory, args=(kstQ, dscQ, ))
+##    fct.start()
     return(fct)
 
 while(running):
@@ -62,9 +62,9 @@ while(running):
     if(kdc == None or not kdc.isAlive()):
         print("thread kdc is stopped... starting...")
         kdc = startDiscord(kdc)
-    if(fct == None or not fct.isAlive()):
-        print("thread fct is stopped... starting...")
-        fct = startFactory(fct)
+    ##if(fct == None or not fct.isAlive()):
+    ##    print("thread fct is stopped... starting...")
+    ##    fct = startFactory(fct)
     ##if(drft == None or not drft.isAlive()):
     ##    pass
     ##    print("thread drft is stopped... starting...")
