@@ -1017,7 +1017,7 @@ def discBot(kstQ, dscQ, factoryQ, draftEvent):
 
     client.loop.create_task(messageHandler(kstQ, dscQ))
     client.loop.create_task(saveTables())
-    client.loop.create_task(league_results())
+    #client.loop.create_task(league_results())
     client.loop.create_task(logIp())
     client.loop.create_task(tree_diary())
     client.loop.create_task(shadow_council_unban())
