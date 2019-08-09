@@ -426,7 +426,7 @@ class SteamSlave(Thread):
         ##we did not get a result, request process on the original message
         else:
             self.botLog("ERROR: UNABLE TO GET DATA FOR " + str(matchId))
-            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[self.gameInfo, msg])
+            cmd = classes.command(classes.botFactoryCommands.PROCESS_BASIC ,[self.gameInfo, MessageToDict(msg)])
             zmqutils.sendObjDealer(self.sock, cmd)
         
         self.botCleanup()
