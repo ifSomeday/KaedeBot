@@ -569,6 +569,7 @@ def factory(kstQ, dscQ):
     async def checkQueueZMQ():
         try:
             botid, cmd = zmqutils.recvObjRouter(socket, zmq.DONTWAIT)
+            botLog("Got command: %s" % str(cmd))
             await processCommand(cmd)
         except zmq.error.Again as e:
             ##botLog("Nothing to recv")

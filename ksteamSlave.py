@@ -163,6 +163,7 @@ class SteamSlave(Thread):
 
         cmd = classes.command(classes.botFactoryCommands.SPAWN_SLAVE, [self.sBot.username])
         zmqutils.sendObjDealer(self.sock, cmd)
+        self.botLog("Sent spawn slave command")
 
 
     def __register_steam_callbacks(self):
