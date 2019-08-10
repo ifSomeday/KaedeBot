@@ -31,6 +31,7 @@ from google.protobuf.json_format import MessageToJson, MessageToDict
 ##  [x] Add addtional bot state, thread started but not connected to steam. Account for this in aquire bot to only get bots that are ready for immediate host
 ##  [ ] Add bot shutdown handler that does not restart the bot
 ##  [ ] Add shutdown all, restart all, start all methods and endpoints
+##  [ ] Make spawnslave delay heartbeat based and remove asyncio.sleep
 
 def factory(kstQ, dscQ):
 
@@ -580,7 +581,8 @@ def factory(kstQ, dscQ):
 
     async def processCommand(cmd):
         if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
-            botLog("Got spawn request")
+            botLog("Got spawn request, sleeping for 10")
+            await asyncio.sleep(10)
             startSteamSlave(cmd = cmd)
         elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
             botLog("Got free request")
