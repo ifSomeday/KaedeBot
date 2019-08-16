@@ -601,6 +601,8 @@ class botFactoryCommands(Enum):
     UPDATE_LOBBY = 5
     UPDATE_STATE = 6
     UPDATE_BOT_STATE = 7
+    HEART = 8
+    BEAT = 9
     
 
 ################################################################

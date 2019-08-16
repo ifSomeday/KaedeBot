@@ -38,7 +38,6 @@ def factory(kstQ, dscQ):
     ##this starts in a thread, so we need to create an event loop
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     ##locks
     count_lock = threading.Lock()
 
@@ -464,11 +463,7 @@ def factory(kstQ, dscQ):
         botUsername = cmd.args[0]
         botState = cmd.args[1]
 
-        botLog("here")
-
         ret = await setBotState(botUsername, botState)
-
-        botLog("here2")
 
         if(not ret):
             botLog("Unable to set botstate for %s to %s" % (botUsername, str(botState)))
@@ -567,11 +562,21 @@ def factory(kstQ, dscQ):
         kstQ.put(classes.command(classes.steamCommands.SHUTDOWN_BOT, []))
 
 
+    async def sendPong(botid, cmd):
+        try:
+            cmd = classes.command(classes.botFactoryCommands.BEAT, [])
+            zmqutils.sendObjRouter(socket, botid, cmd)
+            botLog("Sent BEAT to %s" % str(botid))
+        except Exception as e:
+            botLog("error sending heartbeat to %s:\n %s" % (str(botid), e))
+            pass
+        
+
     async def checkQueueZMQ():
         try:
             botid, cmd = zmqutils.recvObjRouter(socket, zmq.DONTWAIT)
             botLog("Got command: %s" % str(cmd))
-            await processCommand(cmd)
+            await processCommand(botid, cmd)
         except zmq.error.Again as e:
             ##botLog("Nothing to recv")
             pass
@@ -579,10 +584,9 @@ def factory(kstQ, dscQ):
             botLog("Unexpected recv exception: %s" % str(e))
 
 
-    async def processCommand(cmd):
+    async def processCommand(botid, cmd):
         if(cmd.command == classes.botFactoryCommands.SPAWN_SLAVE):
             botLog("Got spawn request, sleeping for 10")
-            await asyncio.sleep(10)
             startSteamSlave(cmd = cmd)
         elif(cmd.command == classes.botFactoryCommands.FREE_SLAVE):
             botLog("Got free request")
@@ -606,6 +610,9 @@ def factory(kstQ, dscQ):
         elif(cmd.command == classes.botFactoryCommands.UPDATE_BOT_STATE):
             botLog("got update bot state command")
             await updateBotState(cmd)
+        elif(cmd.command == classes.botFactoryCommands.HEART):
+            botLog("got HEART from %s" % str(botid))
+            await sendPong(botid, cmd)
 
 
 

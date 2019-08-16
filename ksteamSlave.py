@@ -58,11 +58,6 @@ class SteamSlave(Thread):
         ##zmq context
         self.context = context or zmq.Context()
 
-        ##create socket
-        self.sock = self.context.socket(zmq.DEALER)
-        self.sock.setsockopt(zmq.IDENTITY, bytes(self.sBot.username, 'utf-8'))
-        self.sock.connect("tcp://127.0.0.1:9001")
-
         ##client info
         self.client = SteamClient()
         self.dota = Dota2Client(self.client)
@@ -109,7 +104,6 @@ class SteamSlave(Thread):
                                 classes.steamCommands.STATUS : self.send_status, classes.steamCommands.REQUEST_SHUTDOWN : self.botShutdown
                             }
 
-        ##debug enable flag
         self.debug = True
 
         ##enable library debugging
@@ -122,6 +116,11 @@ class SteamSlave(Thread):
 
 
     def run(self):
+
+        ##create socket
+        while(not self.__create_socket()):
+            self.botLog("Failed to connect to ROUTER, trying again in 10...")
+            time.sleep(10)
 
         ##initiate log on
         self.botLog("logging in")
@@ -184,6 +183,40 @@ class SteamSlave(Thread):
         self.dota.on('lobby_new', self.on_lobby_joined)
         self.dota.on('party_invite', self.party_invite)
         self.dota.on(dGCMsg.EMsgGCChatMessage, self.lobby_message_handler)
+
+    
+    def __create_socket(self):
+        self.botLog("Attempting to create socket")
+        self.sock = self.context.socket(zmq.DEALER)
+        self.sock.setsockopt(zmq.IDENTITY, bytes(self.sBot.username, 'utf-8'))
+        self.sock.connect("tcp://127.0.0.1:9001")
+
+        cmd = classes.command(classes.botFactoryCommands.HEART, [])
+
+        try:
+            self.botLog("Sending HEART")
+            zmqutils.sendObjDealer(self.sock, cmd, flags=zmq.DONTWAIT)
+            self.botLog("Sent HEART")
+        except Exception as e:
+            self.botLog("Unable to send HEART:\n%s" % e)
+            return(False)
+
+        
+        ##attempts a recv every 0.5 seconds for 5 seconds
+        count = 0 
+        while(count < 10):
+            count += 1
+            try:
+                self.botLog("Attempting to recv BEAT")
+                resp = zmqutils.recvObjDealer(self.sock, zmq.DONTWAIT)
+                self.botLog("recv command %s" % str(resp))
+                if(resp.command == classes.botFactoryCommands.BEAT):
+                    return(True)
+            except:
+                ##self.botLog("Nothing to recv, sleeping 0.25")
+                time.sleep(0.5)
+        self.sock.close()
+        return(False)
 
 
     def botLog(self, text):
@@ -972,7 +1005,7 @@ class SteamSlave(Thread):
 
         ##if we want to shutdown, do it
         if(shutdown):
-            
+
             updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.OFFLINE])
             zmqutils.sendObjDealer(self.sock, updateCmd)
             
@@ -980,7 +1013,7 @@ class SteamSlave(Thread):
 
         ##otherwise just leave dota
         else:
-
+            
             updateCmd = classes.command(classes.botFactoryCommands.UPDATE_BOT_STATE, [self.sBot.username, classes.botState.ACTIVE])
             zmqutils.sendObjDealer(self.sock, updateCmd)
 
