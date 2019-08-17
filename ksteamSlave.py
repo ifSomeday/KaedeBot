@@ -123,7 +123,7 @@ class SteamSlave(Thread):
             time.sleep(10)
 
         ##initiate log on
-        self.botLog("logging in")
+        self.botLog("Socket create successful, logging in to steam")
 
         while(not self.client.logged_on):
             try:
@@ -194,9 +194,7 @@ class SteamSlave(Thread):
         cmd = classes.command(classes.botFactoryCommands.HEART, [])
 
         try:
-            self.botLog("Sending HEART")
             zmqutils.sendObjDealer(self.sock, cmd, flags=zmq.DONTWAIT)
-            self.botLog("Sent HEART")
         except Exception as e:
             self.botLog("Unable to send HEART:\n%s" % e)
             return(False)
@@ -207,13 +205,11 @@ class SteamSlave(Thread):
         while(count < 10):
             count += 1
             try:
-                self.botLog("Attempting to recv BEAT")
                 resp = zmqutils.recvObjDealer(self.sock, zmq.DONTWAIT)
                 self.botLog("recv command %s" % str(resp))
                 if(resp.command == classes.botFactoryCommands.BEAT):
                     return(True)
             except:
-                ##self.botLog("Nothing to recv, sleeping 0.25")
                 time.sleep(0.5)
         self.sock.close()
         return(False)
