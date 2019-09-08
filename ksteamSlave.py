@@ -136,6 +136,8 @@ class SteamSlave(Thread):
         ##update my steam id
         self.bot_SteamID = self.client.steam_id
 
+        self.botLog("I am hosting with playerlist %s " % str(self.gameInfo.players))
+
         ##main loop
         while(not self.stop_event.isSet()):
 
@@ -386,6 +388,8 @@ class SteamSlave(Thread):
 
                     ##if player is not supposed to be in a team
                     if(not str(member.id) in self.gameInfo.players):
+
+                        self.botlog("I did not find player with steamID %s in players" % str(member.id))
 
                         ##add to kicklist if not already
                         if(not str(member.id) in self.kickList):
