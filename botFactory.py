@@ -200,7 +200,7 @@ def factory(kstQ, dscQ):
                 self.info.teams = [x["players"] for x in teams]
                 for team in teams:
                     for player in team["players"]:
-                        self.info.players.append(str(player))
+                        self.info.players.append(player)
                     self.info.captains.append(team["captain"])
 
             ##aquire a bot
