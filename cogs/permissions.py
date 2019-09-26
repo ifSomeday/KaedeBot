@@ -6,6 +6,8 @@ import typing
 import pickle
 import os
 
+from cogs import checks
+
 from threading import Lock
 
 class PermissionConverter(commands.Converter):
@@ -47,12 +49,6 @@ class PermissionHandler(commands.Cog):
                 pickle.dump(self.guildPermissions, f)
 
 
-    def manageGuild():
-        async def predicate(ctx):
-            return (ctx.author.guild_permissions.manage_guild or ctx.author.id == 133811493778096128)
-        return(commands.check(predicate))
-
-
     def permissionCheck(self, perm):
         async def predicate(ctx):
             self.is_enabled(ctx, perm)
@@ -60,7 +56,7 @@ class PermissionHandler(commands.Cog):
 
 
     @commands.command(name="addPerm")
-    @manageGuild()
+    @checks.manageGuild()
     async def addPermission(self, ctx, perm: typing.Union[PermissionConverter, str], target : typing.Optional[str]):
 
         if(isinstance(perm, str)):
@@ -88,7 +84,7 @@ class PermissionHandler(commands.Cog):
 
 
     @commands.command(name="removePerm")
-    @manageGuild()
+    @checks.manageGuild()
     async def removePermission(self, ctx, perm: typing.Union[PermissionConverter, str], target : typing.Optional[str]):
 
         if(isinstance(perm, str)):

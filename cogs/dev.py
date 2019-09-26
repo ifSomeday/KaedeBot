@@ -1,19 +1,15 @@
 import discord
 from discord.ext import commands
-
+from cogs import checks
 
 class DevTools(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    def me():
-        async def predicate(ctx):
-            return (ctx.author.id == 133811493778096128)
-        return(commands.check(predicate))
 
     @commands.command()
-    @me()
+    @checks.me()
     async def reload(self, ctx, *args):
         for arg in args:
             self.bot.reload_extension(arg)
@@ -26,7 +22,7 @@ class DevTools(commands.Cog):
             await ctx.send(error)
 
     @commands.command()
-    @me()
+    @checks.me()
     async def load(self, ctx, *args):
         for arg in args:
             self.bot.load_extension(arg)
@@ -37,7 +33,6 @@ class DevTools(commands.Cog):
             print("unauthorized attempt of load")
         else:
             await ctx.send(error)
-
 
 def setup(bot):
     bot.add_cog(DevTools(bot))

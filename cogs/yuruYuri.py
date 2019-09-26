@@ -4,22 +4,16 @@ import random
 import header
 import os
 
+from cogs import checks
+
 class YuruYuri(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        #self.perms = bot.get_cog('PermissionHandler')
-
-
-    def permissionCheck():
-        async def predicate(ctx):
-            perms = ctx.bot.get_cog('PermissionHandler')
-            return(perms.is_enabled(ctx, perms.Permissions.IMAGEMACRO))
-        return(commands.check(predicate))
-
+        
 
     @commands.command(name="yy")
-    @permissionCheck()
+    @checks.permissionCheck('IMAGEMACRO')
     async def yy(self, ctx, *args):
         cMsg = args[0] if args else None
         files = os.listdir(header.YURU_YURI_HOME)

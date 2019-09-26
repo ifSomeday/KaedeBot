@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from cogs import checks
 
 class RuneScape(commands.Cog):
 
@@ -8,15 +9,8 @@ class RuneScape(commands.Cog):
         self.bot = bot
 
 
-    def permissionCheck():
-        async def predicate(ctx):
-            perms = ctx.bot.get_cog('PermissionHandler')
-            return(perms.is_enabled(ctx, perms.Permissions.CHATRESPONSE))
-        return(commands.check(predicate))
-
-
     @commands.command(name="kc")
-    @permissionCheck()
+    @checks.permissionCheck("CHATRESPONSE")
     async def kc(self, ctx, raid):
 
         if(raid.lower() == "cox"):
