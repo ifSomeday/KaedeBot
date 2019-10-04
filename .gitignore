@@ -79,3 +79,4 @@ newpickle
 pf.txt
 *.log
 *.backup
+cogs/shadowCouncil.py
