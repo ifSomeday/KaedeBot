@@ -20,6 +20,8 @@ client = commands.Bot(command_prefix='!')
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
+    game = discord.Game("willmrice.com")
+    await client.change_presence(activity=game)
 
 ## if we didnt specify extensions to load, prepare all for loading
 if(len(loadList) == 0):
