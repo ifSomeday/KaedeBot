@@ -141,6 +141,7 @@ class PermissionHandler(commands.Cog):
         FLOODCONTROL = auto()
         DRAFT = auto()
         OPENDOTA = auto()
+        REWIND = auto()
 
 def setup(bot):
     bot.add_cog(PermissionHandler(bot))
