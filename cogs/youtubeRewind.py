@@ -15,7 +15,7 @@ class YoutubeRewind(commands.Cog):
         self.fileLock = asyncio.Lock()
         self.filePath = "{0}/dataStores/rewind.pickle".format(os.getcwd())
         self.loadRewind()
-        self.urlFinder = r"youtu\.?be(?:\.com)?\/(?:watch\?v=)?\/?([^ \n]*)"
+        self.urlFinder = r"((?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?\/?[^ \n]*)"
 
 
     @commands.command(name="rewind")
@@ -28,7 +28,7 @@ class YoutubeRewind(commands.Cog):
             await ctx.send("No videos in current channel, or library is still being built...\nTry again in a couple minutes")
         else:
             channelVideos = self.videos[ctx.channel.id]
-            await ctx.send("Your YouTube rewind is\nhttps://youtu.be/{0}".format(random.choice(channelVideos)))
+            await ctx.send("Your YouTube rewind is\n{0}".format(random.choice(channelVideos)))
 
 
     @commands.Cog.listener()
