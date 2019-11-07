@@ -144,6 +144,7 @@ class PermissionHandler(commands.Cog):
         DRAFT = auto()
         OPENDOTA = auto()
         REWIND = auto()
+        EGIFT = auto()
 
 def setup(bot):
     bot.add_cog(PermissionHandler(bot))

@@ -500,11 +500,6 @@ async def clean_shutoff(*args, **kwargs):
         botLog("closing connection")
         client.logout()
 
-async def egift_pp(*args, **kwargs):
-    if('msg'in kwargs):
-        msg = kwargs['msg']
-        await msg.channel.send("Please consider donating to Planned Parenthood:\nhttps://www.plannedparenthood.org/")
-
 async def pm_decoded_message(*args, **kwargs):
     if("msg" in kwargs):
         msg = kwargs["msg"]
