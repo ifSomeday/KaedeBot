@@ -34,7 +34,6 @@ from plugins import shadowCouncilSecret
 from plugins import roleCommands
 from plugins import develop
 from plugins import commitlog
-from plugins import youtubeRewind
 
 kstQ = queue.Queue()
 dscQ = queue.Queue()
@@ -106,13 +105,6 @@ async def processMessage(client, message):
             botLog("reaction to self mention")
             await message.add_reaction("🖕")
     
-    ##try to add to rewind lib
-    try:
-        await youtubeRewind.onMessageProcessor(message)
-    except Exception as e:
-        botLog(e)
-        pass
-
     if(len(message.attachments) > 0 and cfg.checkMessage("floodcontrol", message)):
         botLog("Checking floodcontrol")
         await spam_check("", msg=message, cb=None, command=None)
@@ -594,7 +586,7 @@ async def invalid_command(*args, **kwargs):
             pass
             ##await msg.channel.send("invalid command")
 
-function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.discordCommands.NEW_MEME : add_meme,
+function_translation = {
     classes.discordCommands.PURGE_MEMES : purge_memes, classes.discordCommands.HELP : help_command,
     classes.discordCommands.BSJ_MEME : bsj_meme, classes.discordCommands.BSJ_NAME : bsj_name ,
     classes.discordCommands.TWITTER : twitter, classes.discordCommands.GET_STEAM_STATUS : steam_status,
@@ -602,20 +594,20 @@ function_translation = {classes.discordCommands.SEND_MEME : send_meme, classes.d
     classes.discordCommands.AIRGUITAR : image_macro_wrapper, classes.discordCommands.CHEERLEADER : image_macro_wrapper,
     classes.discordCommands.INVALID_COMMAND : invalid_command, classes.discordCommands.BROADCAST : cmdSendMsg, classes.discordCommands.CHOCOLATE : image_macro_wrapper,
     classes.discordCommands.TOMATO : image_macro_wrapper, classes.discordCommands.TRANSFORM : image_macro_wrapper,
-    classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby, classes.discordCommands.SEND_OLD_MEME : send_meme,
+    classes.discordCommands.BROADCAST_LOBBY : broadcast_lobby,
     classes.discordCommands.BROADCAST_DRAFT_PICK : broadcast_draft_pick, classes.discordCommands.TOGGLE_DRAFT_MODE : toggle_draft,
     classes.discordCommands.UPDATE_DRAFT_PICK : update_draft_message, classes.discordCommands.BROADCAST_MATCH_RESULT : broadcast_match_res,
-    classes.discordCommands.ADD_CHANNEL_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_CHANNEL_PERMISSION : addRemovePermission,
-    classes.discordCommands.ADD_SERVER_PERMISSION : addRemovePermission, classes.discordCommands.REMOVE_SERVER_PERMISISON : addRemovePermission,
-    classes.discordCommands.PERMISSION_STATUS : permissionStatus, classes.discordCommands.PERMISSION_HELP : permissionHelp,
+    
+    
+    classes.discordCommands.PERMISSION_STATUS : permissionStatus,
     classes.discordCommands.CREATE_LOBBY : create_lobby, classes.discordCommands.FREE_BOT_LIST : request_bot_list,
     classes.discordCommands.BOT_LIST_RET : print_bot_list, classes.discordCommands.TEST_COMMAND : test_function,
     classes.discordCommands.SEAL_EMBEDS : seal_embeds, classes.discordCommands.HONORARY_CHAMPS : honorary_champs,
     classes.discordCommands.LOBBY_CREATE_MESSAGE : lobby_create_message, classes.discordCommands.REQUEST_SHUTDOWN : shutdown_bot,
     classes.discordCommands.SHUTDOWN_BOT : clean_shutoff, classes.discordCommands.NO_BOTS_AVAILABLE : bot_error_message,
-    classes.discordCommands.EGIFT : egift_pp, classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
-    classes.discordCommands.YURU_YURI_FULL : yuru_yuri, classes.discordCommands.SHADOW_COUNCIL_UNBAN_ALL : shadow_council_unban_all,
-    classes.discordCommands.SC_LOOKUP : sc_lookup, classes.discordCommands.NEW_CHALLENGE : new_challenge,
+    classes.discordCommands.OMEGA_W : image_macro, classes.discordCommands.DECODE : decode,
+    
+    classes.discordCommands.SC_LOOKUP : sc_lookup,
     classes.discordCommands.SC_UPDATE : sc_update, classes.discordCommands.MY_COLOR : my_color, classes.discordCommands.KC : kill_count}
 
 async def messageHandler(kstQ, dscQ):
@@ -795,7 +787,6 @@ socket.bind("tcp://*:9002")
 #header.chat_command_translation, function_translation = leagueResults.init(header.chat_command_translation, function_translation)
 header.chat_command_translation, function_translation = roleCommands.init(header.chat_command_translation, function_translation)
 header.chat_command_translation, function_translation = develop.init(header.chat_command_translation, function_translation)
-header.chat_command_translation, function_translation = youtubeRewind.init(header.chat_command_translation, function_translation)
 
 #client.loop.create_task(messageHandler(kstQ, dscQ))
 #client.loop.create_task(saveTables())
