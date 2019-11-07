@@ -55,7 +55,7 @@ class PermissionHandler(commands.Cog):
         return(commands.check(predicate))
 
 
-    @commands.command(name="addPerm")
+    @commands.command(name="addPerm", help="Adds a feature/permission from the given channel/guild.\nThis command can only be invoked by users with the \"Manage Guild\" Permission.")
     @checks.manageGuild()
     async def addPermission(self, ctx, perm: typing.Union[PermissionConverter, str], target : typing.Optional[str]):
 
@@ -84,7 +84,7 @@ class PermissionHandler(commands.Cog):
         await ctx.send("Permissions updated for {0} `{1}`".format(resourceType, resourceName))
 
 
-    @commands.command(name="removePerm")
+    @commands.command(name="removePerm", help="Removes a feature/permission from the given channel/guild.\nThis command can only be invoked by users with the \"Manage Guild\" Permission.")
     @checks.manageGuild()
     async def removePermission(self, ctx, perm: typing.Union[PermissionConverter, str], target : typing.Optional[str]):
 

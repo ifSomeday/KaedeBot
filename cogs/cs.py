@@ -8,7 +8,7 @@ class CsTools(commands.Cog):
         self.bot = bot
 
 
-    @commands.command()
+    @commands.command(help="Converts from decimal to hex")
     @checks.me()
     async def hex(self, ctx, num: int):
         await ctx.send("{0}".format(hex(num)))
@@ -22,7 +22,7 @@ class CsTools(commands.Cog):
             print(error)
 
 
-    @commands.command()
+    @commands.command(help="Converts from hex to decimal")
     @checks.me()
     async def dec(self, ctx, num):
         await ctx.send("{0}".format(int(num, 16)))

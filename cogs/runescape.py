@@ -9,7 +9,7 @@ class RuneScape(commands.Cog):
         self.bot = bot
 
 
-    @commands.command(name="kc")
+    @commands.command(name="kc", help="Displays your killcount for the specified raid")
     @checks.permissionCheck("CHATRESPONSE")
     async def kc(self, ctx, raid):
 

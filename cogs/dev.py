@@ -8,7 +8,7 @@ class DevTools(commands.Cog):
         self.bot = bot
 
 
-    @commands.command()
+    @commands.command(hidden=True)
     @checks.me()
     async def reload(self, ctx, *args):
         for arg in args:
@@ -21,7 +21,7 @@ class DevTools(commands.Cog):
         else:
             await ctx.send(error)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @checks.me()
     async def load(self, ctx, *args):
         for arg in args:

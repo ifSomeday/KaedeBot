@@ -18,7 +18,7 @@ class Memes(commands.Cog):
         self.loadMemes()
 
 
-    @commands.command(name="newMeme")
+    @commands.command(name="newMeme", help="Adds a meme to the bot's meme database")
     @checks.permissionCheck("MEME")
     async def addMeme(self, ctx, *, meme):
 
@@ -46,7 +46,7 @@ class Memes(commands.Cog):
                 table.append(self.NONWORD)
 
 
-    @commands.command(name="meme")
+    @commands.command(name="meme", help="Generates a meme using the bot's built-in meme database.")
     @checks.permissionCheck("MEME")
     async def getMeme(self, ctx, *, builder: typing.Optional[str]):
 
@@ -73,7 +73,7 @@ class Memes(commands.Cog):
                 word1, word2, word3 = word2, word3, newWord
 
 
-    @commands.command("purgeMemes")
+    @commands.command("purgeMemes", hidden=True)
     @checks.me()
     async def purgeMemes(self, ctx):
         if(os.path.isfile(self.filePath)):
@@ -81,7 +81,7 @@ class Memes(commands.Cog):
             await ctx.send("Purged meme database")
 
 
-    @commands.command("indexMemeChannel")
+    @commands.command("indexMemeChannel", hidden=True)
     @checks.me()
     async def indexMemeChannel(self, ctx):
 
