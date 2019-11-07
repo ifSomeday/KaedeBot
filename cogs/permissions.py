@@ -79,8 +79,9 @@ class PermissionHandler(commands.Cog):
                 self.channelPermissions[ctx.channel.id].append(perm)
 
         self.__savePermissions()
-        #print(self.guildPermissions, self.channelPermissions)
-        await ctx.send("Permissions updated for {0}".format("Guild" if target else "Channel"))
+        resourceName = ctx.guild.name if target else ctx.channel.name
+        resourceType = "Guild" if target else "Channel"
+        await ctx.send("Permissions updated for {0} `{1}`".format(resourceType, resourceName))
 
 
     @commands.command(name="removePerm")
@@ -107,8 +108,9 @@ class PermissionHandler(commands.Cog):
                 self.channelPermissions[ctx.channel.id].remove(perm)
 
         self.__savePermissions()
-        #print(self.guildPermissions, self.channelPermissions)
-        await ctx.send("Permissions updated for {0}".format("Guild" if target else "Channel"))
+        resourceName = ctx.guild.name if target else ctx.channel.name
+        resourceType = "Guild" if target else "Channel"
+        await ctx.send("Permissions updated for {0} `{1}`".format(resourceType, resourceName))
 
 
     @addPermission.error
