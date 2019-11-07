@@ -11,7 +11,7 @@ import re
 import sys
 import pickle
 import operator
-import markovChaining, keys, BSJ, os, header
+import keys, BSJ, os, header
 #import draftThread as dt
 from steam import SteamID
 from concurrent.futures import ProcessPoolExecutor
@@ -49,7 +49,6 @@ asyncio.set_event_loop(loop)
 shadow_council_lock = asyncio.Lock()
 
 client = discord.ext.commands.Bot(command_prefix="%")
-markovChaining.init()
 ##Save Thread
 
 BsjFacts = BSJ.BSJText()
@@ -168,41 +167,8 @@ async def pm_command(*args, **kwargs):
             pm_content += (word + " ")
         await client.get_channel(pm_channel).send(pm_content)
 
-async def send_meme(*args, **kwargs):
-    """
-    builds, validates, and sends a meme message
-    """
-    if('msg' in kwargs):
-        msg = kwargs['msg']
-        if(cfg.checkMessage("meme", msg)):##any(name in msg.channel.name for name in ['meme', 'meming', 'afk'])):
-            table = markovChaining.nd if kwargs['command'] == classes.discordCommands.SEND_MEME else markovChaining.d
-            i = 0
-            meme_base = msg.content.split()
-            st = time.time()
-            meme = markovChaining.generateText3(table, builder = meme_base[1:])
-            while((meme.strip().startswith("!") or len(meme.strip()) == 0) and i < 10):
-                i += 1
-                meme = markovChaining.generateText3(table, builder = [])
-                botLog("Invalid meme, rebuilding")
-            if(meme.strip().startswith("!") or len(meme.strip()) == 0):
-                return
-            et1 = time.time()
-            meme = re.sub(r"@everyone", r"everyone", meme)
-            for s in re.finditer(r"<@(\d+)>", meme):
-                meme = meme.replace(s.group(0), (await client.fetch_user(s.group(1))).name)
-            et2 = time.time()
-            botLog("build meme: " + str(et1 - st) + "\treplace: " + str(et2 - et1))
-            await msg.channel.send(meme)
 
-async def add_meme(*args, **kwargs):
-    """
-    adds a new meme
-    """
-    if('msg' in kwargs):
-        msg = kwargs['msg']
-        if(cfg.checkMessage("meme", msg)):
-            markovChaining.addSingle3(msg.content[len("!newmeme"):], markovChaining.nd)
-            await msg.channel.send("new meme added. thanks!")
+
 
 async def purge_memes(*args, **kwargs):
     """
@@ -531,7 +497,6 @@ async def clean_shutoff(*args, **kwargs):
     if('cmd' in kwargs):
         cmd = kwargs['cmd']
         botLog("Tables saved")
-        markovChaining.dumpAllTables()
         botLog("closing connection")
         client.logout()
 
@@ -671,16 +636,7 @@ async def messageHandler(kstQ, dscQ):
         botLog("Exception in messageHandler method")
         botLog(str(e))
 
-async def saveTables():
-    await client.wait_until_ready()
-    try:
-        while(not client.is_closed()):
-            markovChaining.dumpAllTables()
-            botLog("saving")
-            await asyncio.sleep(1800)
-    except Exception as e:
-        botLog("Exception in saveTables method")
-        botLog(str(e))
+
 
 async def league_results():
     await client.wait_until_ready()
@@ -788,7 +744,7 @@ async def on_reaction_add(reaction, user):
     if(reaction.emoji == '🤖' and not reaction.message.author == client.user and not reaction.me and not reaction.message.content.startswith("!")):
         if(not any((r.me and r.emoji == '🤖') for r in reaction.message.reactions)):
             await reaction.message.add_reaction('🤖')
-            markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
+            #markovChaining.addSingle3(reaction.message.content, markovChaining.nd)
             if(cfg.checkMessage("meme", reaction.message)):
                 await reaction.message.channel.send("Thanks, " + user.mention + " meme added from message by " + reaction.message.author.name)
         else:
