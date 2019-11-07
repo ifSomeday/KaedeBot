@@ -9,7 +9,7 @@ class CsTools(commands.Cog):
 
 
     @commands.command(help="Converts from decimal to hex")
-    @checks.me()
+    @checks.permissionCheck("CS")
     async def hex(self, ctx, num: int):
         await ctx.send("{0}".format(hex(num)))
 
@@ -23,7 +23,7 @@ class CsTools(commands.Cog):
 
 
     @commands.command(help="Converts from hex to decimal")
-    @checks.me()
+    @checks.permissionCheck("CS")
     async def dec(self, ctx, num):
         await ctx.send("{0}".format(int(num, 16)))
 

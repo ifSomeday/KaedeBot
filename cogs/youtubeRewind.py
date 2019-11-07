@@ -18,7 +18,7 @@ class YoutubeRewind(commands.Cog):
         self.urlFinder = r"((?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/(?:watch\?v=)?\/?[^ \n]*)"
 
 
-    @commands.command(name="rewind")
+    @commands.command(name="rewind", help="Reposts a random YouTube video that has been posted in this channel in the past.\nGuaranteed to be better than YouTube's rewind.")
     @checks.permissionCheck("REWIND")
     async def rewind(self, ctx):
         if(not ctx.channel.id in self.videos):
