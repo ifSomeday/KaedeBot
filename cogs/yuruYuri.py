@@ -12,7 +12,7 @@ class YuruYuri(commands.Cog):
         self.bot = bot
         
 
-    @commands.command(name="yy")
+    @commands.command(name="yy", help="Displays an image or gif from the anime Yuru Yuri\nPlease report questionable content to the developer.")
     @checks.permissionCheck('IMAGEMACRO')
     async def yy(self, ctx, *args):
         cMsg = args[0] if args else None
