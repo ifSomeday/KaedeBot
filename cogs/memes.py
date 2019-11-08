@@ -89,8 +89,8 @@ class Memes(commands.Cog):
 
         async for message in ctx.channel.history(limit=None, oldest_first=True):
             if(not message.author.id == self.bot.user.id):
-                if(message.content.lower().startswith("!newmeme") or message.content.lower().startswith("!addmeme")):
-                    meme = " ".join(message.content.split()[1:]).strip()
+                if(message.clean_content.lower().startswith("!newmeme") or message.clean_content.lower().startswith("!addmeme")):
+                    meme = " ".join(message.clean_content.split()[1:]).strip()
                     if(len(meme) > 0):
                         await self.__addMeme(meme)
         await self.saveMemes()
