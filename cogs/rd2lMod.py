@@ -12,8 +12,8 @@ class RD2LMod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.fileLock = asyncio.Lock()
-        self.filePath = "{0}/dataStores/rd2lBotless.pickle".format(os.getcwd())
-        self.roleList = []
+        self.filePath = "{0}/dataStores/rd2lSavedRoles.pickle".format(os.getcwd())
+        self.roleList = {}
         self.loadRoleList()
         print(self.roleList)
 
@@ -21,13 +21,14 @@ class RD2LMod(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if(member.id in self.roleList and member.guild.id == 308515912653340682):
-            role = member.guild.get_role(619346514912739330)
-            await member.add_roles(role)
-            print("Re botlessed {0}".format(member.name))
+            for roleId in self.roleList[member.id]:
+                role = member.guild.get_role(roleId)
+                await member.add_roles(role)
+                print("Re {0}ed {1}".format(role.name, member.name))
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        print([x.name for x in member.roles])
+        #print([x.name for x in member.roles])
         if(member.guild.id == 308515912653340682):
             await self.updateBotlessList(member)
 
@@ -40,21 +41,23 @@ class RD2LMod(commands.Cog):
             
             # https://discord.gg/PtCGry
     async def updateBotlessList(self, member):
-        if(619346514912739330 in [x.id for x in member.roles]):
-            if(not member.id in self.roleList):
-                print("Added {0} to botless".format(member.name))
-                ## self.roleList[member.id] = [x.id for x in member.roles]
-                self.roleList.append(member.id)
-                print(self.roleList)
-                await self.saveRoleList()
-        else:
-            if(member.id in self.roleList):
-                print("removed {0} from botless".format(member.name))
-                ## self.roleList.pop(member.id)
-                self.roleList.remove(member.id)
-                print(self.roleList)
-                await self.saveRoleList()
-
+        for roleId in [619346514912739330, 653853205217804298, 497503772864675882]:
+            self.roleList.setdefault(member.id, [])
+            if(roleId in [x.id for x in member.roles]):
+                if(not roleId in self.roleList[member.id]):
+                    print("Added {0} to {1}".format(roleId, member.name))
+                    ## self.roleList[member.id] = [x.id for x in member.roles]
+                    self.roleList[member.id].append(roleId)
+                    print(self.roleList)
+                    await self.saveRoleList()
+            else:
+                if(roleId in self.roleList[member.id]):
+                    print("removed {0} from {1}".format(roleId, member.name))
+                    ## self.roleList.pop(member.id)
+                    self.roleList[member.id].remove(roleId)
+                    print(self.roleList)
+                    await self.saveRoleList()
+            
 
     @commands.command()
     @checks.me()
@@ -78,10 +81,23 @@ class RD2LMod(commands.Cog):
                 await member.remove_roles(role)
             await ctx.message.add_reaction('✅')
 
+    @commands.command()
+    @checks.me()
+    async def roleList(self, ctx):
+        for role in ctx.guild.roles:
+            print("'{}' : {}".format(role.name, role.id))
+
+
+    ## @commands.command()
+    ## async def wellshit(self, ctx):
+    ##    s = self.bot.get_guild(308515912653340682)
+    ##    m = s.get_member(133811493778096128)
+    ##    r = s.get_role(497503772864675882)
+    ##    await m.remove_roles(r)
 
 
     def loadRoleList(self):
-        self.botless = []
+        self.botless = {}
         if(os.path.isfile(self.filePath)):
             with open(self.filePath, "rb") as f:
                 self.roleList = pickle.load(f)
