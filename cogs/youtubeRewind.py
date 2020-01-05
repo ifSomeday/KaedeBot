@@ -34,6 +34,8 @@ class YoutubeRewind(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, ctx):
         perms = self.bot.get_cog('PermissionHandler')
+        if(not isinstance(ctx.channel, discord.TextChannel)):
+            return
         if(perms.is_enabled(ctx, perms.Permissions["REWIND"]) and not ctx.author.id == self.bot.user.id):
             if(not ctx.channel.id in self.videos):
                 await self.buildHistory(ctx)
