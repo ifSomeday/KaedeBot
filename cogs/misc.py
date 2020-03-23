@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 from cogs import checks
 
+import io
+import aiohttp
+
 class NotLearnedEnough(commands.CheckFailure):
     pass
 
@@ -21,6 +24,8 @@ class Misc(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+        self.steven2Url = "https://media.discordapp.net/attachments/389504390177751054/691562925227245598/steven2.png"
 
 
     @commands.command()
@@ -44,6 +49,16 @@ class Misc(commands.Cog):
     async def scholarError(self, ctx, error):
         if isinstance(error, NotLearnedEnough):
             await ctx.send(error)
+
+
+    @commands.Cog.listener()
+    async def on_message(self, ctx):
+        if("steven" in ctx.clean_content.lower() and ctx.guild.id == 133812880654073857):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self.steven2Url) as r:
+                    if r.status == 200:
+                        data = io.BytesIO(await r.read())
+                        await ctx.channel.send(file=discord.File(data, "steven2.png"))                       
 
 
 def setup(bot):
