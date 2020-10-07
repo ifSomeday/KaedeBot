@@ -16,3 +16,8 @@ def manageGuild():
     async def predicate(ctx):
         return (ctx.author.guild_permissions.manage_guild or ctx.author.id == 133811493778096128)
     return(commands.check(predicate))
+
+def shrimpHole():
+    async def predicate(ctx):
+        return ctx.channel.id == 422936957514022922
+    return commands.check(predicate)

@@ -1,9 +1,11 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from cogs import checks
 
 import io
+import asyncio
 import aiohttp
+import typing
 
 class NotLearnedEnough(commands.CheckFailure):
     pass
@@ -24,7 +26,8 @@ class Misc(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-
+        self.poll = None
+        self.proposedName = ""
         self.steven2Url = "https://media.discordapp.net/attachments/389504390177751054/691562925227245598/steven2.png"
 
 
@@ -58,7 +61,61 @@ class Misc(commands.Cog):
                 async with session.get(self.steven2Url) as r:
                     if r.status == 200:
                         data = io.BytesIO(await r.read())
-                        await ctx.channel.send(file=discord.File(data, "steven2.png"))                       
+                        await ctx.channel.send(file=discord.File(data, "steven2.png"))        
+
+    @commands.command()
+    @commands.cooldown(1, 300, commands.BucketType.channel)
+    @shrimpHole()
+    async def rename(self, ctx, *, name : str):
+        name = name.replace(" ", "_")
+        if(len(name) < 2 or len(name) > 32):
+            await ctx.send("Channel name must be between 2 and 32 characters")
+            return
+
+        self.proposedName = name 
+        self.poll = await ctx.send("Petition to rename channel from `{}` to `{}`\nPetition will be active for 15 minutes, requires a net vote of +3.".format(ctx.channel.name, self.proposedName))
+        
+        await self.poll.add_reaction(self.bot.get_emoji(253705709596704769))
+        await self.poll.add_reaction(self.bot.get_emoji(253705749937520640))
+
+        if(self.pollLoop.is_running()):
+            await ctx.send("Previous petition on name `{}` has been canceled.".format(self.proposedName))
+            self.pollLoop.restart()
+        else:
+            self.pollLoop.start()         
+
+    @rename.error
+    async def renameError(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send("rename can only be used once every 5 minutes.\nPlease try again in {} seconds.".format(int(error.retry_after)))
+
+    @tasks.loop(seconds=15, count=60)
+    async def pollLoop(self):
+        if(not self.poll == None):
+            self.poll = await self.poll.channel.fetch_message(self.poll.id)
+            reactions = self.poll.reactions
+            vote = 0
+            for r in reactions:
+                if r.emoji.id == 253705709596704769:
+                    vote += r.count
+                elif r.emoji.id == 253705749937520640:
+                    vote -= r.count
+            print("Current vote = {}".format(vote))
+            if(vote > 2):
+                await self.poll.channel.edit(name=self.proposedName)
+                await self.poll.send("Petition passed! Channel name changed to `{}`".format(self.proposedName))
+                self.poll = None
+                self.proposedName = ""
+                self.pollLoop.cancel()
+
+    @pollLoop.after_loop
+    async def afterPollLoop(self):
+        print("hi")
+        if(not self.pollLoop.is_being_cancelled()):
+            print("hi2")
+            await self.poll.channel.send("Petition on new channel name `{}` failed.".format(self.proposedName))
+
+
 
 
 def setup(bot):
