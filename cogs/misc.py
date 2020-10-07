@@ -103,7 +103,6 @@ class Misc(commands.Cog):
                         vote += r.count
                     elif r.emoji.id == 253705749937520640:
                         vote -= r.count
-                print("Current vote = {}".format(vote))
                 if(vote > 2):
                     await self.poll.channel.edit(name=self.proposedName)
                     await self.poll.send("Petition passed! Channel name changed to `{}`".format(self.proposedName))
