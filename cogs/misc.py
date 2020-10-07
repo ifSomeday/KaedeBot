@@ -105,7 +105,7 @@ class Misc(commands.Cog):
                         vote -= r.count
                 if(vote > 2):
                     await self.poll.channel.edit(name=self.proposedName)
-                    await self.poll.send("Petition passed! Channel name changed to `{}`".format(self.proposedName))
+                    await self.poll.channel.send("Petition passed! Channel name changed to `{}`".format(self.proposedName))
                     self.poll = None
                     self.proposedName = ""
                     self.pollLoop.cancel()
