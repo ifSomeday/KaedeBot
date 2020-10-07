@@ -65,7 +65,7 @@ class Misc(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 300, commands.BucketType.channel)
-    @shrimpHole()
+    @checks.shrimpHole()
     async def rename(self, ctx, *, name : str):
         name = name.replace(" ", "_")
         if(len(name) < 2 or len(name) > 32):
@@ -116,6 +116,12 @@ class Misc(commands.Cog):
             await self.poll.channel.send("Petition on new channel name `{}` failed.".format(self.proposedName))
 
 
+
+"""
+    @commands.command()
+    async def flushed(self, ctx, emoji : typing.Union[discord.Emoji, discord.PartialEmoji]):
+        print(emoji)
+"""
 
 
 def setup(bot):
