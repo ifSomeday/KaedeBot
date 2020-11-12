@@ -70,13 +70,17 @@ class Misc(commands.Cog):
         name = name.replace(" ", "_")
         if(len(name) < 2 or len(name) > 32):
             await ctx.send("Channel name must be between 2 and 32 characters")
+            await self.rename.reset_cooldown(ctx)
             return
 
         self.proposedName = name 
         self.poll = await ctx.send("Petition to rename channel from `{}` to `{}`\nPetition will be active for 15 minutes, requires a net vote of +3.".format(ctx.channel.name, self.proposedName))
         
+        ##Vote yes
         await self.poll.add_reaction(self.bot.get_emoji(253705709596704769))
+        ##Vote no
         await self.poll.add_reaction(self.bot.get_emoji(253705749937520640))
+        
         try:       
             if(self.pollLoop.is_running()):
                 await ctx.send("Previous petition on name `{}` has been canceled.".format(self.proposedName))
